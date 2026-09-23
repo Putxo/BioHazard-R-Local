@@ -1590,3 +1590,107 @@ sGamePad + 0x668 + index*0xC0
 **CONFIRMADO estáticamente:** la build mantiene y actualiza dos objetos de pad low-level y dos estados indexados de entrada. El slot 1 no es memoria reservada sin uso.
 
 Pendiente de runtime: comprobar exactamente cómo DInput asigna los dos mandos físicos a `sPad::Pad[0]` y `sPad::Pad[1]`.
+
+
+---
+
+# 36. Corrección crítica del split-screen: mMode no es mRegion
+
+Se reconstruyó el metadata de `sCamera::Viewport`.
+
+El registro de tipo confirma:
+
+```text
+sCamera::Viewport
+size = 0x190
+```
+
+Registro DTI observado alrededor de `0x04B014E0`:
+
+```asm
+push 0x190
+...
+push 0x04EC9284 ; "sCamera::Viewport"
+```
+
+El tipo `sCamera` completo se registra con tamaño:
+
+```text
+0xCE0
+```
+
+## Offsets de Viewport confirmados por property metadata
+
+La rutina alrededor de `0x03288BC0` registra:
+
+```text
++0x04 mpCamera
++0x08 mpTestCamera
++0x0C mpSceneTexture
++0x10 mVisible
++0x11 Scene
++0x12 mPriority
++0x13 mMode
++0x14 mDisplay
++0x18 mRegion
+```
+
+La build experimental anterior usaba como primer viewport la base:
+
+```text
+sCamera + 0x30
+```
+
+y segundo viewport:
+
+```text
+sCamera + 0x30 + 0x190 = sCamera + 0x1C0
+```
+
+Esto encaja exactamente con sus escrituras:
+
+```text
++0x34  = viewport0.mpCamera
++0x40  = viewport0.mVisible
++0x43  = viewport0.mMode
++0x44  = viewport0.mDisplay
+
++0x1C4 = viewport1.mpCamera
++0x1D0 = viewport1.mVisible
++0x1D3 = viewport1.mMode
++0x1D4 = viewport1.mDisplay
+```
+
+## Error del experimento v2
+
+El parche escribió:
+
+```text
+viewport0.mMode = 2
+viewport1.mMode = 3
+```
+
+y se interpretó erróneamente como:
+
+```text
+REGION_TOP / REGION_BOTTOM
+```
+
+Pero las etiquetas `REGION_TOP` y `REGION_BOTTOM` pertenecen a **mRegion**, situado en `+0x18`, no a `mMode`.
+
+Por tanto:
+
+**CORRECCIÓN:** las builds split-screen v2 y v3 INPUT+SPLITSCREEN no configuran realmente TOP/BOTTOM mediante esas escrituras.
+
+Siguen siendo útiles como experimentos de asignación de dos cámaras a dos Viewports, pero su parte de geometría de pantalla estaba mal interpretada.
+
+## Próximo parche
+
+El siguiente experimento debe:
+
+1. conservar `mpCamera` y `mVisible`;
+2. determinar los valores exactos del enum `mRegion`;
+3. escribir:
+   - `viewport0.mRegion @ sCamera+0x48`;
+   - `viewport1.mRegion @ sCamera+0x1D8`;
+4. no reutilizar 2/3 en `mMode` salvo que su semántica se determine por separado.
