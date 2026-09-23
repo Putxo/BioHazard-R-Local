@@ -1694,3 +1694,112 @@ El siguiente experimento debe:
    - `viewport0.mRegion @ sCamera+0x48`;
    - `viewport1.mRegion @ sCamera+0x1D8`;
 4. no reutilizar 2/3 en `mMode` salvo que su semántica se determine por separado.
+
+
+---
+
+# 37. Rectificación de la corrección anterior: mMode sí contiene REGION_TOP/BOTTOM
+
+La sección 36 registró una corrección provisional: al ver que `mRegion` estaba en `+0x18`, se asumió que los valores TOP/BOTTOM debían escribirse allí.
+
+Esa conclusión fue **incorrecta**.
+
+El análisis posterior del constructor y de la tabla de metadata de `sCamera::Viewport` demuestra:
+
+- `mMode @ +0x13` es el enum de presets REGION_*;
+- `mRegion @ +0x18` es un bloque/rectángulo de 16 bytes;
+- el constructor de `mRegion` pone cuatro DWORD a cero;
+- el motor deriva/usa ese rectángulo según `mMode`.
+
+## Tabla enum exacta
+
+Inmediatamente después de la vtable `0x04EC9954` aparece la tabla nombre/valor:
+
+```text
+FULLSCREEN   = 0
+FREE         = 1
+TOP          = 2
+BOTTOM       = 3
+LEFT         = 4
+RIGHT        = 5
+TOPLEFT      = 6
+BOTTOMLEFT   = 7
+TOPRIGHT     = 8
+BOTTOMRIGHT  = 9
+VIRTUAL      = 10
+```
+
+Los punteros de la tabla apuntan directamente al sufijo de las strings:
+
+```text
+REGION_FULLSCREEN
+REGION_FREE
+REGION_TOP
+REGION_BOTTOM
+...
+```
+
+## Consecuencia
+
+Las escrituras históricas:
+
+```text
+viewport0.mMode = 2
+viewport1.mMode = 3
+```
+
+**sí corresponden exactamente a TOP/BOTTOM**.
+
+Por tanto la geometría TOP/BOTTOM del split-screen v2 no queda invalidada por la sección 36.
+
+La sección 36 se conserva porque forma parte del proceso de investigación pedido, pero queda explícitamente superseded por esta sección.
+
+## Layout confirmado adicionalmente
+
+Constructor de `sCamera` alrededor de `0x0328A6A0`:
+
+```text
+base de Viewport array = sCamera + 0x30
+count = 8
+stride = 0x190
+constructor Viewport = 0x03288A90
+```
+
+Bucle:
+
+```asm
+push 8
+push 0x190
+lea ecx,[sCamera+0x30]
+call array_constructor
+```
+
+y posteriormente:
+
+```text
+viewport[i].Scene    @ +0x11 = i
+viewport[i].Priority @ +0x12 = 7-i
+```
+
+Esto confirma estructuralmente que:
+
+```text
+Viewport0 base = sCamera+0x30
+Viewport1 base = sCamera+0x1C0
+```
+
+y por tanto:
+
+```text
+Viewport0.mpCamera = +0x34
+Viewport0.mVisible = +0x40
+Viewport0.mMode    = +0x43
+Viewport0.mDisplay = +0x44
+
+Viewport1.mpCamera = +0x1C4
+Viewport1.mVisible = +0x1D0
+Viewport1.mMode    = +0x1D3
+Viewport1.mDisplay = +0x1D4
+```
+
+Las direcciones usadas por el parche split-screen coinciden exactamente con estos campos.
