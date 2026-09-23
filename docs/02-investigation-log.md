@@ -2529,3 +2529,56 @@ Detalle: `docs/12-cdebugplayer-p2-equipment.md`.
 `for2P @ 0x04DB5308` se siguió hasta un parser alrededor de `0x028F5DB0` junto a `SetFlag` y configuración de objetos/ride.
 
 No pertenece al bloque cDebugPlayer ni aporta evidencia de HUD/input global 2P. Se conserva como pista descartada.
+
+
+---
+
+# 41. Confirmación de asociación física para Pad[0]/Pad[1]
+
+La investigación bajó desde `sGamePad` hasta la capa DirectInput de `sPad`.
+
+La inicialización llama explícitamente a la configuración de los pads lógicos 0 y 1 en un bucle `index < 2`.
+
+Implementación por pad:
+
+```text
+0x0335C5C0
+```
+
+Cada pad mantiene una estructura de trabajo de `0x2F8`, con:
+
+```text
++0x06 número lógico de Pad
++0x10 socket físico elegido
+```
+
+La función busca un socket libre entre exactamente dos.
+
+Ruta DirectInput:
+
+```text
+0x0335C7B1 -> 0x01B7BF80 -> 0x0335E2C0
+EnumDevices callback 0x01C477AC -> 0x0335ED30
+```
+
+El callback crea el dispositivo en:
+
+```text
+sPad + 0x63C + socket*4
+```
+
+y evita reutilizar un dispositivo ya adjunto.
+
+Strings internos:
+
+```text
+Work[%d] Pad[%d] Socket[%d]
+New JoyPad controller[p%d] is found.
+Already controller[p%d] attached.
+Device is created.
+ERROR: Pad[v%d] can't use.
+```
+
+**CONFIRMADO:** el backend PC intenta asociar Pad[0] y Pad[1] a dispositivos físicos DirectInput independientes.
+
+Detalle: `docs/10-physical-pad-binding.md`.
