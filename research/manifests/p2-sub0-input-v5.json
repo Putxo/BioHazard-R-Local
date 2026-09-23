@@ -1,0 +1,43 @@
+{
+  "source": "BioRevHD 30-Enero-2013.exe",
+  "source_sha256": "9124bb92d6c54a047ade47dacc8429221b18f9910b504f0e87718d5151013f69",
+  "input_output": "BioRevHD 30-Enero-2013 LOCAL COOP P2 SUB0 INPUT v5.exe",
+  "input_sha256": "d294508a5fe4919eb9cb46c446f23ba7a79eb1da8664dac3d7cf9ed3437068b7",
+  "combined_output": "BioRevHD 30-Enero-2013 LOCAL COOP v5 SUB0 NATIVE SPLIT.exe",
+  "combined_sha256": "e83207b2c64172468930eacbe0460fb7847061b56ac3d4e3a3b7f3ee009bfe9c",
+  "status": "STATICALLY VERIFIED ONLY - gameplay not executed in this environment",
+  "builder": "patches/build_v5_sub0_local.py",
+  "design": {
+    "identity": "uPcsPlayerSub0+0x44 is the live uNpc* matched by [uNpc+0xE3C] against the native Sub0 PCS ID.",
+    "tracking_global": "0x057D9184",
+    "tracking_storage": "4-byte zero-filled writable tail allocated by increasing .data VirtualSize from 0x003B4184 to 0x003B4188",
+    "thinkmode": "Pad(1) remains stock; Cpu(2) is redirected to local input only when uNpc this equals the tracked SubPlayer0; Network(3) remains stock.",
+    "pad": "tracked SubPlayer0 selector=1; every other NPC selector=0; PC sGamePad getters restored to honor their existing selector argument.",
+    "camera": "combined output applies camera split v4: Self->VIEW_0 TOP, Partner->VIEW_1 BOTTOM, both display 0."
+  },
+  "patch_groups": [
+    ".data VirtualSize +4 for gLocalCoopSub0Npc",
+    "non-Pad ThinkMode -> Sub0 discriminator",
+    "Sub0 Cpu -> local Pad branch only",
+    "selector: exact Sub0=>1 else0",
+    "track/clear exact live SubPlayer0 uNpc from common uPcsPlayer binder",
+    "restore selector argument in 12 sGamePad load sites",
+    "optional native camera split v4"
+  ],
+  "diff": {
+    "input_same_size": true,
+    "input_different_bytes": 210,
+    "input_ranges": 21,
+    "combined_same_size": true,
+    "combined_different_bytes": 382,
+    "combined_ranges": 23
+  },
+  "limitations": [
+    "Runtime validation is still required.",
+    "Scenes intentionally without Sub0 leave the tracked pointer zero.",
+    "ThinkMode::Network is deliberately untouched so original online/network control is preserved.",
+    "v5 keeps the actual Sub0 ThinkMode as Cpu and only diverts its control generation inside the studied uNpc update; other AI systems that key on ThinkMode::Cpu may still require attention.",
+    "HUD, inventory, scripted actions, QTEs and camera lifecycle still require gameplay tests."
+  ],
+  "exact_byte_patch_source": "All expected/replacement bytes, addresses and cave bodies are preserved in patches/build_v5_sub0_local.py."
+}
