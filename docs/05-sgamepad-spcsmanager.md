@@ -258,3 +258,61 @@ Esto encaja con la construcción observada anteriormente de dos estructuras de `
 Una vez que los getters PC dejan de sustituir el argumento por `mStartPadNo`, el selector 1 **sí llega a una segunda entrada real de PadData**.
 
 Todavía falta la prueba física en Windows de qué dispositivo conectado alimenta PadData[1], pero la separación interna de dos slots está confirmada.
+
+
+---
+
+## Dos objetos low-level sPad::Pad
+
+La existencia de dos índices no se limita a `PadData`.
+
+### Punteros
+
+```text
+sGamePad + 0x968 + index*4
+index 0..1
+```
+
+El constructor de `sGamePad` inicializa exactamente dos punteros a null.
+
+La ruta runtime `0x02DACA76..0x02DACADC` crea, si es necesario, dos objetos de `0x2F8` bytes.
+
+Constructor:
+
+```text
+0x01C01EAF -> 0x03358F60
+```
+
+Vtable:
+
+```text
+0x04EE8E4C
+```
+
+RTTI:
+
+```text
+.?AVPad@sPad@@
+```
+
+### Actualización
+
+`0x02DAC73E..0x02DAC77A` itera los dos objetos y copia estado desde:
+
+```text
+sPad::Pad + 0x15C
+```
+
+a:
+
+```text
+sGamePad + 0x198 + index*0x2F8
+```
+
+Después el flujo también procesa dos `PadData` de `0xC0` en:
+
+```text
+sGamePad + 0x668 + index*0xC0
+```
+
+Esto confirma que el backend PC está estructurado realmente para dos pads internos independientes.
