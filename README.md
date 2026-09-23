@@ -61,6 +61,7 @@ Hallazgo más reciente: la build de enero contiene RTTI/clases diferenciadas par
 - [Mapa técnico actual](docs/04-current-architecture-map.md)
 - [sGamePad, sPcsManager y clases Main/Sub](docs/05-sgamepad-spcsmanager.md)
 - [SubPlayer0: actor exacto y PadMode v6](docs/09-subplayer0-local-filter.md)
+- [Persistent Partner camera v8](docs/11-persistent-camera-v8.md)
 - [Experimentos estáticos y sus limitaciones](docs/06-experiments.md)
 - [RTTI/vtables y matriz nativa Main/Sub](docs/07-pcs-role-vtables-and-mapping.md)
 - [ThinkMode y ruta nativa de pads](docs/08-input-thinkmode-and-pad-routing.md)
@@ -83,8 +84,10 @@ También se conservan los errores de interpretación hechos **durante este chat*
 - `patches/build_v3_input_patch.py` — experimento histórico v3.
 - `patches/camera_split_v4.S` + `patches/build_camera_split_v4.py` — split Self/Partner nativo.
 - `patches/build_v5_sub0_local.py` — filtro exacto Sub0 manteniendo Cpu.
-- `patches/build_v6_sub0_padmode.py` — candidato actual: Sub0 Cpu→Pad mediante setter oficial.
+- `patches/build_v6_sub0_padmode.py` — transición nativa Sub0 Cpu→Pad.
+- `patches/build_v7_fullpad.py` — amplía la separación a todas las cargas de input localizadas.
+- `patches/build_v8_persistent_split.py` — candidato actual: FULLPAD + cámara Partner persistente.
 - `research/manifests/p2-sub0-input-v5.json`
 - `research/manifests/p2-sub0-padmode-v6.json`
 
-El candidato estático principal actual es **v6 Sub0 PadMode + Native Split**. Sigue pendiente de validación dentro del juego.
+El candidato estático principal actual es **v8 FULLPAD + Persistent Split**. Mantiene la identidad exacta de Sub0, lo cambia por la ruta canónica a ThinkMode::Pad, separa el conjunto de controles localizado hacia PadData[1] y mantiene Self/Partner CameraManage activos en VIEW_0/VIEW_1. Sigue pendiente de validación dentro del juego.
