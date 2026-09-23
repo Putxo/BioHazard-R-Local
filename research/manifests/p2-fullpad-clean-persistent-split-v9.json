@@ -1,0 +1,63 @@
+{
+  "source": "BioRevHD 30-Enero-2013.exe",
+  "source_sha256": "9124bb92d6c54a047ade47dacc8429221b18f9910b504f0e87718d5151013f69",
+  "base_v7_input_only": "BioRevHD 30-Enero-2013 LOCAL COOP P2 FULLPAD v7.exe",
+  "base_v7_sha256": "25cb559a183156bbb8de312688da86bec300bd78e66f0d6c6f7d776a3cc88af7",
+  "output": "BioRevHD 30-Enero-2013 LOCAL COOP v9 FULLPAD CLEAN PERSISTENT SPLIT.exe",
+  "output_sha256": "5dc7a7a413ce5916c2758be43b3107d5adf00beee93533b4acf5d83cec97c4be",
+  "status": "STATICALLY VERIFIED ONLY - gameplay not executed in this environment",
+  "design": {
+    "local_activation_flag": "0x057d9188; set only after exact Sub0 canonical ThinkMode::Cpu(2)->Pad(1), cleared when Sub0 binding clears",
+    "network_preservation": "ThinkMode::Network(3) never sets the local flag; because v9 is built on input-only v7, stock camera init/exclusivity/viewport behavior is byte-identical to the original whenever flag=0",
+    "partner_target": "ensure_split writes the exact tracked Sub0 uNpc* into Partner uCameraManage via stock target setter 0x01C275EC->0x02066AB0",
+    "camera_coexistence": "when local flag=1, Self View / Partner View no longer deactivate the other manager; both are activated with stock 0x01BF353F",
+    "viewports": "Self->VIEW_0 TOP(2), Partner->VIEW_1 BOTTOM(3), both visible on display 0 via native setCameraForViewport",
+    "persistence": "Sub0 bind/rebind, Self/Partner view callbacks, and the later Partner camera state-clear sites all preserve/reassert local split"
+  },
+  "helper": {
+    "base_va": "0x1c94fc0",
+    "size": 314,
+    "end_va": "0x1c950fa",
+    "entries": {
+      "local_enable": "0x01C94FC0",
+      "pad_rebind_check": "0x01C94FD4",
+      "conditional_deactivate": "0x01C94FF8",
+      "partner_view_index": "0x01C9500C",
+      "conditional_bit0": "0x01C95020",
+      "conditional_bit1": "0x01C95036",
+      "ensure_split": "0x01C9504C"
+    }
+  },
+  "diff": {
+    "same_file_size": true,
+    "different_bytes_vs_original": 854,
+    "ranges_vs_original": 88,
+    "additional_different_bytes_vs_v7": 351,
+    "ranges_vs_v7": 11
+  },
+  "patches": [
+    {"label": ".data VirtualSize +4 for gLocalCoopActive","file_offset": "0x298","old": "88413b00","new": "8c413b00","bytes": 4},
+    {"label": "clear exact Sub0 tracking + local-active flag","file_offset": "0xc28760","old": "c740440000000081389c64e1040f853b3c6500c70584917d0500000000e92c3c6500cccccccccccccccccccc","new": "c740440000000081389c64e1040f853b3c6500c70584917d0500000000c70588917d0500000000e9223c6500","bytes": 44,"va": "0x27a1360"},
+    {"label": "Sub0 non-Cpu -> local Pad rebind discriminator","file_offset": "0xc287b5","old": "0f85673c6500","new": "0f85193c4fff","bytes": 6,"va": "0x27a13b5"},
+    {"label": "after canonical Cpu->Pad -> enable persistent local split","file_offset": "0xc287c4","old": "e9593c6500","new": "e9f73b4fff","bytes": 5,"va": "0x27a13c4"},
+    {"label": "persistent split helper block","file_offset": "0x11c3c0","old": "CC padding (314 bytes)","new": "assembled research/patches/camera_persistence_v8.S","bytes": 314,"va": "0x1c94fc0"},
+    {"label": "Self View: conditional Partner deactivate","file_offset": "0x4c5d2d","old": "e8a29bc2ff","new": "e8c666c5ff","bytes": 5,"va": "0x203e92d"},
+    {"label": "Partner View: conditional Self deactivate","file_offset": "0x4c5d8b","old": "e8449bc2ff","new": "e86866c5ff","bytes": 5,"va": "0x203e98b"},
+    {"label": "Partner View viewport index -> conditional VIEW_1","file_offset": "0x4c5dad","old": "e8019abcff","new": "e85a66c5ff","bytes": 5,"va": "0x203e9ad"},
+    {"label": "Partner camera setup bit0: conditional keep-active","file_offset": "0x3bf454","old": "e8486fd2ff","new": "e8c7cfd5ff","bytes": 5,"va": "0x1f38054"},
+    {"label": "Partner camera setup bit1: conditional keep-active","file_offset": "0x3bf461","old": "e8d055c5ff","new": "e8d0cfd5ff","bytes": 5,"va": "0x1f38061"}
+  ],
+  "clean_base_verification": {
+    "stock_camera_init_range": "0x0203E3A9..0x0203E463",
+    "status": "byte-identical to original in v9",
+    "old_v4_unconditional_hook_present": false
+  },
+  "limitations": [
+    "Runtime validation is still required.",
+    "The patch statically guarantees a distinct Partner camera target and persistent activation/binding when the local flag is active, but rendering correctness, collision/culling and cutscene transitions must be tested in-game.",
+    "HUD, inventory/pause ownership, scripted interactions and QTE behavior remain unresolved.",
+    "The second physical controller still requires runtime confirmation that Windows/DInput populates sPad::Pad[1] as expected on the user setup."
+  ],
+  "builder": "patches/build_v9_clean_persistent_split.py",
+  "assembly": "research/patches/camera_persistence_v8.S"
+}
