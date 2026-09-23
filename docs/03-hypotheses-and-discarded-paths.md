@@ -47,6 +47,14 @@ Solo se incluyen hipótesis surgidas durante esta conversación.
 | H36 | El split más limpio es Self->VIEW_0 y Partner->VIEW_1 activados simultáneamente | helper nativo 0x01EBD610 admite cualquier viewport y VIEW_1 existe | ACTIVA / PRIORITARIA |
 | H37 | uCameraManage::mPadNo debe ponerse 0/1 para controlar dos mandos | el nombre del campo lo sugería | NO DEMOSTRADA; retirada del parche nuevo hasta nueva evidencia |
 
+| H39 | El compañero offline relevante puede filtrarse por uPcsPlayerSub0 en vez de redirigir todos los Cpu | uPcsPlayerSub0 vtable 0x04E1649C y binder +0x44 | CONFIRMADA |
+| H40 | uPcsPlayerSub0+0x44 es el actor vivo cuyo ID está en uNpc+0xE3C | scan común compara el ID y guarda el objeto real | CONFIRMADA |
+| H41 | Redirigir globalmente ThinkMode::Cpu sería seguro | muchos NPC comparten la ruta Cpu | DESCARTADA |
+| H42 | Forzar Sub0 a ThinkMode::Network es la mejor forma de control local | implicaría efectos de red innecesarios | DESCARTADA frente a PadMode |
+| H43 | Mantener Sub0 como Cpu y desviar solo su control principal basta | v5 lo implementa | POSIBLE, pero superseded por v6 por riesgo de otros subsistemas AI |
+| H44 | Cambiar solo Sub0 Cpu->Pad con el setter oficial es la ruta más nativa | wrapper 0x0278CC40 + setter 0x027F1290 | ACTIVA / IMPLEMENTADA EN v6 |
+| H45 | v6 preserva online al no tocar Sub0 Network=3 | el hook solo cambia Cpu=2 | CONFIRMADA estáticamente |
+
 ## Descartes explicados
 
 ### `mCameraList[0]/[1]`
