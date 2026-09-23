@@ -53,11 +53,18 @@ Hallazgo más reciente: la build de enero contiene RTTI/clases diferenciadas par
 
 ## Documentación
 
+- [Alcance exacto de esta conversación](docs/00-scope-this-chat.md)
+
 - [Inventario de las cuatro builds](docs/01-build-inventory.md)
 - [Diario completo de esta conversación](docs/02-investigation-log.md)
 - [Hipótesis y caminos descartados](docs/03-hypotheses-and-discarded-paths.md)
 - [Mapa técnico actual](docs/04-current-architecture-map.md)
 - [sGamePad, sPcsManager y clases Main/Sub](docs/05-sgamepad-spcsmanager.md)
+- [Experimentos estáticos y sus limitaciones](docs/06-experiments.md)
+- [Mapa de strings/direcciones](research/key-string-addresses.md)
+- [Manifest P2 input](research/manifests/p2-input-experimental.json)
+- [Manifest split-screen v2](research/manifests/splitscreen-v2-experimental.json)
+- [Scripts reproducibles](scripts/)
 
 ## Criterio documental
 
