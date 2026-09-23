@@ -532,3 +532,238 @@ Prioridad posterior: enlazar un CameraManage distinto con Sub0 y un segundo view
 7. finalmente activar un segundo viewport.
 
 No se considera resuelto ningún paso solo porque aparezca un string o un segundo modelo; cada capa se validará por separado.
+
+
+---
+
+# 17. Hipótesis intermedia: febrero como target por XInput
+
+Antes de seguir `CreateRaidPlayer` hasta su implementación final hubo una hipótesis temporal:
+
+```text
+Enero  -> usarlo como mapa FullDebug
+Febrero -> usarlo como target práctico porque ya importa XINPUT1_3.dll
+```
+
+La idea era razonable porque enero no muestra `XINPUT1_3.dll` en su tabla normal de imports, mientras febrero/mayo/retail sí.
+
+Después de seguir `CreateRaidPlayer 2`, la hipótesis se corrigió:
+
+- febrero conserva el menú/wrapper;
+- el destino funcional investigado termina en `0x0079C2D0: ret 4`;
+- enero conserva implementación real.
+
+**CORRECCIÓN:** enero pasa a ser también la base experimental principal, no solo el mapa de símbolos/debug.
+
+Se mantiene este cambio de criterio en el diario para que no parezca que enero fue elegido desde el principio sin alternativas.
+
+---
+
+# 18. Experimento estático P2 INPUT
+
+Durante esta conversación se generó:
+
+`BioRevHD 30-Enero-2013 LOCAL COOP P2 INPUT EXPERIMENTAL.exe`
+
+SHA-256:
+
+`6c55444a820d05d0b0a15cafad0e8e7d0ec5bc67c1a548631a47d9ef2e6f0729`
+
+Objetivo: comprobar estáticamente si modos internos secundarios podían reentrar en la ruta local de input y seleccionar pad lógico 1.
+
+Puntos modificados:
+
+```text
+0x27A0CE7 -> redirect a 0x27A1318
+0x27A1318 -> stub de decisión de modo
+0x27A1340 -> selector pad 0/1
+
+call sites:
+0x27A0D03
+0x27A0D49
+0x27A0D6D
+0x27A0DBF
+0x27A0E29
+0x27A0E8A
+```
+
+Diff contra el original:
+
+- mismo tamaño;
+- 79 bytes distintos;
+- 10 rangos contiguos.
+
+**Estado:** solo verificación estática. No hubo ejecución del juego, por lo que no se etiquetó como “P2 funcional”.
+
+El detalle completo se conserva en `docs/06-experiments.md` y `research/manifests/p2-input-experimental.json`.
+
+---
+
+# 19. Experimento estático SPLITSCREEN v2
+
+Después de localizar Self/Partner CameraManage, `mPadNo` y varios Viewports, se generó:
+
+`BioRevHD 30-Enero-2013 LOCAL COOP SPLITSCREEN EXPERIMENTAL v2.exe`
+
+SHA-256:
+
+`9952e14daedfa05afceea6e1456f7d18aa1ed071ea900c7aef2cc7c8eeeec089`
+
+Incluye el experimento de input anterior y añade una prueba estática de:
+
+```text
+Self CameraManage    -> mPadNo 0
+Partner CameraManage -> mPadNo 1
+
+Viewport 0 -> Self    / TOP
+Viewport 1 -> Partner / BOTTOM
+```
+
+Hook/cave documentados:
+
+```text
+0x203E3A9 -> 0x203E3BD
+cave 0x203E3BD..0x203E44B
+activate impl ~0x2069AB0
+```
+
+Diff total contra el original:
+
+- 242 bytes diferentes;
+- 11 rangos;
+- 163 bytes nuevos de cambios de cámara/viewport + los 79 bytes del experimento de input.
+
+**Estado:** solo verificación estática.
+
+No demuestra actor P2, cámara Partner válida, HUD dual ni estabilidad de escenas.
+
+---
+
+# 20. Pista comparativa: Revelations 2 / Fluffy Manager
+
+Se consideró como referencia conceptual que herramientas/mods de Resident Evil Revelations 2 habían trabajado con cooperativo local sobre la misma familia tecnológica MT Framework.
+
+La intención era comprobar si podía sugerir patrones de separación de pad/cámara/viewport.
+
+**Resultado de esta conversación:** no se usó ningún offset, binario ni implementación de Revelations 2 como evidencia para Revelations 1.
+
+Se conserva como pista comparativa descartada para evitar que en el futuro parezca una dependencia oculta del parche.
+
+---
+
+# 21. Fallo de herramienta: `pefile`
+
+Se intentó usar Python con:
+
+```python
+import pefile
+```
+
+El entorno respondió:
+
+```text
+ModuleNotFoundError: No module named 'pefile'
+```
+
+No se convirtió en dependencia del proyecto.
+
+El trabajo siguió con:
+
+- `objdump`;
+- `strings`;
+- `file`;
+- `sha256sum`;
+- Python sin dependencias externas para búsqueda/diff de bytes.
+
+Los scripts reproducibles añadidos al repositorio siguen ese mismo criterio.
+
+---
+
+# 22. Verificación byte a byte de los experimentos
+
+Los dos experimentos fueron comparados directamente contra el original de enero.
+
+## P2 INPUT
+
+```text
+79 bytes diferentes
+10 rangos
+tamaño final = tamaño original
+```
+
+## SPLITSCREEN v2
+
+```text
+242 bytes diferentes
+11 rangos
+tamaño final = tamaño original
+```
+
+Esto confirma que fueron parches estrechos sobre la misma imagen PE, no una reconstrucción accidental o una sustitución masiva del binario.
+
+No implica validación funcional.
+
+---
+
+# 23. Petición de trazabilidad en GitHub
+
+El usuario pidió subir **todo el proceso de esta investigación** a:
+
+`Putxo/BioHazard-R-Local`
+
+Se verificó durante esta conversación que:
+
+- el repositorio existía;
+- estaba inicialmente vacío;
+- la rama por defecto era `main`;
+- la cuenta conectada tenía permisos de escritura/admin.
+
+El criterio pedido por el usuario se concretó después en:
+
+> solo el progreso de este chat, incluyendo lo que parecía servir y después se descartó.
+
+Por eso el repositorio conserva explícitamente:
+
+- hipótesis fallidas;
+- correcciones;
+- experimentos no validados;
+- limitaciones;
+- herramientas fallidas;
+- siguiente trabajo pendiente.
+
+---
+
+# 24. Estado técnico actual después de documentar todo lo anterior
+
+La evidencia más fuerte ya no es `CreateRaidPlayer` por sí sola.
+
+La ruta actual prioritaria es:
+
+```text
+uPcsPlayerMain
+uPcsPlayerSub0
+uPcsPlayerSub1
+        |
+        v
+sPcsManager Main/Sub0/Sub1
+        |
+        v
+mMovePcs / mMoveSubPcs
+        |
+        v
+sGamePad::PadData
+        |
+        v
+input independiente
+```
+
+Después:
+
+```text
+Sub0
+ -> uCameraManage independiente
+ -> Viewport independiente
+ -> split-screen
+```
+
+La siguiente confirmación que falta es localizar una diferencia concreta Main/Sub0 que llegue a la selección del `PadData` o equivalente, en lugar de seguir imponiendo el índice de pad mediante una inferencia externa.
