@@ -1,0 +1,183 @@
+# 05 — sGamePad, sPcsManager y clases Main/Sub
+
+## sGamePad
+
+Strings contiguas:
+
+```text
+sGamePad
+mIsUsePadEx
+mStartPadNo
+ExPadData
+sGamePad::PadData
+e:\bhr\source\biorevhd\prog\game\pad\sgamepadpc.cpp
+```
+
+Direcciones:
+
+```text
+sGamePad             0x04E11D87
+mIsUsePadEx          0x04E11DC0
+mStartPadNo          0x04E11DD0
+sGamePad::PadData    0x04E12210
+```
+
+Constructor aproximado:
+
+```text
+0x02DAC0F0
+```
+
+Campo confirmado:
+
+```text
+sGamePad::mStartPadNo = +0x970
+```
+
+Inicializado a 0.
+
+Regiones candidatas de PadData:
+
+```text
++0x668
++0x7E8
+```
+
+La separación es `0x180`, consistente con dos elementos de `0xC0` bytes observados en la construcción.
+
+Una rutina alrededor de `0x02DAE020` lee `mStartPadNo` y lo usa en acceso real al estado del mando.
+
+---
+
+## sPcsManager
+
+Strings:
+
+```text
+Main Player
+Sub Player 0
+Sub Player 1
+uPCS
+mMoveSubPcs
+mMovePcs
+Use Pcs Buffer
+mDebugPlayerSub1ID
+mDebugPlayerSub0ID
+mDebugPlayerMainID
+mIsDebug
+sPcsManager::uPcsFsm
+sPcsManager
+```
+
+Enum observado:
+
+```text
+Main Player  -> 0
+Sub Player 0 -> 1
+Sub Player 1 -> 2
+```
+
+Campos:
+
+```text
++0x1308 mIsDebug
++0x130C mDebugPlayerMainID
++0x1310 mDebugPlayerSub0ID
++0x1314 mDebugPlayerSub1ID
+```
+
+Getters:
+
+```text
+MainID  0x02DCDF10
+Sub0ID  0x02DCDF50
+Sub1ID  0x02DCDF90
+```
+
+Setters aproximados:
+
+```text
+mIsDebug ~0x02DD1460
+MainID   ~0x02DD14C0
+Sub0ID   ~0x02DD1520
+Sub1ID   ~0x02DD1580
+```
+
+Los setters de los tres IDs convergen en:
+
+```text
+0x01BC1F58 -> 0x02DD16F0
+```
+
+La función común procesa consecutivamente los tres IDs Main/Sub0/Sub1.
+
+---
+
+## Clases RTTI diferenciadas
+
+Se identificaron:
+
+```text
+app::game::pcs::uPcsPlayerMain
+app::game::pcs::uPcsPlayerSub0
+app::game::pcs::uPcsPlayerSub1
+```
+
+Este hallazgo es especialmente importante porque demuestra que Main/Sub0/Sub1 tienen representación de clase diferenciada en el ejecutable.
+
+### Interpretación actual
+
+La ruta más prometedora ya no es “crear un segundo jugador desde cero”, sino:
+
+1. localizar constructor/vtable de `uPcsPlayerSub0`;
+2. encontrar qué métodos difieren respecto a `uPcsPlayerMain`;
+3. seguir esos métodos hasta la selección de input;
+4. enlazar Sub0 con el segundo PadData;
+5. después resolver CameraManage y viewport.
+
+---
+
+## mMovePcs / mMoveSubPcs
+
+Xrefs aproximados:
+
+```text
+mMovePcs
+  ~0x02DCB123
+  ~0x02DCB2A1
+
+mMoveSubPcs
+  ~0x02DCB185
+  ~0x02DCB2ED
+```
+
+Callbacks/getters observados en la zona:
+
+```text
+~0x02DCB370
+~0x02DCB820
+~0x02DCB3B0
+~0x02DCB8C0
+```
+
+Todavía no se etiqueta su semántica final.
+
+---
+
+## Próxima investigación
+
+Prioridad inmediata:
+
+```text
+uPcsPlayerMain
+uPcsPlayerSub0
+uPcsPlayerSub1
+   ↓
+constructores / vtables / overrides
+   ↓
+ruta de movimiento e input
+   ↓
+sGamePad::PadData[index]
+```
+
+La siguiente confirmación importante debe ser una diferencia concreta de método entre Main y Sub0 que permita identificar cómo el juego decide qué input alimenta a cada clase.
