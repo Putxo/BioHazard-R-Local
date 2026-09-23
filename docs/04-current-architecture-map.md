@@ -254,3 +254,112 @@ activate     0x01BF353F
 VIEW_4 queda intacto porque pertenece a una tercera cámara/debug.
 
 `uCameraManage::mPadNo +0x88` queda fuera del parche actual: no se ha demostrado que seleccione el dispositivo físico.
+
+
+---
+
+## 10. Ruta local actual v6
+
+La identidad del segundo jugador ya no depende de nombres de personaje ni de un modo global.
+
+```text
+sPcsManager
+   |
+   +-- uPcsPlayerSub0
+          |
+          +-- +0x40 native PCS ID
+          |
+          +-- common binder 0x02DF4F30
+                 |
+                 +-- compara [uNpc+0xE3C]
+                 |
+                 +-- +0x44 = uNpc* exacto de Sub0
+```
+
+v6 guarda ese `uNpc*` en `gLocalCoopSub0Npc`.
+
+Si:
+
+```text
+Sub0 ThinkMode == Cpu(2)
+```
+
+usa el setter virtual oficial:
+
+```text
+0x01BB8B60 -> 0x0278CC40 -> 0x027F1290
+```
+
+para pasar únicamente ese actor a:
+
+```text
+ThinkMode::Pad(1)
+```
+
+Si el actor está en `Network(3)`, no se modifica.
+
+### Entrada
+
+```text
+P1 / actor normal
+ -> selector 0
+ -> PadData[0]
+
+SubPlayer0 exacto
+ -> selector 1
+ -> PadData[1]
+```
+
+La capa PC `sGamePad` se corrige para usar el selector que su ABI ya recibe, en vez de forzar `mStartPadNo`.
+
+### Cámara
+
+```text
+Self uCameraManage
+ -> VIEW_0
+ -> TOP
+ -> display 0
+
+Partner uCameraManage
+ -> VIEW_1
+ -> BOTTOM
+ -> display 0
+```
+
+Ambos se activan con las mismas funciones nativas que usa el selector debug Self/Partner.
+
+### Lo que v6 no toca
+
+- `ThinkMode::Network`;
+- IA de otros NPC;
+- VIEW_4;
+- `uCameraManage::mPadNo`;
+- coordenadas manuales de viewport;
+- un global `mStartPadNo`.
+
+## Siguiente capa a reconstruir
+
+El control ya cubre de forma confirmada los campos sincronizados:
+
+```text
+moveAnalog
+rotateAnalog
+aimAnalog
+waistRotateX
+isRun
+isAim
+```
+
+Falta comprobar qué rutas gestionan de manera separada:
+
+- disparo/ataque;
+- recarga;
+- interacción/acción;
+- esquiva;
+- cambio de arma;
+- uso de objeto;
+- menú/inventario;
+- QTE;
+- comandos contextuales.
+
+También falta demostrar que Partner Camera continúa actualizándose de forma válida con Self y Partner activos simultáneamente.
