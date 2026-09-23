@@ -2582,3 +2582,77 @@ ERROR: Pad[v%d] can't use.
 **CONFIRMADO:** el backend PC intenta asociar Pad[0] y Pad[1] a dispositivos físicos DirectInput independientes.
 
 Detalle: `docs/10-physical-pad-binding.md`.
+
+
+---
+
+# 42. PcsSub, inventario y SubEquipWin
+
+La investigación posterior a v9 comprobó que la capa de armas/UI cooperativa ya está ampliamente separada en el juego.
+
+## FSM
+
+Se compararon 84 acciones PcsMain y 77 PcsSub.
+
+Las **77 acciones Sub tienen equivalente Main**. Main solo añade 7 acciones de lifecycle/gestión.
+
+Para ChangeWeapon, AddWeapon, ClearWeapon, NpcSetWeaponSlot, NpcResetWeaponSlot y NpcChangeEquipSlot se localizaron wrappers Main/Sub que llaman a la misma implementación común.
+
+Patrón:
+
+```text
+Main -> tercer contexto = 0
+Sub  -> tercer contexto = [cFsmActionPcsSub+0x1078]
+```
+
+`+0x1078` se inicializa desde una tabla de punteros del manager alrededor de `+0xB44`.
+
+**Precaución:** está demostrado como contexto/objeto específico Sub, pero todavía no se identifica su clase exacta; no se etiqueta como uNpc sin prueba adicional.
+
+## Inventario
+
+`cBioItemPack` contiene:
+
+```text
+mSubWeapon[5]     @ +0xA0
+mSubBulletSlot[4] @ +0xB4
+mHerbNum          @ +0xC8
+mCoopKeyNum       @ +0xCC
+```
+
+y métodos virtuales reales para get/set de `mSubWeapon` por índice y por charaID.
+
+La función normal `addItem` usa esos virtuales y mantiene `mSubBulletSlot`, por lo que no son propiedades debug muertas.
+
+## Estado coop
+
+`cPlayerSaveParamCoop` registra por separado:
+
+```text
+mSelf.mLifePoint / mSelf.mVitality
+mPartner.mLifePoint / mPartner.mVitality
+mPartnerThink
+```
+
+## UI
+
+Existen clases distintas:
+
+```text
+uGUI_MainEquipWin vtable 0x04DE4C3C
+uGUI_SubEquipWin  vtable 0x04DE57B4
+```
+
+Sus vtables difieren en 8/50 slots analizados.
+
+Ambas registran `notifyPadInput`.
+
+Main handler `0x02B3C790` consulta `mMainWeaponNum`.
+
+Sub handler `0x02B43840` consulta `mSubWeaponNum`.
+
+La rutina Sub `0x02B439B0` construye la lista de equipo usando una interfaz virtual con offset `+0x54`, coincidente con el getter directo de `mSubWeapon[index]` de `cBioItemPack`.
+
+**Conclusión actual:** el juego ya tiene almacenamiento, acciones y UI separados para el equipo Sub. Falta identificar el dispatcher que entrega input a `SubEquipWin` y separarlo por Pad 2.
+
+Detalle completo: `docs/11-sub-inventory-fsm-ui.md`.
