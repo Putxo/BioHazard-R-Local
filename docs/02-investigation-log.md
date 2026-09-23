@@ -2103,3 +2103,138 @@ ranges: 19
 Estado: **STATICALLY VERIFIED ONLY**.
 
 La siguiente validación necesaria es runtime: comprobar que ambos managers permanecen actualizados simultáneamente y que Partner posee una cámara válida durante gameplay.
+
+
+---
+
+# 41. SubPlayer0+0x44 identifica el uNpc vivo del compañero
+
+La rutina común de binding de `uPcsPlayer*` en `0x02DF4F30` usa:
+
+```text
+uPcsPlayer* + 0x40 = ID PCS esperado
+uPcsPlayer* + 0x44 = actor encontrado
+```
+
+El scan obtiene el objeto real mediante `0x01BEE332` y lee su ID con `0x01BEDBB7 -> 0x01CB7610`, cuya implementación devuelve `[this+0xE3C]`. Cuando ese ID coincide con `uPcsPlayer*+0x40`, el propio objeto se almacena en `uPcsPlayer*+0x44`.
+
+Como `uPcsPlayerSub0` tiene vtable exacta `0x04E1649C`, se puede identificar el compañero Sub0 sin depender del personaje concreto.
+
+El constructor de `uNpc` inicializa:
+
+```text
+[uNpc+0xE3C] = -1
+[uNpc+0xE40] = 2
+```
+
+y el enum ThinkMode reconstruido es:
+
+```text
+0 Invalid
+1 Pad
+2 Cpu
+3 Network
+```
+
+Por tanto el compañero normal/offline nace como `ThinkMode::Cpu`.
+
+---
+
+# 42. Experimento v5 — filtro exacto Sub0 manteniendo Cpu
+
+Outputs:
+
+```text
+BioRevHD 30-Enero-2013 LOCAL COOP P2 SUB0 INPUT v5.exe
+SHA-256 d294508a5fe4919eb9cb46c446f23ba7a79eb1da8664dac3d7cf9ed3437068b7
+
+BioRevHD 30-Enero-2013 LOCAL COOP v5 SUB0 NATIVE SPLIT.exe
+SHA-256 e83207b2c64172468930eacbe0460fb7847061b56ac3d4e3a3b7f3ee009bfe9c
+```
+
+v5 amplía solo 4 bytes el `VirtualSize` de `.data`:
+
+```text
+0x003B4184 -> 0x003B4188
+```
+
+y usa `0x057D9184` como `gLocalCoopSub0Npc`.
+
+Regla:
+
+```text
+Pad(1)       -> stock
+Cpu(2) Sub0  -> ruta local + selector 1
+Cpu(2) otros -> CPU/AI stock
+Network(3)   -> stock
+```
+
+Verificación estática:
+
+```text
+input-only: 210 bytes distintos / 21 rangos
+combined:   382 bytes distintos / 23 rangos
+same file size: sí
+```
+
+Limitación: Sub0 sigue teniendo formalmente `ThinkMode::Cpu` fuera de la rutina desviada, así que otros subsistemas de IA podrían seguir considerándolo CPU.
+
+---
+
+# 43. Setter oficial de ThinkMode
+
+Se identificó la ruta virtual completa:
+
+```text
+0x01BB8B60 -> 0x0278CC40
+```
+
+El wrapper llama al setter real `0x01BE3257 -> 0x027F1290` y después refresca el controlador asociado mediante `0x01C03223 -> 0x01DF4C60` y `0x01C338A1 -> 0x02080240`.
+
+El setter real escribe finalmente:
+
+```text
+[uNpc+0xE40] = new ThinkMode
+```
+
+y solo ejecuta el teardown específico de red cuando el modo anterior era `Network=3` y se sale de Network. La transición `Cpu(2) -> Pad(1)` no entra en esa rama.
+
+---
+
+# 44. Experimento v6 — Sub0 pasa nativamente a ThinkMode::Pad
+
+v6 sustituye el desvío de la rama CPU de v5 por una transición nativa:
+
+```text
+si actor == SubPlayer0 y ThinkMode == Cpu(2):
+    SetThinkMode(Pad=1) mediante 0x01BB8B60
+
+si ya es Pad(1):
+    no cambiar
+
+si es Network(3):
+    no cambiar
+```
+
+Después, la ruta stock `ThinkMode::Pad` se ejecuta normalmente. El selector devuelve PadData 1 solo para el actor Sub0 exacto, y los getters PC de `sGamePad` respetan el selector restaurado.
+
+Outputs:
+
+```text
+BioRevHD 30-Enero-2013 LOCAL COOP P2 SUB0 PADMODE v6.exe
+SHA-256 83554753d1d6a86bf256627830f509a313871a847c87338b61da0e3c0a2c0914
+
+BioRevHD 30-Enero-2013 LOCAL COOP v6 SUB0 PADMODE NATIVE SPLIT.exe
+SHA-256 18a429daa0855a7e6de6af91358d867970beee9a99671913303166f8b39a540d
+```
+
+Verificación:
+
+```text
+v6 input: 201 bytes distintos / 19 rangos / mismo tamaño
+v6+split: 373 bytes distintos / 21 rangos / mismo tamaño
+```
+
+v6 ya no modifica el branch de ThinkMode en `0x027A0CA0`.
+
+**Estado:** STATICALLY VERIFIED ONLY.
