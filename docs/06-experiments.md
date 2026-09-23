@@ -487,3 +487,85 @@ v3 restaura el selector en la propia implementación PC.
 Manifest:
 
 `research/manifests/p2-input-v3.json`
+
+
+---
+
+# Experimento 4 — LOCAL COOP v3 INPUT+SPLITSCREEN
+
+Archivo local:
+
+`BioRevHD 30-Enero-2013 LOCAL COOP v3 INPUT+SPLITSCREEN.exe`
+
+SHA-256:
+
+`6978dc6d63781718c3728160c0312737424536734c0850b9337e990fb2da677d`
+
+Estado:
+
+**STATICALLY VERIFIED ONLY.**
+
+## Construcción
+
+Se partió otra vez de la build original de enero.
+
+Componentes:
+
+1. **P2 INPUT v3**
+   - modo 1 conserva ruta local original y selector 0;
+   - modo 2 queda completamente intacto;
+   - modo 3 se redirige a la ruta local y usa selector 1;
+   - los seis getters PC de `sGamePad` respetan el selector.
+
+2. **SPLITSCREEN**
+   - se aplicó únicamente el bloque de cámara/viewport ya documentado del experimento split-screen v2;
+   - no se arrastraron los parches de input antiguos de v2.
+
+## Cámara/viewport aplicado
+
+Ventana de diferencias copiada del experimento split-screen anterior:
+
+```text
+file 0x004C57A9..0x004C584B
+163 bytes diferentes
+VA hook  0x0203E3A9
+VA cave  0x0203E3BD
+```
+
+Configura de forma experimental:
+
+```text
+Self CameraManage    mPadNo=0 -> Viewport 0 -> TOP
+Partner CameraManage mPadNo=1 -> Viewport 1 -> BOTTOM
+```
+
+## Diff total contra el original
+
+```text
+same size: yes
+different bytes: 274
+contiguous ranges: 18
+```
+
+## Qué mejora respecto al split-screen v2 anterior
+
+El split-screen v2 anterior contenía el input experimental viejo, que después se demostró insuficiente porque `sGamePad` ignoraba el selector.
+
+Esta versión sustituye completamente aquella parte por el input v3 corregido.
+
+## Pendiente de prueba
+
+- que el partner esté creado como `uNpc` controlable en la escena;
+- que ThinkMode 3 sea el estado que realmente usa ese partner en la sesión objetivo;
+- que PadData índice 1 corresponda al segundo mando conectado;
+- que Partner Camera tenga una cámara válida;
+- que el juego no sobrescriba los Viewports después;
+- HUD/UI;
+- inventario y pausa;
+- interacciones y QTE;
+- muerte/revive;
+- checkpoints y transiciones.
+
+Manifest:
+
+`research/manifests/local-coop-v3-input-splitscreen.json`
