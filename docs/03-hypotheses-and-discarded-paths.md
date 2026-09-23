@@ -30,6 +30,11 @@ Solo se incluyen hipótesis surgidas durante esta conversación.
 | H22 | La build PC solo mantiene un pad internamente | gameplay usa siempre pad 0 | DESCARTADA: sGamePad construye y actualiza dos PadData con índices 0/1 |
 | H23 | Main/Sub0/Sub1 son roles nativos con tipos separados | vtables y overrides fijos 0/1/2; uPcsActor<Player0/1/2> | CONFIRMADA |
 
+| H24 | Modos internos 2/3 podían representar P2 local | el primer experimento los usó como señal secundaria | DESCARTADA: 2=Network y 3=Cpu; P2 local debe usar ThinkMode::Pad(1) |
+| H25 | La rama 2 era otro tipo de input local | consumía analog/aim/run | DESCARTADA: consume cPlayerPadSyncData y corresponde a ThinkMode::Network |
+| H26 | uPlayer no conserva ownership/control mode explícito | el modo parecía residir solo en gestor de estado | DESCARTADA: uPlayer+0xE40 cachea ThinkMode y existe setter dedicado |
+| H27 | Para P2 local hay que secuestrar Network/Cpu | ramas 2/3 ya transportan un segundo estado | DESCARTADA: solución nativa es Sub0 ThinkMode::Pad + pad 1 |
+
 ## Descartes explicados
 
 ### `mCameraList[0]/[1]`
