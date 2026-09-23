@@ -1,0 +1,38 @@
+{
+  "source": "BioRevHD 30-Enero-2013.exe",
+  "source_sha256": "9124bb92d6c54a047ade47dacc8429221b18f9910b504f0e87718d5151013f69",
+  "output": "BioRevHD 30-Enero-2013 LOCAL COOP P2 INPUT v3.exe",
+  "output_sha256": "ee05fc7d6c965aed0661165eb0ead4c6dffa1f67bc32fd758297edb86f3213e1",
+  "status": "STATICALLY VERIFIED ONLY - gameplay not executed in this environment",
+  "intent": "Restore the existing sGamePad selector argument, route only inferred remote ThinkMode 3 through local control, and select pad index 1 only for that mode.",
+  "diff": {
+    "same_file_size": true,
+    "different_bytes": 111,
+    "contiguous_ranges": 17
+  },
+  "logic": {
+    "mode_1": "unchanged local-control path; selector 0",
+    "mode_2": "unchanged original path",
+    "mode_3": "redirected into local-control path; selector 1"
+  },
+  "npc_patches": {
+    "mode_branch": "0x027A0CE7 JNE -> 0x027A1318",
+    "mode_discriminator_cave": "0x027A1318: mode 3 -> 0x027A0CED; all other non-1 -> 0x027A1080",
+    "selector_hook": "0x027A27D3 -> 0x027A1340",
+    "selector_cave": "0x027A1340: read ThinkMode; return 1 only when mode==3, else 0"
+  },
+  "sgamepad_patches": {
+    "aim_bool": ["0x02DAF404", "0x02DAF40E"],
+    "run_bool": ["0x02DAFFE5", "0x02DAFFEF"],
+    "move_analog": ["0x02DB15B7", "0x02DB15C8"],
+    "aim_analog": ["0x02DB1787", "0x02DB1798"],
+    "rotate_analog": ["0x02DB1957", "0x02DB1968"],
+    "alternate_rotate_analog": ["0x02DB1CD7", "0x02DB1CE8"]
+  },
+  "sgamepad_change": "Replace loads from sGamePad+0x970 (mStartPadNo) with the selector argument already present in each getter ABI.",
+  "notes": [
+    "ThinkMode numeric names are inferred from behavior; mode 3 is strongly consistent with remote/network control but the enum label is not yet recovered.",
+    "No global mStartPadNo mutation is used.",
+    "The old v1/v2 input experiment is superseded for pad-selection semantics because PC getters ignored the selector."
+  ]
+}
