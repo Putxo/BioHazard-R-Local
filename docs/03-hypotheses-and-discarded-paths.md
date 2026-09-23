@@ -16,7 +16,7 @@ Solo se incluyen hipótesis surgidas durante esta conversación.
 | H10 | Cambiar solo `mStartPadNo` resolvería P2 | es global y parece seleccionar el pad inicial/principal | POCO PROBABLE |
 | H11 | `sPcsManager` ya distingue Main/Sub0/Sub1 | enum real, tres IDs, setters/getters y bucle de 3 slots | CONFIRMADA |
 | H12 | Main/Sub0/Sub1 son solo etiquetas | RTTI muestra clases `uPcsPlayerMain/Sub0/Sub1` | DESCARTADA |
-| H13 | `mMovePcs` / `mMoveSubPcs` pueden participar en la separación de control | nombres y callbacks reales | ACTIVA |
+| H13 | `mMovePcs` / `mMoveSubPcs` pueden participar en la separación de control | los setters registrados son `ret 4`; los getters solo exponen campos internos `+0x08/+0x0C` al debug | DESCARTADA como interruptor de movimiento |
 | H14 | P2 debe implementarse desde cero | ya existe infraestructura Main/Sub y varios viewports | DESCARTADA como punto de partida |
 | H15 | El mejor orden es spawn+input+cámara todo a la vez | dificulta aislar fallos | DESCARTADA metodológicamente |
 
@@ -61,3 +61,16 @@ ambos actores simultáneos
 ```
 
 y después demostrar dos cámaras/viewport independientes.
+
+
+### `mMovePcs` / `mMoveSubPcs`
+
+Parecían candidatos directos para habilitar/deshabilitar movimiento del jugador principal y subjugadores.
+
+Al seguir los callbacks registrados:
+
+- los setters son funciones vacías que retornan inmediatamente (`ret 4`);
+- los getters consultan únicamente dos DWORD/campos internos alrededor de `+0x08` y `+0x0C`;
+- su función observable es exponer estado al sistema de debug/propiedades.
+
+**DESCARTADOS como mecanismo para activar el control local de Sub0.**
