@@ -2238,3 +2238,191 @@ v6+split: 373 bytes distintos / 21 rangos / mismo tamaño
 v6 ya no modifica el branch de ThinkMode en `0x027A0CA0`.
 
 **Estado:** STATICALLY VERIFIED ONLY.
+
+
+---
+
+# 45. El selector de uNpc se usa en 129 llamadas
+
+Después de v6 se amplió el análisis de:
+
+```text
+0x01C6C746 -> 0x027A27B0
+```
+
+La función ya no se trata únicamente como selector usado por movimiento.
+
+Se localizaron **129 llamadas directas** a ese thunk dentro de las rutas de `uNpc`/acciones.
+
+Esto es importante porque el selector exacto:
+
+```text
+SubPlayer0 -> 1
+otros      -> 0
+```
+
+se propaga a muchas consultas de gameplay más allá de:
+
+- movimiento;
+- rotación;
+- aim;
+- correr.
+
+Entre las rutas consumidoras aparecen consultas de botones/acciones, máscaras como `0x400` / `0x800`, helpers que guardan temporalmente el selector y llamadas posteriores a `sGamePad`.
+
+No todas las 129 llamadas necesitan un parche: algunas comparan/guardan el índice y ya respetan 0/1 correctamente.
+
+---
+
+# 46. Nueva limitación encontrada en v6: botones todavía colapsados a mStartPadNo
+
+Al seguir los consumidores del selector se comprobó que la adaptación PC repite el mismo patrón que ya habíamos corregido en los getters analógicos.
+
+Funciones de acciones/botones como:
+
+```text
+0x02DAF640
+0x02DAF7B0
+0x02DB02F0
+0x02DB0810
+...
+```
+
+reciben un selector de pad, pero dentro vuelven a cargar:
+
+```text
+sGamePad::mStartPadNo @ +0x970
+```
+
+Por tanto v6 podía separar movimiento/aim/run y, sin embargo, determinadas acciones podían seguir leyendo el mando principal.
+
+## Cobertura reconstruida
+
+Dentro de las funciones relevantes alcanzadas por el selector de `uNpc` se localizaron:
+
+```text
+67 cargas estándar de mStartPadNo
+  - 4 ya corregidas en v6
+
+8 cargas de los cuatro getters analógicos de frame alineado
+  - 8 ya corregidas en v6
+
+TOTAL = 75 cargas de selector relevantes
+```
+
+Quedaban:
+
+```text
+63 cargas estándar
+```
+
+por restaurar.
+
+Para los métodos estándar se comprobó que el selector es:
+
+```text
+[ebp+0x08]
+```
+
+Incluso en los métodos con dos argumentos, el segundo argumento real aparece en `[ebp+0x0C]`, confirmando que `[ebp+8]` es el índice de pad.
+
+Los cuatro getters analógicos usan su frame especial y ya leen el selector restaurado desde:
+
+```text
+[ebx+0x0C]
+```
+
+---
+
+# 47. Experimento v7 — FULLPAD
+
+Se construyó una ampliación directa de v6 que restaura las **63 cargas estándar restantes**.
+
+Regla de parche por sitio:
+
+```text
+ANTES:
+mov r32,[sGamePad + 0x970]
+
+DESPUÉS:
+mov r32,[ebp+0x08]
+nop
+nop
+nop
+```
+
+Se conserva el registro destino original.
+
+v7 hereda de v6:
+
+- identificación exacta de `uPcsPlayerSub0`;
+- `Cpu(2) -> Pad(1)` mediante setter oficial solo para Sub0;
+- `Network(3)` intacto;
+- selector Sub0=1/resto=0;
+- las 12 correcciones previas de input;
+- en la build combinada, split de cámara v4.
+
+## Output input-only
+
+```text
+BioRevHD 30-Enero-2013 LOCAL COOP P2 FULLPAD v7.exe
+SHA-256:
+25cb559a183156bbb8de312688da86bec300bd78e66f0d6c6f7d776a3cc88af7
+```
+
+## Output combinado
+
+```text
+BioRevHD 30-Enero-2013 LOCAL COOP v7 FULLPAD NATIVE SPLIT.exe
+SHA-256:
+fe12f35c1d08f61961d7bdefba19a09e68939bb8966fc3d6c50e994ab699fa76
+```
+
+## Verificación
+
+```text
+63/63 nuevos puntos: patrón correcto
+67/67 cargas estándar conocidas: ninguna sigue leyendo mStartPadNo
+8/8 analógicas: siguen leyendo su selector de frame
+75/75 cargas relevantes cubiertas
+
+input-only:
+  mismo tamaño
+  516 bytes distintos
+  82 rangos
+
+input + split:
+  mismo tamaño
+  688 bytes distintos
+  84 rangos
+
+ambos siguen siendo PE32 válidos
+```
+
+Se desensamblaron muestras de las nuevas rutas, entre ellas:
+
+```text
+0x02DAF7B0
+0x02DB02F0
+0x02DB0810
+0x01CB2F80
+0x02DAFAF0
+```
+
+y las cargas modificadas utilizan correctamente `[ebp+8]`.
+
+## Estado
+
+**STATICALLY VERIFIED ONLY.**
+
+v7 pasa a ser la candidata estática principal.
+
+No se afirma todavía que sea cooperativo local funcional hasta ejecutarlo en Windows y validar la sesión real.
+
+Builder reproducible:
+
+`patches/build_v7_fullpad.py`
+
+Manifest:
+
+`research/manifests/p2-fullpad-v7.json`
