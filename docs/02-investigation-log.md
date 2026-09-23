@@ -1914,3 +1914,69 @@ Sus referencias observadas no demuestran que sea el selector de dispositivo fís
 Por tanto el siguiente parche de cámara **no modificará mPadNo** hasta recuperar una ruta que justifique esa semántica.
 
 La escritura antigua se conserva en el historial como experimento, pero queda marcada como no demostrada.
+
+
+---
+
+# 41. Construcción de CAMERA SPLIT v4
+
+Con la arquitectura Self/Partner ya corregida se construyó un nuevo parche de cámara.
+
+Objetivos:
+
+- no reutilizar VIEW_4;
+- no modificar `mPadNo`;
+- usar las mismas rutinas de readiness/activación que los callbacks stock;
+- usar el helper nativo de binding de viewport.
+
+Hook:
+
+```text
+0x0203E3A9 -> 0x0203E3BD
+```
+
+El cave ensamblado ocupa:
+
+```text
+167 bytes / 179 bytes disponibles
+```
+
+y termina antes de la siguiente función en `0x0203E470`.
+
+Secuencia:
+
+```text
+Self = [sGameCamera+0xCE0]
+Partner = [sGameCamera+0xCE4]
+
+para Self y Partner:
+  check readiness 0x01B7BA8A
+  si no está listo:
+    init mode 0x13 mediante 0x01B8AAEE
+  activate 0x01BF353F
+
+bind Self    -> VIEW_0 con 0x01C34D5A
+bind Partner -> VIEW_1 con 0x01C34D5A
+
+VIEW_0 visible=1, mMode=TOP(2),    display=0
+VIEW_1 visible=1, mMode=BOTTOM(3), display=0
+
+refresh 0x01BFD4B8
+```
+
+Resultados:
+
+```text
+CAMERA SPLIT v4
+SHA256 12ca6dae126e3e7354719637e144253d10a72cc6a8739de704f74e8aa0bcf172
+172 bytes distintos / 2 rangos
+
+LOCAL COOP v4 NATIVE SPLIT
+(input v3 + camera v4)
+SHA256 2b0e7b71cbac09cfb7fd5f3904f2e4709b2fdbfcbf372880e79f301cb95718ad
+283 bytes distintos / 19 rangos
+```
+
+Ambas imágenes conservan exactamente el tamaño del original y siguen siendo PE32 válidos.
+
+Estado: **solo validación estática**.
