@@ -1,0 +1,47 @@
+{
+  "source": "BioRevHD 30-Enero-2013.exe",
+  "source_sha256": "9124bb92d6c54a047ade47dacc8429221b18f9910b504f0e87718d5151013f69",
+  "base_v6_input_sha256": "83554753d1d6a86bf256627830f509a313871a847c87338b61da0e3c0a2c0914",
+  "base_v6_combined_sha256": "18a429daa0855a7e6de6af91358d867970beee9a99671913303166f8b39a540d",
+  "input_output": "BioRevHD 30-Enero-2013 LOCAL COOP P2 FULLPAD v7.exe",
+  "input_sha256": "25cb559a183156bbb8de312688da86bec300bd78e66f0d6c6f7d776a3cc88af7",
+  "combined_output": "BioRevHD 30-Enero-2013 LOCAL COOP v7 FULLPAD NATIVE SPLIT.exe",
+  "combined_sha256": "fe12f35c1d08f61961d7bdefba19a09e68939bb8966fc3d6c50e994ab699fa76",
+  "status": "STATICALLY VERIFIED ONLY - gameplay not executed in this environment",
+  "builder": "patches/build_v7_fullpad.py",
+  "coverage": {
+    "npc_selector_direct_calls_found": 129,
+    "standard_mStartPadNo_sites_total_in_relevant_consumer_methods": 67,
+    "standard_sites_already_fixed_in_v6": 4,
+    "additional_standard_sites_fixed_by_v7": 63,
+    "aligned_analog_sites_already_fixed_in_v6": 8,
+    "total_selector_load_sites_fixed_for_relevant_npc_input_path": 75,
+    "remaining_mStartPadNo_loads_at_these_75_known_sites_after_v7": 0
+  },
+  "design": {
+    "identity_and_mode": "inherits v6: exact uPcsPlayerSub0 live uNpc; canonical ThinkMode::Cpu(2)->Pad(1); Network(3) untouched",
+    "selector": "exact tracked Sub0 returns PadData index 1; other NPCs return 0",
+    "fullpad": "restores the selector argument across every mStartPadNo-collapsed sGamePad/action API identified on the uNpc gameplay selector path",
+    "camera": "combined build inherits native camera split v4: Self->VIEW_0 TOP and Partner->VIEW_1 BOTTOM on display 0"
+  },
+  "verification": {
+    "all_63_new_sites_match_expected_mov_reg_ebp_plus_8_pattern": true,
+    "all_67_standard_known_sites_no_longer_load_mStartPadNo": true,
+    "all_8_aligned_analog_sites_still_use_selector_from_ebx_plus_0x0C": true,
+    "pe32_valid": true,
+    "same_file_size": true
+  },
+  "diff": {
+    "input_different_bytes_vs_original": 516,
+    "input_contiguous_ranges": 82,
+    "combined_different_bytes_vs_original": 688,
+    "combined_contiguous_ranges": 84
+  },
+  "limitations": [
+    "Runtime validation is still required.",
+    "The 129 selector calls include uses where the selector is tested or cached rather than immediately passed to sGamePad; those flows were deliberately preserved.",
+    "UI/menu input outside the uNpc gameplay route can still have separate single-player assumptions.",
+    "HUD, inventory/pause ownership, scripted actions, QTE behavior and camera lifecycle still require validation."
+  ],
+  "exact_patch_sites": "All 63 new VAs, expected bytes, replacement logic and assertions are preserved in patches/build_v7_fullpad.py."
+}
