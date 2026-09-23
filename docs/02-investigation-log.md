@@ -1028,3 +1028,103 @@ La conversión Partner `Cpu -> Pad` ocurre dentro de la ruta de actualización d
 Por tanto un script que fuerce temporalmente CPU para una escena podría competir con v3.
 
 Este riesgo se considera explícito y deberá resolverse con un gate de estado/escena o un cambio más temprano en la creación/configuración del Partner si las pruebas de gameplay lo confirman.
+
+
+---
+
+# 27. Corrección crítica: 0x027A0CA0 pertenece a uNpc / uNp<...>
+
+La rutina que se había tratado provisionalmente como una ruta de input de “uPlayer”:
+
+```text
+0x027A0CA0
+```
+
+fue rastreada hacia atrás.
+
+Su único caller directo localizado es:
+
+```text
+0x027885E0
+  -> call thunk 0x01C0DFBB
+  -> 0x027A0CA0
+```
+
+El thunk de `0x027885E0` es `0x01C5519A`.
+
+Buscando esa entrada en vtables con RTTI se comprobó que ocupa el mismo slot virtual (**slot 51**) en:
+
+```text
+uNpc
+uNp<OBrien>
+uNp<Raymond>
+uNp<Raymond_Injury>
+uNp<Raymond_Aid>
+uNp<Morgan>
+uNp<Norman>
+uNp<Terrorist>
+uNp<Terrorist_Norman>
+uNp<Terrorist_Rymond>
+uNp<Terrorist_ColdRegion>
+uNp<Terrorist_Rymond2>
+uNp<BSAA_AgentA>
+uNp<BSAA_AgentB>
+uNp<BSAA_AgentC>
+uNp<BSAA_Operator>
+uNp<Kirk>
+uNp<NSFAgent>
+uNp<NSFAgentB>
+uNp<Combargno>
+uNp<ScientistA>
+uNp<ScientistB>
+...
+```
+
+Ejemplo:
+
+```text
+uNp<OBrien> vtable ~0x04D4E2BC
+slot 51 -> thunk 0x01C5519A -> 0x027885E0
+```
+
+## Consecuencia
+
+La clasificación anterior “rutina que rellena el input de uPlayer” era demasiado fuerte.
+
+**CORRECCIÓN:** `0x027A0CA0` pertenece a la ruta de actualización/control de NPCs/partners.
+
+Esto no vuelve inútil el experimento anterior. Al contrario, puede ser precisamente la ruta necesaria para convertir un acompañante controlado como NPC en un segundo jugador local. Pero ya no debe describirse como input nativo de `uPcsPlayerMain/Sub0`.
+
+## 0x027A27B0
+
+Dentro de esa ruta se llama repetidamente a:
+
+```text
+thunk 0x01C6C746 -> 0x027A27B0
+```
+
+La implementación original de enero es:
+
+```asm
+xor eax,eax
+ret
+```
+
+Es decir, devuelve siempre **0**.
+
+El experimento anterior sustituyó funcionalmente ese cero por 1 para determinados modos inferidos.
+
+Nueva interpretación prudente:
+
+- existe un selector/índice en la ruta NPC;
+- en la build original está fijado a 0;
+- aún no se ha demostrado formalmente que su nombre semántico sea “pad number”;
+- las llamadas que reciben su retorno terminan en sistemas de control/entrada, por lo que sigue siendo una pista prioritaria.
+
+## Impacto sobre el experimento P2 INPUT
+
+El archivo experimental se mantiene como evidencia histórica, pero su descripción correcta pasa a ser:
+
+> experimento para redirigir la ruta de control/input del NPC/partner a un segundo índice de entrada bajo modos secundarios inferidos.
+
+No debe etiquetarse como parche ya demostrado de `uPlayer P2`.
