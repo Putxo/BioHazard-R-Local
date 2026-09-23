@@ -367,3 +367,123 @@ Manifest:
 Patcher reproducible:
 
 `scripts/apply_native_input_v3.py`
+
+
+---
+
+# Experimento 3 — P2 INPUT v3
+
+Archivo local:
+
+`BioRevHD 30-Enero-2013 LOCAL COOP P2 INPUT v3.exe`
+
+SHA-256:
+
+`ee05fc7d6c965aed0661165eb0ead4c6dffa1f67bc32fd758297edb86f3213e1`
+
+Base:
+
+`BioRevHD 30-Enero-2013.exe`
+
+Estado:
+
+**STATICALLY VERIFIED ONLY — no se ejecutó gameplay de Windows en el entorno de análisis.**
+
+## Por qué existe v3
+
+Los experimentos anteriores cambiaban el selector devuelto por la ruta NPC, pero se descubrió después que los getters PC de `sGamePad` ignoraban ese argumento y usaban siempre `mStartPadNo`.
+
+v3 corrige ese problema en la fuente.
+
+## Lógica
+
+```text
+ThinkMode 1
+  -> ruta local original
+  -> selector 0
+  -> PadData 0
+
+ThinkMode 2
+  -> ruta original sin tocar
+
+ThinkMode 3
+  -> redirigido a la ruta local
+  -> selector 1
+  -> PadData 1
+```
+
+## Parches de flujo NPC
+
+```text
+0x027A0CE7
+  JNE -> cave 0x027A1318
+
+0x027A1318
+  mode==3 -> 0x027A0CED (ruta local)
+  otro non-1 -> 0x027A1080 (ruta original)
+
+0x027A27D3
+  hook -> 0x027A1340
+
+0x027A1340
+  obtiene ThinkMode
+  devuelve 1 si mode==3
+  devuelve 0 en los demás casos
+```
+
+## Parches sGamePad
+
+Se sustituyen 12 cargas de `mStartPadNo` por el argumento selector ya recibido por la función:
+
+```text
+0x02DAF404 / 0x02DAF40E  aim bool
+0x02DAFFE5 / 0x02DAFFEF  run bool
+
+0x02DB15B7 / 0x02DB15C8  move analog
+0x02DB1787 / 0x02DB1798  aim analog
+0x02DB1957 / 0x02DB1968  rotate analog
+0x02DB1CD7 / 0x02DB1CE8  alternate rotate analog
+```
+
+En getters analógicos:
+
+```text
+mov edx,[sGamePad+0x970]
+```
+
+pasa a:
+
+```text
+mov edx,[ebx+0x0C]
+nop
+nop
+nop
+```
+
+En getters booleanos se usa el argumento `[ebp+0x08]` conservando el registro destino.
+
+## Verificación binaria
+
+```text
+tamaño final = tamaño original
+111 bytes diferentes
+17 rangos contiguos
+```
+
+El desensamblado del resultado confirma:
+
+- modo 1 mantiene fall-through original;
+- modo 3 salta a la ruta local;
+- modo 2 conserva ruta original;
+- selector devuelve 1 solo para modo 3;
+- los seis getters relevantes ya no cargan `mStartPadNo` en los puntos parcheados.
+
+## Diferencia conceptual respecto a v1/v2
+
+v1/v2 demostraban que podía cambiarse el flujo, pero no separaban de forma fiable el dispositivo físico porque la capa PC ignoraba el selector.
+
+v3 restaura el selector en la propia implementación PC.
+
+Manifest:
+
+`research/manifests/p2-input-v3.json`
