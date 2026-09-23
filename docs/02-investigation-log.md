@@ -1479,3 +1479,114 @@ element = base + index * 0xC0
 Por tanto `selector=1` no es solo un número aceptado por la API: selecciona el segundo elemento de una colección de dos PadData.
 
 Pendiente de runtime: confirmar qué mando físico alimenta cada slot en esta FullDebug PC.
+
+
+---
+
+# 35. ThinkMode y dos objetos sPad::Pad reales
+
+## Etiquetas internas ThinkMode
+
+La build de enero contiene consecutivamente:
+
+```text
+ThinkMode::Network  raw 0x0322AF38
+ThinkMode::Cpu      raw 0x0322AF50
+ThinkMode::Pad      raw 0x0322AF64
+ThinkMode::Invalid  raw 0x0322AF78
+```
+
+El flujo ejecutable de `0x027A0CA0` distingue los valores 1, 2 y 3:
+
+- valor 1 entra en la ruta que consulta `sGamePad`;
+- valor 2 consume la ruta/estructura de CPU;
+- valor 3 deja sin regenerar los vectores principales y encaja con la recepción `cPlayerPadSyncData`.
+
+Con el conjunto completo de etiquetas internas, el mapeo operativo queda:
+
+```text
+0 = ThinkMode::Invalid
+1 = ThinkMode::Pad
+2 = ThinkMode::Cpu
+3 = ThinkMode::Network
+```
+
+No se ha localizado todavía una tabla enum explícita que contenga nombre+valor en una misma estructura, por lo que la prueba combina las etiquetas internas con las ramas de comportamiento.
+
+## Dos objetos low-level sPad::Pad
+
+Además de los dos `PadData` de stride `0xC0`, `sGamePad` mantiene exactamente dos punteros de objeto low-level:
+
+```text
+sGamePad + 0x968 + index*4
+index = 0..1
+```
+
+El constructor inicializa ambos a null en el bucle:
+
+```text
+0x02DAC353..0x02DAC37C
+cmp index,2
+```
+
+La ruta de creación runtime:
+
+```text
+0x02DACA76..0x02DACADC
+```
+
+itera dos veces, reserva `0x2F8` bytes, llama al constructor:
+
+```text
+0x01C01EAF -> 0x03358F60
+```
+
+y almacena cada puntero en:
+
+```text
+[this + index*4 + 0x968]
+```
+
+El constructor instala la vtable:
+
+```text
+0x04EE8E4C
+```
+
+El RTTI asociado identifica el tipo:
+
+```text
+.?AVPad@sPad@@
+```
+
+Por tanto son objetos reales `sPad::Pad`.
+
+## Actualización separada de ambos dispositivos
+
+La actualización alrededor de `0x02DAC73E` recorre de nuevo `index=0..1` y usa:
+
+```text
+[this + index*4 + 0x968]
+```
+
+Para cada objeto copia estado desde:
+
+```text
+sPad::Pad + 0x15C
+```
+
+a un buffer separado:
+
+```text
+sGamePad + 0x198 + index*0x2F8
+```
+
+Más adelante también recorre dos entradas `PadData`:
+
+```text
+sGamePad + 0x668 + index*0xC0
+```
+
+**CONFIRMADO estáticamente:** la build mantiene y actualiza dos objetos de pad low-level y dos estados indexados de entrada. El slot 1 no es memoria reservada sin uso.
+
+Pendiente de runtime: comprobar exactamente cómo DInput asigna los dos mandos físicos a `sPad::Pad[0]` y `sPad::Pad[1]`.
