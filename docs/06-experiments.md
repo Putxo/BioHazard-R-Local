@@ -709,3 +709,126 @@ Archivos reproducibles:
 
 - `research/patches/camera_split_v4.S`
 - `research/manifests/camera-split-v4.json`
+
+
+---
+
+# Experimento 5 — SubPlayer0 v5
+
+## Input-only
+
+```text
+BioRevHD 30-Enero-2013 LOCAL COOP P2 SUB0 INPUT v5.exe
+SHA-256:
+d294508a5fe4919eb9cb46c446f23ba7a79eb1da8664dac3d7cf9ed3437068b7
+```
+
+## Input + split nativo
+
+```text
+BioRevHD 30-Enero-2013 LOCAL COOP v5 SUB0 NATIVE SPLIT.exe
+SHA-256:
+e83207b2c64172468930eacbe0460fb7847061b56ac3d4e3a3b7f3ee009bfe9c
+```
+
+v5 introduce por primera vez un filtro exacto del actor `uPcsPlayerSub0`.
+
+Almacena el `uNpc*` vivo de Sub0 en un DWORD writable añadido al final virtual de `.data` y redirige `ThinkMode::Cpu` a la ruta local **solo** cuando `this` coincide con ese actor.
+
+```text
+Pad(1)       stock
+Cpu(2) Sub0  local, PadData[1]
+Cpu(2) otros stock AI
+Network(3)   stock
+```
+
+Diff:
+
+```text
+input:    210 bytes / 21 rangos
+combined: 382 bytes / 23 rangos
+same file size: sí
+```
+
+Limitación principal: el actor sigue teniendo formalmente `ThinkMode::Cpu`, por lo que otros subsistemas de IA podrían seguir tratándolo como CPU.
+
+Builder:
+
+`patches/build_v5_sub0_local.py`
+
+Manifest:
+
+`research/manifests/p2-sub0-input-v5.json`
+
+---
+
+# Experimento 6 — SubPlayer0 PadMode v6
+
+## Input-only
+
+```text
+BioRevHD 30-Enero-2013 LOCAL COOP P2 SUB0 PADMODE v6.exe
+SHA-256:
+83554753d1d6a86bf256627830f509a313871a847c87338b61da0e3c0a2c0914
+```
+
+## Input + native split
+
+```text
+BioRevHD 30-Enero-2013 LOCAL COOP v6 SUB0 PADMODE NATIVE SPLIT.exe
+SHA-256:
+18a429daa0855a7e6de6af91358d867970beee9a99671913303166f8b39a540d
+```
+
+### Diferencia fundamental frente a v5
+
+v6 **no parchea la rama Cpu** de `0x027A0CA0`.
+
+Cuando el binder de PCS encuentra el actor exacto de `uPcsPlayerSub0`:
+
+```text
+si ThinkMode == Cpu(2)
+  -> llama al wrapper oficial 0x01BB8B60
+  -> SetThinkMode(Pad=1)
+
+si ThinkMode == Pad(1)
+  -> no cambia
+
+si ThinkMode == Network(3)
+  -> no cambia
+```
+
+A partir de ahí el motor entra por su propia ruta nativa `ThinkMode::Pad`.
+
+El selector de pad sigue siendo exacto por identidad:
+
+```text
+Sub0 -> 1
+resto -> 0
+```
+
+y los getters PC de `sGamePad` están corregidos para respetar ese selector.
+
+### Diff
+
+```text
+input:    201 bytes / 19 rangos
+combined: 373 bytes / 21 rangos
+same file size: sí
+```
+
+### Estado
+
+**STATICALLY VERIFIED ONLY.**
+
+A nivel de arquitectura v6 supersede v5 como candidato principal, porque el compañero deja de presentarse al motor como CPU.
+
+No se elimina v5: queda conservado como experimento intermedio y alternativa comparativa.
+
+Builder:
+
+`patches/build_v6_sub0_padmode.py`
+
+Manifest:
+
+`research/manifests/p2-sub0-padmode-v6.json`
