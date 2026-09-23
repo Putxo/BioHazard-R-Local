@@ -35,6 +35,10 @@ Solo se incluyen hipótesis surgidas durante esta conversación.
 | H26 | uPlayer no conserva ownership/control mode explícito | el modo parecía residir solo en gestor de estado | DESCARTADA: uPlayer+0xE40 cachea ThinkMode y existe setter dedicado |
 | H27 | Para P2 local hay que secuestrar Network/Cpu | ramas 2/3 ya transportan un segundo estado | DESCARTADA: solución nativa es Sub0 ThinkMode::Pad + pad 1 |
 
+| H30 | Un selector basado en Self/Partner puede separar los pads sin heurística de modo | getter stock siempre 0 + predicado nativo Self/Partner | CONFIRMADA ESTÁTICAMENTE en v3 |
+| H31 | Partner+Cpu puede convertirse a Pad usando la API interna sin tocar Network | wrapper 0x01BB8B60 / setter 0x027F1290 | CONFIRMADA ESTÁTICAMENTE en v3; falta runtime |
+| H32 | Convertir siempre Partner Cpu->Pad es seguro en todas las escenas | v3 fuerza la conversión durante update de input | ABIERTA/RIESGO: scripts/cutscenes pueden requerir CPU temporal |
+
 ## Descartes explicados
 
 ### `mCameraList[0]/[1]`
