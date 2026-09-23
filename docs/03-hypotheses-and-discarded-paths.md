@@ -25,6 +25,11 @@ Solo se incluyen hipótesis surgidas durante esta conversación.
 | H18 | La solución de Revelations 2 puede trasplantarse directamente | misma familia MT Framework y antecedentes de local co-op | DESCARTADA como evidencia/trasplante; solo referencia conceptual |
 | H19 | Strings `Pad2`/`PS2Pad2`/`X(2P)` bastan para identificar P2 | nombres muy sugerentes | DESCARTADA como prueba; necesitan owner/xref/flujo ejecutable |
 
+| H20 | `mMovePcs/mMoveSubPcs` son rutas de movimiento/input | nombre inglés parecía "Move PCS" | DESCARTADA: etiquetas japonesas indican número de PCS/sub-PCS |
+| H21 | El experimento P2 input resolvía la selección de mando sustituyendo getPadNo | getPadNo retorna 0 y se sustituyó por 0/1 | INCOMPLETA: sGamePad además ignora el argumento y usa mStartPadNo |
+| H22 | La build PC solo mantiene un pad internamente | gameplay usa siempre pad 0 | DESCARTADA: sGamePad construye y actualiza dos PadData con índices 0/1 |
+| H23 | Main/Sub0/Sub1 son roles nativos con tipos separados | vtables y overrides fijos 0/1/2; uPcsActor<Player0/1/2> | CONFIRMADA |
+
 ## Descartes explicados
 
 ### `mCameraList[0]/[1]`
