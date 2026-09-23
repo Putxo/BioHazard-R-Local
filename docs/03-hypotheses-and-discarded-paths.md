@@ -39,6 +39,9 @@ Solo se incluyen hipótesis surgidas durante esta conversación.
 | H31 | Partner+Cpu puede convertirse a Pad usando la API interna sin tocar Network | wrapper 0x01BB8B60 / setter 0x027F1290 | CONFIRMADA ESTÁTICAMENTE en v3; falta runtime |
 | H32 | Convertir siempre Partner Cpu->Pad es seguro en todas las escenas | v3 fuerza la conversión durante update de input | ABIERTA/RIESGO: scripts/cutscenes pueden requerir CPU temporal |
 
+| H28 | El selector restaurado puede alcanzar dos entradas de PadData | `0x02DBE720` valida index<2 y usa stride `0xC0` | CONFIRMADA estáticamente |
+| H29 | PadData[1] corresponde al segundo mando físico conectado | existen dos slots internos y la API permite 0/1 | ABIERTA hasta prueba runtime |
+
 ## Descartes explicados
 
 ### `mCameraList[0]/[1]`
