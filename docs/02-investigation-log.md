@@ -1422,3 +1422,31 @@ Detalle y manifest:
 
 - `docs/06-experiments.md`
 - `research/manifests/p2-input-v3.json`
+
+
+---
+
+# 33. Combinación v3 input + split-screen
+
+Se creó una nueva build experimental combinada:
+
+`BioRevHD 30-Enero-2013 LOCAL COOP v3 INPUT+SPLITSCREEN.exe`
+
+SHA-256:
+
+`6978dc6d63781718c3728160c0312737424536734c0850b9337e990fb2da677d`
+
+La build se genera desde el original de enero, aplica el input v3 corregido y después **solo** el bloque cámara/viewport del split-screen v2.
+
+No hereda los parches de input antiguos.
+
+Verificación:
+
+```text
+PE32 sigue válido para objdump
+mismo tamaño: sí
+274 bytes diferentes
+18 rangos
+```
+
+Sigue siendo una build experimental sin prueba de gameplay.
