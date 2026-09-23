@@ -42,6 +42,11 @@ Solo se incluyen hipótesis surgidas durante esta conversación.
 | H28 | El selector restaurado puede alcanzar dos entradas de PadData | `0x02DBE720` valida index<2 y usa stride `0xC0` | CONFIRMADA estáticamente |
 | H29 | PadData[1] corresponde al segundo mando físico conectado | existen dos slots internos y la API permite 0/1 | ABIERTA hasta prueba runtime |
 
+| H34 | VIEW_4 stock contiene Partner uCameraManage | el índice 4 aparece tras crear los managers | DESCARTADA: VIEW_4 recibe un tercer objeto de 0xB0 bytes |
+| H35 | Self/Partner son dos cámaras alternativas que Capcom enlaza a VIEW_0 | callbacks 0x0203E570/630 -> 0x0203E8A0 | CONFIRMADA |
+| H36 | El split más limpio es Self->VIEW_0 y Partner->VIEW_1 activados simultáneamente | helper nativo 0x01EBD610 admite cualquier viewport y VIEW_1 existe | ACTIVA / PRIORITARIA |
+| H37 | uCameraManage::mPadNo debe ponerse 0/1 para controlar dos mandos | el nombre del campo lo sugería | NO DEMOSTRADA; retirada del parche nuevo hasta nueva evidencia |
+
 ## Descartes explicados
 
 ### `mCameraList[0]/[1]`
