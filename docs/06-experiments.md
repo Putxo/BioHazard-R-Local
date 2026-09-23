@@ -569,3 +569,28 @@ Esta versión sustituye completamente aquella parte por el input v3 corregido.
 Manifest:
 
 `research/manifests/local-coop-v3-input-splitscreen.json`
+
+
+---
+
+## CORRECCIÓN POSTERIOR — geometría de viewport en experimentos 2 y 4
+
+El metadata de `sCamera::Viewport` demuestra que:
+
+```text
+mMode   = +0x13
+mRegion = +0x18
+```
+
+Los experimentos anteriores escribieron 2/3 en `mMode`, no en `mRegion`.
+
+Por ello las descripciones antiguas “TOP/BOTTOM” asociadas a esas escrituras son incorrectas.
+
+Los EXE históricos y sus manifests **no se borran** porque forman parte del proceso solicitado por el usuario, pero quedan marcados como superseded para la geometría de split-screen.
+
+La siguiente versión debe escribir el enum de región en:
+
+```text
+Viewport0 base sCamera+0x30  -> mRegion sCamera+0x48
+Viewport1 base sCamera+0x1C0 -> mRegion sCamera+0x1D8
+```
