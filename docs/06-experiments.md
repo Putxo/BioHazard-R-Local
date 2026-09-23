@@ -214,3 +214,156 @@ Los JSON exactos generados durante esta conversación se conservan en:
 
 - `research/manifests/p2-input-experimental.json`
 - `research/manifests/splitscreen-v2-experimental.json`
+
+
+---
+
+# Experimento 3 — NATIVE INPUT EXPERIMENTAL v3
+
+Archivo local generado:
+
+`BioRevHD 30-Enero-2013 LOCAL COOP NATIVE INPUT EXPERIMENTAL v3.exe`
+
+Base directa:
+
+`BioRevHD 30-Enero-2013.exe`
+
+SHA-256 base:
+
+`9124bb92d6c54a047ade47dacc8429221b18f9910b504f0e87718d5151013f69`
+
+SHA-256 v3:
+
+`9de444e104f2846aa166e1460f33a110ffac5b880f374edfd31b94aef3e5c649`
+
+Estado:
+
+**STATICALLY VERIFIED ONLY — todavía no se ha ejecutado gameplay de Windows en este entorno.**
+
+## Por qué existe v3
+
+Los experimentos 1/2 trataban los modos internos 2/3 como posibles rutas de segundo jugador. Después se recuperaron los nombres y comportamiento reales:
+
+```text
+1 = ThinkMode::Pad
+2 = ThinkMode::Network
+3 = ThinkMode::Cpu
+```
+
+Por tanto v3 se rehízo **desde el EXE original**, sin heredar los parches heurísticos anteriores.
+
+## Diseño
+
+### ThinkMode
+
+En `0x027A0CE4` se desvía el dispatch a una cave en `0x027A1318`.
+
+La cave conserva:
+
+```text
+Pad (1)     -> ruta local stock
+Network (2) -> ruta Network stock
+Cpu (3):
+    Self    -> ruta CPU stock
+    Partner -> setter nativo ThinkMode::Pad -> ruta local stock
+otros       -> ruta stock no-local
+```
+
+Para Partner usa:
+
+```text
+Self predicate:
+0x01BB3192 -> 0x01CB7560
+
+ThinkMode wrapper:
+0x01BB8B60 -> 0x0278CC40
+```
+
+El wrapper de ThinkMode es preferible a escribir `uPlayer+0xE40` directamente porque sincroniza los controladores internos y la ruta concreta hace el cleanup al abandonar CPU.
+
+### Índice de pad
+
+La función stock:
+
+```text
+0x01C6C746 -> 0x027A27B0
+```
+
+devolvía siempre 0.
+
+v3 sustituye `0x027A27B0` por:
+
+```text
+Self    -> pad 0
+Partner -> pad 1
+```
+
+usando el mismo predicado Self/Partner que utiliza el propio juego.
+
+## Diff exacto
+
+Mismo tamaño que el original.
+
+```text
+3 rangos modificados
+73 bytes diferentes
+
+0x00C280E4-0x00C280EC   9 bytes
+0x00C28718-0x00C2874A  51 bytes
+0x00C29BB0-0x00C29BBC  13 bytes
+```
+
+### Rango 1
+
+```text
+83f8010f8593030000
+->
+e92f06000090909090
+```
+
+### Rango 2
+
+51 bytes de `CC` usados como cave:
+
+```text
+83f801742483f8030f85200000008b4df851e8631e41ff84c00f850f0000006a018b4df8e81f7841ffe9a7f9ffffe935fdffff
+```
+
+### Rango 3
+
+```text
+558bec81eccc00000053565751
+->
+51e8dc0941ff0fb6c083f001c3
+```
+
+## Verificación de desensamblado
+
+Se comprobó con `objdump -D -Mintel` que:
+
+- el jump de `0x027A0CE4` aterriza en `0x027A1318`;
+- Pad vuelve a `0x027A0CED`;
+- Network/otros vuelven a `0x027A1080`;
+- Partner+Cpu llama a `0x01BB8B60` con argumento 1;
+- el selector `0x027A27B0` llama a `0x01BB3192` y transforma el booleano en 0/1.
+
+## Limitación importante
+
+Si una escena/script fuerza deliberadamente al Partner a `ThinkMode::Cpu`, v3 intentará devolverlo a `Pad` cuando esta ruta de actualización de input se ejecute.
+
+Eso puede ser correcto para gameplay cooperativo libre, pero probablemente necesitará excepciones para:
+
+- cutscenes;
+- secuencias guiadas;
+- QTE/scripted movement;
+- momentos en los que el partner debe quedar temporalmente bajo control de CPU.
+
+Por eso v3 es una prueba de **propiedad de input nativa**, no todavía el parche final.
+
+Manifest:
+
+`research/manifests/native-input-v3-experimental.json`
+
+Patcher reproducible:
+
+`scripts/apply_native_input_v3.py`
