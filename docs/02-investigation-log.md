@@ -866,3 +866,90 @@ Nueva conclusión:
 > el backend de input ya es 2-pad, pero la capa PC de gameplay está forzada al pad inicial/global.
 
 Esto redefine la solución de input P2: hay que restaurar tanto la identidad 0/1 de cada uPlayer como el respeto del parámetro por sGamePad.
+
+
+---
+
+# 29. ThinkMode identificado: Pad / Network / Cpu / Invalid
+
+La rama 1/2/3 de la actualización de input ya no se trata como un enum desconocido.
+
+La build contiene explícitamente:
+
+```text
+ThinkMode::Pad
+ThinkMode::Network
+ThinkMode::Cpu
+ThinkMode::Invalid
+```
+
+y el flujo ejecutable establece:
+
+```text
+0 Invalid
+1 Pad
+2 Network
+3 Cpu
+```
+
+La rama 2 consume `cPlayerPadSyncData`, confirmando que es input sincronizado/remoto.
+
+---
+
+# 30. uCallThink::mThinkMode confirmado
+
+El objeto instalado en `cCharaStateManager+0x524` es `uCallThink`.
+
+Su metadata registra directamente:
+
+```text
+uCallThink+0x34 = mThinkMode
+```
+
+El getter usado por uPlayer termina leyendo exactamente ese campo.
+
+---
+
+# 31. uPlayer+0xE40 y setter de ThinkMode
+
+El constructor de uPlayer inicializa:
+
+```text
+uPlayer+0xE40 = 2 (Network)
+```
+
+La ruta:
+
+```text
+0x01BE3257 -> 0x027F1290
+```
+
+actúa como setter de ThinkMode:
+
+- propaga el modo a cCharaStateManager/uCallThink;
+- actualiza `uPlayer+0xE40`.
+
+La entrada virtual de vtable `+0x110` conduce mediante `0x01BB8B60 -> 0x0278CC40` a la propagación de este estado.
+
+---
+
+# 32. Corrección del experimento P2 INPUT
+
+El primer experimento forzaba modos 2/3 a la rama local.
+
+Ahora queda corregido:
+
+```text
+2 = Network
+3 = Cpu
+```
+
+Por tanto el enfoque correcto para P2 local es poner Sub0/Player1 en:
+
+```text
+ThinkMode::Pad = 1
+```
+
+y asignarle pad 1, no reutilizar Network/Cpu como señal de P2.
+
+Detalle completo: `docs/08-thinkmode-local-input.md`.
