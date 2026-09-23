@@ -1980,3 +1980,126 @@ SHA256 2b0e7b71cbac09cfb7fd5f3904f2e4709b2fdbfcbf372880e79f301cb95718ad
 Ambas imágenes conservan exactamente el tamaño del original y siguen siendo PE32 válidos.
 
 Estado: **solo validación estática**.
+
+
+---
+
+# 38. Self/Partner View y construcción del split nativo v4
+
+La revisión de los callbacks debug confirmó que `Self View` y `Partner View` no son etiquetas decorativas.
+
+Callbacks:
+
+```text
+Self View
+  0x0203E570
+  pasa [sGameCamera+0xCE0]
+
+Partner View
+  0x0203E630
+  pasa [sGameCamera+0xCE4]
+```
+
+Ambos convergen en:
+
+```text
+0x01C784F1 -> 0x0203E8A0
+```
+
+## Comportamiento nativo de 0x0203E8A0
+
+Si se selecciona Self:
+
+```text
+check ready Self       0x01B7BA8A
+si hace falta init 13  0x01B8AAEE
+activate Self          0x01BF353F
+deactivate Partner     0x01C684D4
+bind VIEW_0 <- Self    0x01C34D5A
+```
+
+Si se selecciona Partner:
+
+```text
+check ready Partner
+si hace falta init 13
+deactivate Self
+activate Partner
+bind VIEW_0 <- Partner
+```
+
+Por tanto Capcom ya implementa dos `uCameraManage` funcionales Self/Partner, pero de stock son alternativos sobre VIEW_0.
+
+## Corrección de VIEW_4
+
+La inicialización stock observada anteriormente se había resumido provisionalmente como si Partner terminara en VIEW_4.
+
+La lectura completa muestra que VIEW_4 recibe un tercer objeto de cámara independiente, no `[sGameCamera+0xCE4]`.
+
+**CORRECCIÓN:** VIEW_4 no se usa como viewport de Partner en el nuevo parche.
+
+## Split nativo v4
+
+Se construyó un nuevo parche de cámara que reutiliza únicamente rutas confirmadas del juego:
+
+```text
+Self    [sGameCamera+0xCE0]
+Partner [sGameCamera+0xCE4]
+
+activar Self
+activar Partner
+bind Self    -> VIEW_0
+bind Partner -> VIEW_1
+
+VIEW_0.mVisible = 1
+VIEW_0.mMode    = TOP (2)
+VIEW_0.mDisplay = 0
+
+VIEW_1.mVisible = 1
+VIEW_1.mMode    = BOTTOM (3)
+VIEW_1.mDisplay = 0
+```
+
+No modifica VIEW_4.
+
+No modifica `uCameraManage::mPadNo`.
+
+### Hook
+
+```text
+hook VA  0x0203E3A9
+cave VA  0x0203E3BD
+next fn  0x0203E470
+```
+
+El hook sustituye 5 bytes del epílogo por un JMP y la cave reproduce después el epílogo original completo.
+
+### Cámara-only v4
+
+```text
+BioRevHD 30-Enero-2013 CAMERA SPLIT v4.exe
+SHA-256:
+12ca6dae126e3e7354719637e144253d10a72cc6a8739de704f74e8aa0bcf172
+
+same size: yes
+different bytes: 172
+ranges: 2
+```
+
+### Local co-op v4 combinado
+
+Se aplicó el camera split v4 sobre el input v3 corregido:
+
+```text
+BioRevHD 30-Enero-2013 LOCAL COOP v4 NATIVE SPLIT.exe
+SHA-256:
+2b0e7b71cbac09cfb7fd5f3904f2e4709b2fdbfcbf372880e79f301cb95718ad
+
+same size: yes
+different bytes vs original: 283
+ranges: 19
+```
+
+Estado: **STATICALLY VERIFIED ONLY**.
+
+La siguiente validación necesaria es runtime: comprobar que ambos managers permanecen actualizados simultáneamente y que Partner posee una cámara válida durante gameplay.
