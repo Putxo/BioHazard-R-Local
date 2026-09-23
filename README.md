@@ -68,6 +68,8 @@ Hallazgo más reciente: la build de enero contiene RTTI/clases diferenciadas par
 - [Mapa de strings/direcciones](research/key-string-addresses.md)
 - [Manifest P2 input](research/manifests/p2-input-experimental.json)
 - [Manifest split-screen v2](research/manifests/splitscreen-v2-experimental.json)
+- [Native input v3 manifest](research/manifests/native-input-v3-experimental.json)
+- [Patcher reproducible de Native input v3](scripts/apply_native_input_v3.py)
 - [Scripts reproducibles](scripts/)
 
 ## Criterio documental
