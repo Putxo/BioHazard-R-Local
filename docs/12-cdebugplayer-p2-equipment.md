@@ -124,3 +124,56 @@ El parser alrededor de `0x028F5DB0` lo procesa junto a `SetFlag` y estructuras d
 No hay evidencia de que sea un flag global de HUD, input o cooperativo.
 
 **Estado:** descartado como hook genérico. Puede seguir siendo una propiedad 2P específica de un ride/evento.
+
+
+---
+
+## Resolución formal del actor: Self vs no-Self
+
+`cDebugPlayer` no diferencia 1P/2P cambiando los números de slot; diferencia **qué actor resuelve antes de entrar en la misma API de equipamiento**.
+
+### Ruta 1P
+
+`0x01C2C7F4 -> 0x01CB7400` itera candidatos y usa el predicado `0x01BB3192 -> 0x01CB7560`.
+
+El predicado obtiene el ID Self mediante `0x01B9EB39 -> 0x01CB7650` y `0x01C473C4 -> 0x02D99DB0`, obtiene el ID del candidato mediante `0x01BEDBB7 -> 0x01CB7610` (`return [candidate+0xE3C]`) y exige:
+
+```text
+candidateID == SelfID
+AND eligibility(candidate) == true
+```
+
+El filtro común de elegibilidad usa `0x01C8D53B -> 0x01CA5F20`.
+
+### Ruta 2P
+
+`0x01BCA0C2 -> 0x01D115B0` itera candidatos y usa `0x01C8731B -> 0x01D116C0`.
+
+Este predicado obtiene los mismos IDs y exige:
+
+```text
+candidateID != SelfID
+AND 0x01BE01D8 -> 0x01D11780(candidate) == true
+AND eligibility(candidate) == true
+```
+
+`0x01D11780` consulta el subobjeto `candidate+0xF5C` con argumento `7` y devuelve la negación del resultado. Su nombre semántico exacto todavía no está recuperado.
+
+**CONFIRMADO:** las rutas de equipamiento 1P/2P distinguen explícitamente **Self** frente a un **actor jugador elegible no-Self**. En una sesión de dos jugadores ese no-Self corresponde al compañero; la equivalencia formal con `uPcsPlayerSub0` se mantiene como fuerte y debe terminar de demostrarse desde el binder/colección cuando existan más de dos candidatos.
+
+## Objeto contenedor
+
+El constructor de `app::debug::sDebug` (`0x01D81120`) instala vtable `0x04CC65A0`. El RTTI asociado es `.?AVsDebug@debug@app@@`.
+
+Durante ese constructor se crea `cDebugPlayer` en `0x01D812FE` y se asigna al miembro `sDebug+0x30`. La property registration de `sDebug` (`0x01D818D0`) registra ese miembro con el nombre literal `player @ 0x04CC63EC`.
+
+Por tanto la cadena estructural queda confirmada:
+
+```text
+app::debug::sDebug
+  +0x30  player -> cDebugPlayer
+             +0x10 useCharacterSettings
+             +0x11 2P necessary
+```
+
+El siguiente objetivo es localizar un consumidor ejecutable de `player->+0x11`; si no aparece, deberá tratarse como un dato consumido únicamente por el sistema genérico de reflexión/debug y no como un switch directo de spawn.
