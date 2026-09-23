@@ -1,0 +1,46 @@
+{
+  "source": "BioRevHD 30-Enero-2013.exe",
+  "source_sha256": "9124bb92d6c54a047ade47dacc8429221b18f9910b504f0e87718d5151013f69",
+  "base_v7_combined": "BioRevHD 30-Enero-2013 LOCAL COOP v7 FULLPAD NATIVE SPLIT.exe",
+  "base_v7_sha256": "fe12f35c1d08f61961d7bdefba19a09e68939bb8966fc3d6c50e994ab699fa76",
+  "output": "BioRevHD 30-Enero-2013 LOCAL COOP v8 FULLPAD PERSISTENT SPLIT.exe",
+  "output_sha256": "c9a4c1e9887eb3504905734cb0279b2c8fe61ec55bb69768c55724b3b7ec8356",
+  "status": "STATICALLY VERIFIED ONLY - gameplay not executed in this environment",
+  "design": {
+    "local_activation_flag": "0x057d9188; set only after exact Sub0 canonical ThinkMode::Cpu(2)->Pad(1), cleared when Sub0 binding clears",
+    "network_preservation": "ThinkMode::Network(3) never sets the local flag; stock camera exclusivity and viewport behavior are preserved when flag=0",
+    "partner_target": "ensure_split writes the exact tracked Sub0 uNpc* into Partner uCameraManage via stock target setter 0x01C275EC->0x02066AB0",
+    "camera_coexistence": "when local flag=1, Self View / Partner View no longer deactivate the other manager; both are activated with stock 0x01BF353F",
+    "viewports": "Self->VIEW_0 TOP(2), Partner->VIEW_1 BOTTOM(3), both visible on display 0 via native setCameraForViewport",
+    "persistence": "Sub0 bind/rebind, Self/Partner view callbacks, and the later Partner camera state-clear sites all preserve/reassert local split"
+  },
+  "helper": {
+    "base_va": "0x1c94fc0",
+    "size": 314,
+    "end_va": "0x1c950fa",
+    "entries": {
+      "local_enable": "0x01C94FC0",
+      "pad_rebind_check": "0x01C94FD4",
+      "conditional_deactivate": "0x01C94FF8",
+      "partner_view_index": "0x01C9500C",
+      "conditional_bit0": "0x01C95020",
+      "conditional_bit1": "0x01C95036",
+      "ensure_split": "0x01C9504C"
+    }
+  },
+  "diff": {
+    "same_file_size": true,
+    "different_bytes_vs_original": 1026,
+    "ranges_vs_original": 90,
+    "additional_different_bytes_vs_v7": 351,
+    "ranges_vs_v7": 11
+  },
+  "limitations": [
+    "Runtime validation is still required.",
+    "Rendering correctness, collision/culling and cutscene transitions must be tested in-game.",
+    "HUD, inventory/pause ownership, scripted interactions and QTE behavior remain unresolved.",
+    "The second physical controller still requires runtime confirmation that Windows/DInput populates sPad::Pad[1] as expected."
+  ],
+  "builder": "patches/build_v8_persistent_split.py",
+  "assembly": "research/patches/camera_persistence_v8.S"
+}
