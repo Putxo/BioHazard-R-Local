@@ -217,3 +217,44 @@ Mapeo desde la ruta NPC:
 El experimento anterior que modificaba el selector devuelto por `0x027A27B0` no podía separar físicamente Pad 1/Pad 2 mientras estos getters siguieran forzando el global.
 
 El siguiente experimento debe hacer que las implementaciones respeten el selector que ya reciben.
+
+
+---
+
+## Confirmación: el selector indexa exactamente dos PadData
+
+Se siguió el helper usado por los getters de `sGamePad`.
+
+Thunk:
+
+```text
+0x01C4F385 -> 0x02DBE720
+```
+
+La implementación contiene:
+
+```asm
+cmp  dword ptr [ebp+8], 2
+jb   valid_index
+...
+valid_index:
+mov  eax,[ebp+8]
+imul eax,eax,0xC0
+mov  ecx,[ebp-8]
+add  eax,[ecx]
+ret  4
+```
+
+Por tanto:
+
+- el índice válido está limitado explícitamente a `0..1`;
+- cada elemento ocupa `0xC0` bytes;
+- índice 0 e índice 1 seleccionan dos elementos distintos.
+
+Esto encaja con la construcción observada anteriormente de dos estructuras de `0xC0`.
+
+### Consecuencia
+
+Una vez que los getters PC dejan de sustituir el argumento por `mStartPadNo`, el selector 1 **sí llega a una segunda entrada real de PadData**.
+
+Todavía falta la prueba física en Windows de qué dispositivo conectado alimenta PadData[1], pero la separación interna de dos slots está confirmada.
