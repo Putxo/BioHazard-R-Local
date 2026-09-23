@@ -213,3 +213,44 @@ Partner uCameraManage -> VIEW_1 -> BOTTOM(3) -> display 0
 activando ambos managers simultáneamente y enlazándolos mediante el helper nativo.
 
 `uCameraManage::mPadNo +0x88` ya no forma parte del parche nuevo: el nombre parecía prometedor, pero todavía no existe evidencia de que seleccione `sGamePad` o un dispositivo físico.
+
+
+---
+
+## 9. Cámara Self/Partner confirmada
+
+`sGameCamera` contiene dos punteros `uCameraManage` reales:
+
+```text
++0xCE0 Self
++0xCE4 Partner
+```
+
+Los callbacks debug `Self View` y `Partner View` usan esos punteros y convergen en `0x0203E8A0`.
+
+La función stock hace que solo uno esté activo a la vez y lo enlaza a VIEW_0.
+
+Para cooperativo local, v4 modifica únicamente esa política:
+
+```text
+Self    -> activo -> VIEW_0 -> TOP    -> display 0
+Partner -> activo -> VIEW_1 -> BOTTOM -> display 0
+```
+
+Se usa el helper nativo de enlace de cámara a viewport:
+
+```text
+0x01C34D5A
+```
+
+y las mismas funciones de preparación/activación usadas por Capcom:
+
+```text
+check ready  0x01B7BA8A
+init mode 13 0x01B8AAEE
+activate     0x01BF353F
+```
+
+VIEW_4 queda intacto porque pertenece a una tercera cámara/debug.
+
+`uCameraManage::mPadNo +0x88` queda fuera del parche actual: no se ha demostrado que seleccione el dispositivo físico.
