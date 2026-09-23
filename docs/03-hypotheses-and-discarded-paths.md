@@ -55,6 +55,13 @@ Solo se incluyen hipótesis surgidas durante esta conversación.
 | H44 | Cambiar solo Sub0 Cpu->Pad con el setter oficial es la ruta más nativa | wrapper 0x0278CC40 + setter 0x027F1290 | ACTIVA / IMPLEMENTADA EN v6 |
 | H45 | v6 preserva online al no tocar Sub0 Network=3 | el hook solo cambia Cpu=2 | CONFIRMADA estáticamente |
 
+| H38 | v6 cubría todo el mando P2 | cubría analógicos y algunos booleanos | CORREGIDA: había 63 cargas adicionales relevantes; v7 las restaura |
+| H39 | Activar Partner solo en sGameCamera::init basta | v4 dejaba ambos managers activos | DESCARTADA: setup posterior vuelve a desactivar/limpiar Partner |
+| H40 | 0x027A1500 era padding seguro para v8 | parecía continuación del cave anterior | DESCARTADA: verificación de bytes encontró código real |
+| H41 | 0x01C94FC0 es code cave apto | run continuo de 0xCC de 64 KiB | CONFIRMADA para helper v8 de 314 bytes |
+| H42 | El uNpc no-Self usa Partner CameraManage nativamente | 0x027A2FA0 devuelve Self o Partner según identidad | CONFIRMADA |
+| H43 | Un flag local separado puede preservar online y hacer persistente la cámara | solo se activa tras Cpu->Pad; Network no lo activa | IMPLEMENTADA en v8 |
+
 ## Descartes explicados
 
 ### `mCameraList[0]/[1]`
