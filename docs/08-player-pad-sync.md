@@ -326,3 +326,83 @@ Ventajas frente a reimplementar el control:
 **CONFIRMADO a nivel estático:** existe una ruta nativa de pad remoto que aplica directamente los datos de entrada al compañero NPC.
 
 **ACTIVA como estrategia:** reutilizar esa ruta con el segundo mando local.
+
+
+---
+
+# 8. Productor/sender nativo — 0x0274B200
+
+También se localizó el lado emisor de `cPlayerPadSyncData`.
+
+Rutina:
+
+```text
+0x0274B200
+```
+
+Construye un paquete temporal y lo rellena desde el estado del `uNpc` owner.
+
+| Campo paquete | Getter | Origen |
+|---|---|---|
+| +0x08 moveAnalog | `0x01BF5416 -> 0x0208B7E0` | `uNpc+0x1670` |
+| +0x10 rotateAnalog | `0x01C7EB03 -> 0x02703130` | `uNpc+0x1678` |
+| +0x18 aimAnalog | `0x01C6253E -> 0x02728570` | `uNpc+0x1680` |
+| +0x20 waistRotateX | `0x01C3B1AA -> 0x02089BC0` | primer float de `uNpc+0x16C0` |
+| +0x24 isRun | `0x01C3DD56 -> 0x0272D790` | `uNpc+0x1688` |
+| +0x25 isAim | `0x01BC4D43 -> 0x0208E9D0` | estado de aim calculado |
+
+El paquete se compara contra una cache dentro de `cNetSyncData` a partir de `+0x70`. Si cambia —o se alcanza el refresco periódico— se envía por la ruta de red.
+
+El único caller relevante localizado dentro de la actualización de control NPC es:
+
+```text
+0x027A1027
+  -> thunk 0x01BED879
+  -> 0x0274B200
+```
+
+Por tanto el pipeline remoto original queda reconstruido de extremo a extremo.
+
+---
+
+# 9. Relación con los modos de control del NPC
+
+La rutina `0x027A0CA0` distingue varios modos.
+
+Por comportamiento:
+
+- modo 1 lee físicamente `sGamePad` y después puede enviar `cPlayerPadSyncData`;
+- modo 3 no vuelve a generar los vectores principales, lo que encaja con que los reciba por el handler remoto `0x027B1D70`.
+
+Existe metadata/debug con el nombre `ThinkModes`, pero las etiquetas numéricas exactas todavía no se han recuperado.
+
+Por eso se registra como **hipótesis fuerte**, no como enum nombrado confirmado.
+
+---
+
+# 10. Limitación PC: el selector de pad se ignora
+
+Las APIs de `sGamePad` llamadas por el modo local reciben un selector de pad. Sin embargo, las implementaciones PC inspeccionadas ignoran ese argumento y usan siempre:
+
+```text
+sGamePad + 0x970 = mStartPadNo
+```
+
+Métodos:
+
+```text
+0x02DB1570 move analog
+0x02DB1740 aim analog
+0x02DB1910 rotate analog
+0x02DB1C90 alternate rotate
+0x02DAFFB0 run/action bool
+0x02DAF3C0 aim bool
+```
+
+Esto explica por qué el primer experimento que cambió el selector 0→1 no podía, por sí solo, escoger físicamente el segundo PadData.
+
+## Nueva ruta preferida
+
+Restaurar el uso del argumento selector en estos getters PC y después hacer que únicamente el partner convertido a local solicite índice 1.
+
+Esta modificación aprovecha una interfaz que ya existe en el motor en lugar de introducir un global nuevo.
