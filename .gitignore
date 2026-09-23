@@ -1,0 +1,21 @@
+# Proprietary game binaries / symbols
+*.exe
+*.dll
+*.pdb
+*.map
+*.obj
+*.lib
+
+# Disassembler databases / dumps
+*.dmp
+*.idb
+*.i64
+*.til
+*.nam
+*.id0
+*.id1
+*.id2
+
+analysis-output/
+__pycache__/
+*.pyc
