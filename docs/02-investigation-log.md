@@ -1803,3 +1803,114 @@ Viewport1.mDisplay = +0x1D4
 ```
 
 Las direcciones usadas por el parche split-screen coinciden exactamente con estos campos.
+
+
+---
+
+# 38. Self/Partner View y corrección de VIEW_4
+
+Se revisó completa la inicialización `sGameCamera::init` alrededor de `0x0203E120`.
+
+La función reserva dos objetos `uCameraManage` de `0x240` bytes y los guarda en:
+
+```text
+sGameCamera + 0xCE0
+sGameCamera + 0xCE4
+```
+
+Ambos usan el mismo constructor `0x01C52D78 -> 0x0205F2B0`.
+
+## Corrección: VIEW_4 no recibe el Partner uCameraManage
+
+La lectura inicial se resumió como “Self -> VIEW_0 / Partner -> VIEW_4”. Eso era incorrecto.
+
+VIEW_0 recibe:
+
+```text
+getViewport(0)
+setCamera([sGameCamera+0xCE0])
+setDisplay(0)
+setVisible(1)
+```
+
+Después el juego reserva un **tercer objeto distinto** de `0xB0` bytes. Ese objeto, no `[sGameCamera+0xCE4]`, se asigna a:
+
+```text
+getViewport(4)
+setCamera(third_object)
+setDisplay(1)
+setVisible(1)
+```
+
+Por tanto VIEW_4 es una cámara adicional/debug/free-view y no la salida simultánea del Partner Manager.
+
+# 39. Self View / Partner View seleccionan cuál ocupa VIEW_0
+
+Callbacks:
+
+```text
+Self View    0x0203E570 -> usa +0xCE0
+Partner View 0x0203E630 -> usa +0xCE4
+```
+
+Ambos llaman `0x0203E8A0`.
+
+Si se elige Self:
+
+```text
+activar Self
+desactivar Partner
+bind VIEW_0 <- Self
+```
+
+Si se elige Partner:
+
+```text
+desactivar Self
+activar Partner
+bind VIEW_0 <- Partner
+```
+
+La unión usa el helper nativo:
+
+```text
+0x01C34D5A -> 0x01EBD610
+```
+
+que calcula:
+
+```text
+viewport = sCamera + 0x30 + index*0x190
+```
+
+y asigna su `mpCamera`, seguido de refresco del sistema.
+
+Métodos usados por el selector debug:
+
+```text
+activate-like   0x01BF353F -> 0x02069AB0
+deactivate-like 0x01C684D4 -> 0x020699B0
+```
+
+La estrategia actual de split-screen pasa a ser:
+
+```text
+activar Self
+activar Partner
+Self    -> VIEW_0 -> TOP(2)    -> display 0
+Partner -> VIEW_1 -> BOTTOM(3) -> display 0
+```
+
+sin tocar VIEW_4.
+
+# 40. mPadNo de uCameraManage se retira del parche nuevo
+
+`uCameraManage::mPadNo` está confirmado por metadata en `+0x88`.
+
+El experimento antiguo escribió Self=0 y Partner=1, pero la revisión posterior no ha encontrado una conexión directa de ese campo con `sGamePad` o `PadData`.
+
+Sus referencias observadas no demuestran que sea el selector de dispositivo físico.
+
+Por tanto el siguiente parche de cámara **no modificará mPadNo** hasta recuperar una ruta que justifique esa semántica.
+
+La escritura antigua se conserva en el historial como experimento, pero queda marcada como no demostrada.
