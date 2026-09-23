@@ -1,0 +1,73 @@
+{
+  "source": "BioRevHD 30-Enero-2013.exe",
+  "source_sha256": "9124bb92d6c54a047ade47dacc8429221b18f9910b504f0e87718d5151013f69",
+  "output": "BioRevHD 30-Enero-2013 LOCAL COOP NATIVE INPUT EXPERIMENTAL v3.exe",
+  "output_sha256": "9de444e104f2846aa166e1460f33a110ffac5b880f374edfd31b94aef3e5c649",
+  "file_size": 60748800,
+  "status": "STATICALLY VERIFIED ONLY - gameplay not executed in this environment",
+  "design": {
+    "thinkmode_hook": {
+      "va": "0x027A0CE4",
+      "file_offset": "0x00C280E4",
+      "purpose": "Preserve Pad/Network semantics; convert only Partner+Cpu to Pad through the native uPlayer setter wrapper"
+    },
+    "code_cave": {
+      "va": "0x027A1318",
+      "file_offset": "0x00C28718",
+      "bytes": 51,
+      "logic": [
+        "ThinkMode::Pad (1) -> stock local input path",
+        "ThinkMode::Network (2) -> stock nonlocal/network path",
+        "ThinkMode::Cpu (3) + Self -> stock CPU path",
+        "ThinkMode::Cpu (3) + Partner -> native ThinkMode::Pad setter, then local input path",
+        "other/invalid -> stock nonlocal path"
+      ],
+      "native_self_predicate": "0x01BB3192 -> 0x01CB7560",
+      "native_thinkmode_wrapper": "0x01BB8B60 -> 0x0278CC40",
+      "local_input_reentry": "0x027A0CED",
+      "stock_nonlocal_reentry": "0x027A1080"
+    },
+    "pad_selector": {
+      "va": "0x027A27B0",
+      "file_offset": "0x00C29BB0",
+      "purpose": "Replace stock constant-zero pad selector with native Self/Partner-based selector",
+      "logic": [
+        "Self -> pad index 0",
+        "Partner -> pad index 1"
+      ],
+      "native_self_predicate": "0x01BB3192 -> 0x01CB7560"
+    }
+  },
+  "changed_file_ranges": [
+    {
+      "start": "0x00C280E4",
+      "end_exclusive": "0x00C280ED",
+      "bytes": 9,
+      "before": "83f8010f8593030000",
+      "after": "e92f06000090909090"
+    },
+    {
+      "start": "0x00C28718",
+      "end_exclusive": "0x00C2874B",
+      "bytes": 51,
+      "before": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "after": "83f801742483f8030f85200000008b4df851e8631e41ff84c00f850f0000006a018b4df8e81f7841ffe9a7f9ffffe935fdffff"
+    },
+    {
+      "start": "0x00C29BB0",
+      "end_exclusive": "0x00C29BBD",
+      "bytes": 13,
+      "before": "558bec81eccc00000053565751",
+      "after": "51e8dc0941ff0fb6c083f001c3"
+    }
+  ],
+  "different_bytes": 73,
+  "different_ranges": 3,
+  "limitations": [
+    "Runtime gameplay has not been executed in this environment.",
+    "A Partner intentionally forced to ThinkMode::Cpu by a scripted scene will be converted back to Pad when this input update path runs; scripted/cutscene exceptions may be required.",
+    "This experiment tests native input ownership only; it does not add split-screen by itself.",
+    "It assumes the game's native Self/Partner predicate remains valid for the intended campaign partner.",
+    "HUD, pause/inventory ownership, QTEs, scene transitions and camera ownership are not validated by this experiment."
+  ]
+}
