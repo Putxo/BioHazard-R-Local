@@ -1128,3 +1128,70 @@ El archivo experimental se mantiene como evidencia histórica, pero su descripci
 > experimento para redirigir la ruta de control/input del NPC/partner a un segundo índice de entrada bajo modos secundarios inferidos.
 
 No debe etiquetarse como parche ya demostrado de `uPlayer P2`.
+
+
+---
+
+# 28. cPlayerPadSyncData: entrada remota nativa del compañero
+
+Se identificó el tipo RTTI:
+
+```text
+app::game::chara::cPlayerPadSyncData
+```
+
+con vtable `0x04D98588` y tamaño aproximado `0x28`.
+
+Layout confirmado por metadata y serialización:
+
+```text
++0x08 moveAnalog
++0x10 rotateAnalog
++0x18 aimAnalog
++0x20 waistRotateX
++0x24 isRun
++0x25 isAim
+```
+
+Serializer: `0x02747960`.
+
+Deserializer: `0x02747B40`.
+
+Canal de red:
+
+```text
+PlayerPad -> 0x332D
+```
+
+Un `cNetSyncData<uNpc>` se crea para el owner NPC y su dispatcher entrante `0x0274A680` reconoce el DTI de `cPlayerPadSyncData`.
+
+El callback termina en:
+
+```text
+0x027B1D70
+```
+
+que copia los campos del paquete remoto a:
+
+```text
+uNpc+0x1670 move
+uNpc+0x1678 rotate
+uNpc+0x1680 aim
+uNpc+0x1688 run
+uNpc+0x1689 aim flag
+```
+
+Son los mismos campos alimentados por la ruta local/AI `0x027A0CA0`.
+
+**CONFIRMADO:** el juego ya posee una ruta completa de control remoto del partner que converge en el mismo estado de control del NPC.
+
+Nueva estrategia prioritaria:
+
+```text
+PadData[1] local
+ -> cPlayerPadSyncData
+ -> handler 0x027B1D70
+ -> partner uNpc
+```
+
+Detalle completo: `docs/08-player-pad-sync.md`.
