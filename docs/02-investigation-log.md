@@ -1386,3 +1386,39 @@ modo 3:
 ```
 
 **Estado:** modo 1 = local y modo 3 = remoto/network es una hipótesis fuerte por comportamiento, pero todavía no se marca como nombre de enum confirmado hasta recuperar las etiquetas del metadata.
+
+
+---
+
+# 32. Construcción del experimento P2 INPUT v3
+
+Tras confirmar que la capa PC de `sGamePad` ignora el selector, se construyó un nuevo experimento directamente sobre el EXE original de enero.
+
+Output:
+
+`BioRevHD 30-Enero-2013 LOCAL COOP P2 INPUT v3.exe`
+
+SHA-256:
+
+`ee05fc7d6c965aed0661165eb0ead4c6dffa1f67bc32fd758297edb86f3213e1`
+
+La lógica deja el modo 2 completamente intacto.
+
+Solo el modo 3 —fuerte candidato a remoto/network— se redirige a la ruta local, y el selector retorna 1 exclusivamente para ese modo.
+
+Además se restauró el uso del selector en los seis getters de `sGamePad` usados por el control NPC.
+
+Verificación estática:
+
+```text
+same file size: yes
+different bytes: 111
+contiguous diff ranges: 17
+```
+
+No se marca como funcional hasta prueba dentro del juego.
+
+Detalle y manifest:
+
+- `docs/06-experiments.md`
+- `research/manifests/p2-input-v3.json`
