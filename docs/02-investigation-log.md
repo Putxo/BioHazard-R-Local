@@ -1450,3 +1450,32 @@ mismo tamaño: sí
 ```
 
 Sigue siendo una build experimental sin prueba de gameplay.
+
+
+---
+
+# 34. Confirmación de dos PadData indexables
+
+El helper de indexación alcanzado desde los getters de `sGamePad` es:
+
+```text
+0x01C4F385 -> 0x02DBE720
+```
+
+La función valida explícitamente:
+
+```text
+index < 2
+```
+
+y calcula:
+
+```text
+element = base + index * 0xC0
+```
+
+**CONFIRMADO:** existen dos entradas seleccionables por el índice que v3 restaura.
+
+Por tanto `selector=1` no es solo un número aceptado por la API: selecciona el segundo elemento de una colección de dos PadData.
+
+Pendiente de runtime: confirmar qué mando físico alimenta cada slot en esta FullDebug PC.
