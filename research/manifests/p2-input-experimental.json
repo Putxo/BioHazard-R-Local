@@ -1,0 +1,20 @@
+{
+  "source": "BioRevHD 30-Enero-2013.exe",
+  "source_sha256": "9124bb92d6c54a047ade47dacc8429221b18f9910b504f0e87718d5151013f69",
+  "output": "BioRevHD 30-Enero-2013 LOCAL COOP P2 INPUT EXPERIMENTAL.exe",
+  "output_sha256": "6c55444a820d05d0b0a15cafad0e8e7d0ec5bc67c1a548631a47d9ef2e6f0729",
+  "patches": {
+    "mode_redirect_jne": "0x27A0CE7 -> 0x27A1318",
+    "mode_redirect_stub": "0x27A1318 (mode 2/3 -> local input; others -> original nonlocal path)",
+    "pad_selector_stub": "0x27A1340 (mode 2/3 -> pad index 1; mode 1/other -> 0)",
+    "pad_selector_calls": [
+      "0x27a0d03",
+      "0x27a0d49",
+      "0x27a0d6d",
+      "0x27a0dbf",
+      "0x27a0e29",
+      "0x27a0e8a"
+    ]
+  },
+  "status": "STATICALLY VERIFIED ONLY - gameplay not executed in this environment"
+}
