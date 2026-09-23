@@ -953,3 +953,78 @@ ThinkMode::Pad = 1
 y asignarle pad 1, no reutilizar Network/Cpu como señal de P2.
 
 Detalle completo: `docs/08-thinkmode-local-input.md`.
+
+
+---
+
+# 25. Native Input v3: reemplazo del experimento heurístico
+
+Después de identificar de forma consistente:
+
+```text
+ThinkMode::Pad     = 1
+ThinkMode::Network = 2
+ThinkMode::Cpu     = 3
+```
+
+y localizar:
+
+- setter nativo de ThinkMode;
+- wrapper virtual que sincroniza controladores internos;
+- predicado nativo Self/Partner;
+- getter stock de pad que devolvía 0;
+
+se construyó una nueva prueba **desde el EXE original de enero**.
+
+Archivo local:
+
+`BioRevHD 30-Enero-2013 LOCAL COOP NATIVE INPUT EXPERIMENTAL v3.exe`
+
+SHA-256:
+
+`9de444e104f2846aa166e1460f33a110ffac5b880f374edfd31b94aef3e5c649`
+
+## Cambios
+
+```text
+ThinkMode::Pad     -> local stock
+ThinkMode::Network -> network stock
+ThinkMode::Cpu + Self -> CPU stock
+ThinkMode::Cpu + Partner -> setter nativo Pad -> local stock
+
+Self    -> pad 0
+Partner -> pad 1
+```
+
+Diff:
+
+```text
+73 bytes
+3 rangos
+mismo tamaño de EXE
+```
+
+La prueba anterior que redirigía modos 2/3 queda conservada por trazabilidad, pero **v3 es el diseño estático preferido**.
+
+# 26. Verificación del desensamblado de v3
+
+Se volvió a desmontar el EXE generado.
+
+Se verificó que:
+
+- el hook de `0x027A0CE4` aterriza en la cave;
+- las salidas vuelven a las rutas stock correctas;
+- `Network` no pasa por el setter Pad;
+- Partner+Cpu llama a `0x01BB8B60` con 1;
+- el selector de pad llama al predicado `0x01BB3192`;
+- Self produce 0 y Partner produce 1.
+
+Esto sigue siendo validación estática, no gameplay.
+
+# 27. Riesgo identificado en v3
+
+La conversión Partner `Cpu -> Pad` ocurre dentro de la ruta de actualización de input.
+
+Por tanto un script que fuerce temporalmente CPU para una escena podría competir con v3.
+
+Este riesgo se considera explícito y deberá resolverse con un gate de estado/escena o un cambio más temprano en la creación/configuración del Partner si las pruebas de gameplay lo confirman.
