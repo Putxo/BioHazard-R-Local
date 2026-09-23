@@ -11,9 +11,9 @@
     "contiguous_ranges": 17
   },
   "logic": {
-    "mode_1": "unchanged local-control path; selector 0",
-    "mode_2": "unchanged original path",
-    "mode_3": "redirected into local-control path; selector 1"
+    "mode_1": "ThinkMode::Pad (1): unchanged local-control path; selector 0",
+    "mode_2": "ThinkMode::Cpu (2): unchanged original CPU path",
+    "mode_3": "ThinkMode::Network (3): redirected into local-control path; selector 1"
   },
   "npc_patches": {
     "mode_branch": "0x027A0CE7 JNE -> 0x027A1318",
@@ -22,16 +22,35 @@
     "selector_cave": "0x027A1340: read ThinkMode; return 1 only when mode==3, else 0"
   },
   "sgamepad_patches": {
-    "aim_bool": ["0x02DAF404", "0x02DAF40E"],
-    "run_bool": ["0x02DAFFE5", "0x02DAFFEF"],
-    "move_analog": ["0x02DB15B7", "0x02DB15C8"],
-    "aim_analog": ["0x02DB1787", "0x02DB1798"],
-    "rotate_analog": ["0x02DB1957", "0x02DB1968"],
-    "alternate_rotate_analog": ["0x02DB1CD7", "0x02DB1CE8"]
+    "aim_bool": [
+      "0x02DAF404",
+      "0x02DAF40E"
+    ],
+    "run_bool": [
+      "0x02DAFFE5",
+      "0x02DAFFEF"
+    ],
+    "move_analog": [
+      "0x02DB15B7",
+      "0x02DB15C8"
+    ],
+    "aim_analog": [
+      "0x02DB1787",
+      "0x02DB1798"
+    ],
+    "rotate_analog": [
+      "0x02DB1957",
+      "0x02DB1968"
+    ],
+    "alternate_rotate_analog": [
+      "0x02DB1CD7",
+      "0x02DB1CE8"
+    ]
   },
   "sgamepad_change": "Replace loads from sGamePad+0x970 (mStartPadNo) with the selector argument already present in each getter ABI.",
   "notes": [
-    "ThinkMode numeric names are inferred from behavior; mode 3 is strongly consistent with remote/network control but the enum label is not yet recovered.",
+    "ThinkMode labels Network/Cpu/Pad/Invalid exist in the executable; numeric mapping 0/1/2/3 is established from the branch behavior together with those internal labels.",
+    "sGamePad maintains two real sPad::Pad objects and two indexed PadData entries; selector 1 reaches a distinct internal input slot.",
     "No global mStartPadNo mutation is used.",
     "The old v1/v2 input experiment is superseded for pad-selection semantics because PC getters ignored the selector."
   ]
