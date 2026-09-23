@@ -628,3 +628,84 @@ mMode=3 -> BOTTOM
 `mRegion @ +0x18` es un rectángulo/estructura de 16 bytes, no el enum.
 
 La anotación anterior se conserva como parte del historial, pero queda superseded por esta rectificación.
+
+
+---
+
+# Experimento 5 — CAMERA SPLIT v4
+
+Se sustituyó el bloque de cámara anterior por una versión que reproduce mejor las rutas nativas del juego.
+
+## Cámara solamente
+
+Archivo local:
+
+`BioRevHD 30-Enero-2013 CAMERA SPLIT v4.exe`
+
+SHA-256:
+
+`12ca6dae126e3e7354719637e144253d10a72cc6a8739de704f74e8aa0bcf172`
+
+Diff contra el original:
+
+```text
+mismo tamaño: sí
+172 bytes diferentes
+2 rangos:
+0x004C57A9-0x004C57AD  5 bytes
+0x004C57BD-0x004C5863 167 bytes
+```
+
+## Combinada con P2 INPUT v3
+
+Archivo local:
+
+`BioRevHD 30-Enero-2013 LOCAL COOP v4 NATIVE SPLIT.exe`
+
+SHA-256:
+
+`2b0e7b71cbac09cfb7fd5f3904f2e4709b2fdbfcbf372880e79f301cb95718ad`
+
+Diff total frente al original:
+
+```text
+mismo tamaño: sí
+283 bytes diferentes
+19 rangos
+```
+
+## Hook
+
+```text
+0x0203E3A9 -> JMP 0x0203E3BD
+```
+
+El code cave ocupa 167 bytes y termina en `0x0203E463`. El siguiente código real empieza en `0x0203E470`; quedan 12 bytes de padding sin usar.
+
+## Diferencias respecto al split anterior
+
+Esta versión:
+
+1. comprueba que Self y Partner Manager existen;
+2. usa el mismo chequeo de readiness que los callbacks stock;
+3. si hace falta inicializa cada manager con el mismo modo `0x13` que usa `Self View/Partner View`;
+4. activa ambos con la rutina stock `0x01BF353F`;
+5. usa `sCamera::setCameraForViewport` mediante `0x01C34D5A -> 0x01EBD610`;
+6. enlaza Self a VIEW_0 y Partner a VIEW_1;
+7. configura:
+   - VIEW_0 = visible, TOP(2), display 0;
+   - VIEW_1 = visible, BOTTOM(3), display 0;
+8. fuerza un refresh posterior mediante `0x01BFD4B8`;
+9. **no toca VIEW_4**;
+10. **no toca `uCameraManage::mPadNo`**.
+
+## Estado
+
+**STATICALLY VERIFIED ONLY.**
+
+El desensamblado del EXE resultante confirma las llamadas y offsets anteriores, pero falta prueba dentro del juego.
+
+Archivos reproducibles:
+
+- `research/patches/camera_split_v4.S`
+- `research/manifests/camera-split-v4.json`
