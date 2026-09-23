@@ -2426,3 +2426,80 @@ Builder reproducible:
 Manifest:
 
 `research/manifests/p2-fullpad-v7.json`
+
+
+---
+
+# 45. FULLPAD v7
+
+Después de v6 se comprobó que el selector NPC alimenta más APIs que movimiento/aim/run.
+
+Se localizaron 129 llamadas directas al selector. Dentro de los métodos consumidores relevantes había 67 cargas estándar de sGamePad::mStartPadNo y 8 cargas analógicas ya corregidas por v6.
+
+v7 mantiene la identidad exacta Sub0 y el cambio canónico Cpu(2)->Pad(1), deja Network(3) intacto y corrige 63 cargas adicionales. Cobertura estática de la ruta localizada: 67 estándar + 8 analógicas = 75 cargas que respetan el selector.
+
+Outputs:
+
+- BioRevHD 30-Enero-2013 LOCAL COOP P2 FULLPAD v7.exe
+  SHA-256 25cb559a183156bbb8de312688da86bec300bd78e66f0d6c6f7d776a3cc88af7
+- BioRevHD 30-Enero-2013 LOCAL COOP v7 FULLPAD NATIVE SPLIT.exe
+  SHA-256 fe12f35c1d08f61961d7bdefba19a09e68939bb8966fc3d6c50e994ab699fa76
+
+Diff vs original: input 516 bytes/82 rangos; combined 688 bytes/84 rangos.
+
+Builder: patches/build_v7_fullpad.py
+Manifest: research/manifests/p2-fullpad-v7.json
+
+# 46. Riesgo posterior a v7: Partner puede volver a apagarse
+
+La cámara v4 se activaba durante sGameCamera::init, pero el setup posterior de actores/cámaras alrededor de 0x01F37B00 vuelve a tocar los managers.
+
+La rama Self ejecuta Self View, cuyo comportamiento stock desactiva Partner. La rama del otro actor asigna Partner target y posteriormente llama en 0x01F38054 y 0x01F38061 a los dos setters de estado con valor 0. Son las mismas dos flags que uCameraManage::activate pone a 1.
+
+Conclusión: una activación únicamente en init no es persistente.
+
+# 47. Asociación nativa actor -> CameraManage
+
+La función 0x027A2FA0 (thunk 0x01BDEC39) recibe un uNpc, compara su identidad con el jugador Self y devuelve:
+
+- Self CameraManage para el jugador local;
+- Partner CameraManage para el otro uNpc.
+
+Esto confirma que el motor ya contempla nativamente el uso de Partner CameraManage por el actor no-Self.
+
+# 48. Code cave v8 inicialmente descartado
+
+El primer borrador eligió 0x027A1500 como supuesto padding.
+
+El builder exigía bytes 0xCC y abortó: en esa dirección empieza código real. No se produjo ningún EXE con ese solapamiento.
+
+Después se escaneó .text y se escogió 0x01C94FC0 dentro de un run continuo de 0xCC de 64 KiB. El helper final usa 314 bytes y el builder vuelve a verificar el padding antes de escribir.
+
+# 49. v8 FULLPAD + Persistent Split
+
+Output:
+BioRevHD 30-Enero-2013 LOCAL COOP v8 FULLPAD PERSISTENT SPLIT.exe
+
+SHA-256:
+c9a4c1e9887eb3504905734cb0279b2c8fe61ec55bb69768c55724b3b7ec8356
+
+v8 añade gLocalCoopActive en 0x057D9188. Solo se activa cuando el Sub0 exacto realiza la transición canónica ThinkMode::Cpu(2)->Pad(1), y se borra cuando se limpia el binding. Network(3) no activa este flag.
+
+El helper ensure_split en 0x01C9504C recupera el uNpc exacto de Sub0, lo asigna como target de Partner mediante el setter stock 0x01C275EC->0x02066AB0, activa Self y Partner, enlaza Self->VIEW_0 y Partner->VIEW_1, aplica TOP(2)/BOTTOM(3), display 0 y refresca cámara.
+
+Intercepciones condicionales:
+- 0x0203E92D: Self View intenta desactivar Partner.
+- 0x0203E98B: Partner View intenta desactivar Self.
+- 0x0203E9AD: índice de viewport de Partner View.
+- 0x01F38054 y 0x01F38061: posteriores state bits de Partner.
+
+Con flag=0 todo conserva stock. Con flag=1 ambas cámaras coexisten y Partner permanece en VIEW_1.
+
+Verificación: PE32 válido, mismo tamaño, 1026 bytes distintos/90 rangos frente al original; 351 bytes/11 rangos añadidos sobre v7.
+
+Estado: STATICALLY VERIFIED ONLY.
+
+Detalle: docs/11-persistent-camera-v8.md
+Builder: patches/build_v8_persistent_split.py
+Assembly: research/patches/camera_persistence_v8.S
+Manifest: research/manifests/p2-fullpad-persistent-split-v8.json
