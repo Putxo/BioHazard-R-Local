@@ -1,0 +1,28 @@
+{
+  "source": "BioRevHD 30-Enero-2013.exe",
+  "source_sha256": "9124bb92d6c54a047ade47dacc8429221b18f9910b504f0e87718d5151013f69",
+  "output": "BioRevHD 30-Enero-2013 LOCAL COOP v3 INPUT+SPLITSCREEN.exe",
+  "output_sha256": "6978dc6d63781718c3728160c0312737424536734c0850b9337e990fb2da677d",
+  "status": "STATICALLY VERIFIED ONLY - gameplay not executed in this environment",
+  "components": {
+    "input": "P2 INPUT v3: inferred ThinkMode 3 -> local-control path, selector 1; mode 2 untouched; six sGamePad APIs restored to honor selector",
+    "split_screen": "Self/Partner camera and Viewport 0/1 TOP/BOTTOM block from the previously documented split-screen v2 experiment"
+  },
+  "camera_patch": {
+    "file_range": "0x004C57A9..0x004C584B",
+    "different_bytes": 163,
+    "hook_va": "0x0203E3A9",
+    "cave_va": "0x0203E3BD"
+  },
+  "diff_vs_original": {
+    "same_file_size": true,
+    "different_bytes": 274,
+    "contiguous_ranges": 18
+  },
+  "limitations": [
+    "No Windows gameplay execution was possible in the analysis environment.",
+    "Partner actor and Partner camera lifecycle still require runtime validation.",
+    "HUD, inventory, pause, scripted interactions, QTEs and scene transitions remain unvalidated.",
+    "ThinkMode 3 is strongly inferred as remote/network from behavior but the exact enum label has not yet been recovered."
+  ]
+}
