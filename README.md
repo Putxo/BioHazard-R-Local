@@ -60,6 +60,7 @@ Hallazgo más reciente: la build de enero contiene RTTI/clases diferenciadas par
 - [Hipótesis y caminos descartados](docs/03-hypotheses-and-discarded-paths.md)
 - [Mapa técnico actual](docs/04-current-architecture-map.md)
 - [sGamePad, sPcsManager y clases Main/Sub](docs/05-sgamepad-spcsmanager.md)
+- [Asociación física Pad 0/Pad 1 con DirectInput](docs/10-physical-pad-binding.md)
 - [SubPlayer0: actor exacto y PadMode v6](docs/09-subplayer0-local-filter.md)
 - [Persistent Partner camera v8](docs/11-persistent-camera-v8.md)
 - [Experimentos estáticos y sus limitaciones](docs/06-experiments.md)
