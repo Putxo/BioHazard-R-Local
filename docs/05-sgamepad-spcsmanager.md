@@ -316,3 +316,70 @@ sGamePad + 0x668 + index*0xC0
 ```
 
 Esto confirma que el backend PC está estructurado realmente para dos pads internos independientes.
+
+
+---
+
+## Restauración FULLPAD v7
+
+La corrección de `mStartPadNo` no se limita a los seis getters inicialmente estudiados.
+
+El selector nativo de `uNpc` tiene **129 call sites** y alcanza múltiples APIs de gameplay.
+
+### Cobertura de cargas que colapsaban el selector
+
+En los consumidores relevantes se localizaron:
+
+```text
+67 cargas estándar de sGamePad+0x970
+8 cargas analógicas de frame alineado
+TOTAL: 75
+```
+
+v6 ya corregía:
+
+```text
+4 estándar:
+  aim bool x2
+  run bool x2
+
+8 analógicas:
+  move x2
+  aim analog x2
+  rotate x2
+  alternate rotate x2
+```
+
+v7 añade las **63 estándar restantes**.
+
+Después de v7:
+
+```text
+0/67 cargas estándar conocidas siguen leyendo mStartPadNo
+8/8 cargas analógicas usan el selector restaurado
+```
+
+En métodos estándar el selector está en:
+
+```text
+[ebp+8]
+```
+
+La transformación in-place mantiene el registro destino:
+
+```text
+mov reg,[...+0x970]  ; 6 bytes
+->
+mov reg,[ebp+8]      ; 3 bytes
+nop
+nop
+nop
+```
+
+La lista completa de las 63 VAs nuevas y las comprobaciones de bytes están en:
+
+`patches/build_v7_fullpad.py`
+
+### Implicación
+
+La separación PadData[0]/PadData[1] queda restaurada no solo para movimiento, sino también para las APIs de botones/acciones identificadas en la ruta de gameplay de `uNpc`.
