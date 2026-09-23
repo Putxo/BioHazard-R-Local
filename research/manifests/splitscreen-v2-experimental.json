@@ -1,0 +1,58 @@
+{
+  "source": "BioRevHD 30-Enero-2013.exe",
+  "source_sha256": "9124bb92d6c54a047ade47dacc8429221b18f9910b504f0e87718d5151013f69",
+  "output": "BioRevHD 30-Enero-2013 LOCAL COOP SPLITSCREEN EXPERIMENTAL v2.exe",
+  "output_sha256": "9952e14daedfa05afceea6e1456f7d18aa1ed071ea900c7aef2cc7c8eeeec089",
+  "status": "STATICALLY VERIFIED ONLY - gameplay not executed in this environment",
+  "base_reason": "30-Jan-2013 dev build retains real Self/Partner camera managers, 8 Viewports, debug co-op/player creation paths and XInput-era controller code.",
+  "patches": {
+    "p2_input": {
+      "mode_redirect_jne": "0x27A0CE7 -> 0x27A1318",
+      "mode_redirect_stub": "0x27A1318: modes 2/3 re-enter local input path; other modes retain stock nonlocal path",
+      "pad_selector_stub": "0x27A1340: modes 2/3 return XInput pad index 1; otherwise 0",
+      "pad_selector_calls": [
+        "0x27A0D03",
+        "0x27A0D49",
+        "0x27A0D6D",
+        "0x27A0DBF",
+        "0x27A0E29",
+        "0x27A0E8A"
+      ]
+    },
+    "split_screen": {
+      "hook": "0x203E3A9 -> 0x203E3BD",
+      "cave": "0x203E3BD..0x203E44B (143 bytes)",
+      "camera_managers": {
+        "self": "sGameCamera+0xCE0",
+        "partner": "sGameCamera+0xCE4"
+      },
+      "manager_pad_assignment": {
+        "self": "mPadNo=0",
+        "partner": "mPadNo=1"
+      },
+      "viewport0": "camera=Self, visible=1, mode=TOP(2), display=0",
+      "viewport1": "camera=Partner, visible=1, mode=BOTTOM(3), display=0",
+      "viewport4": "left untouched (stock uFreeCamera/debug viewport)",
+      "activation": "calls uCameraManage activate implementation 0x2069AB0 for both managers"
+    }
+  },
+  "changed_file_ranges": [
+    {"start":"0x4c57a9","end_exclusive":"0x4c584c","bytes":163},
+    {"start":"0xc280e9","end_exclusive":"0xc280eb","bytes":2},
+    {"start":"0xc28104","end_exclusive":"0xc28108","bytes":4},
+    {"start":"0xc2814a","end_exclusive":"0xc2814e","bytes":4},
+    {"start":"0xc2816e","end_exclusive":"0xc28172","bytes":4},
+    {"start":"0xc281c0","end_exclusive":"0xc281c4","bytes":4},
+    {"start":"0xc2822a","end_exclusive":"0xc2822e","bytes":4},
+    {"start":"0xc2828b","end_exclusive":"0xc2828f","bytes":4},
+    {"start":"0xc28718","end_exclusive":"0xc2871d","bytes":5},
+    {"start":"0xc2871e","end_exclusive":"0xc2872f","bytes":17},
+    {"start":"0xc28740","end_exclusive":"0xc2875f","bytes":31}
+  ],
+  "limitations": [
+    "This patch does not yet prove that every campaign scene initializes/keeps a controllable Player2 actor.",
+    "The exact semantic labels of internal player input modes 1/2/3 are inferred from control-flow, not recovered symbols.",
+    "If Partner camera has no active camera entry in a scene, the lower viewport may render black or be cleared by the engine.",
+    "No Windows gameplay execution was possible in this environment; runtime stability and HUD behavior require an in-game test."
+  ]
+}
