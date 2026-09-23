@@ -767,3 +767,102 @@ Sub0
 ```
 
 La siguiente confirmación que falta es localizar una diferencia concreta Main/Sub0 que llegue a la selección del `PadData` o equivalente, en lugar de seguir imponiendo el índice de pad mediante una inferencia externa.
+
+
+---
+
+# 25. Vtables Main/Sub y especializaciones uPcsActor
+
+Se reconstruyeron las vtables de:
+
+```text
+uPcsPlayerMain  0x04E1642C
+uPcsPlayerSub0  0x04E1649C
+uPcsPlayerSub1  0x04E1650C
+```
+
+Base RTTI:
+
+```text
+uPcsChara
+vtable 0x04E1631C
+```
+
+Solo difieren 3 de 21 slots. El slot funcional más importante fija rol 0/1/2 y consulta `sPcsManager`.
+
+También se identificaron:
+
+```text
+uPcsActor<Player0> vtable 0x04E166CC
+uPcsActor<Player1> vtable 0x04E1673C
+uPcsActor<Player2> vtable 0x04E167AC
+uPcsActor<SubPlayer0>
+uPcsActor<SubPlayer1>
+```
+
+Las especializaciones Player0/1/2 repiten la separación fija de rol 0/1/2.
+
+Detalle: `docs/07-player-roles-and-pad-routing.md`.
+
+---
+
+# 26. Corrección de mMovePcs / mMoveSubPcs
+
+Las strings japonesas adyacentes muestran:
+
+```text
+PCS番号      = número de PCS
+サブPCS番号  = número de sub-PCS
+```
+
+Por tanto `mMovePcs` y `mMoveSubPcs` dejan de tratarse como candidatos de input/movimiento. Son controles de selección/número de PCS.
+
+---
+
+# 27. getPadNo de uPlayer devuelve siempre 0
+
+Thunk:
+
+```text
+0x01C6C746 -> 0x027A27B0
+```
+
+La implementación hace únicamente:
+
+```asm
+xor eax,eax
+ret
+```
+
+El thunk tiene al menos 129 call sites en gameplay.
+
+La zona pertenece a `uplayer.cpp`.
+
+---
+
+# 28. sGamePad recibe pad number pero fuerza mStartPadNo
+
+Se siguieron varias llamadas que hacen:
+
+```text
+uPlayer -> getPadNo -> argumento a sGamePad
+```
+
+Sin embargo métodos de `sGamePad` como:
+
+```text
+0x02DB1570
+0x02DB1910
+0x02DB1C90
+0x02DAF000
+```
+
+ignoran el selector recibido y leen `this+0x970` (`mStartPadNo`).
+
+Al mismo tiempo `sGamePad` sí posee exactamente dos bloques `PadData` y un operador indexado con límite 2.
+
+Nueva conclusión:
+
+> el backend de input ya es 2-pad, pero la capa PC de gameplay está forzada al pad inicial/global.
+
+Esto redefine la solución de input P2: hay que restaurar tanto la identidad 0/1 de cada uPlayer como el respeto del parámetro por sGamePad.
