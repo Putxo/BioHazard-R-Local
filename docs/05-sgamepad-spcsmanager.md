@@ -181,3 +181,39 @@ sGamePad::PadData[index]
 ```
 
 La siguiente confirmación importante debe ser una diferencia concreta de método entre Main y Sub0 que permita identificar cómo el juego decide qué input alimenta a cada clase.
+
+
+---
+
+## Corrección: los getters PC ignoran el selector recibido
+
+La API de entrada llamada desde `uNpc` pasa un índice/selector a los getters de `sGamePad`.
+
+Sin embargo, la implementación PC de enero ignora ese argumento y consulta `mStartPadNo @ +0x970`.
+
+Métodos confirmados:
+
+```text
+0x02DB1570  move analog
+0x02DB1740  aim analog
+0x02DB1910  rotate analog
+0x02DB1C90  alternate rotate analog
+0x02DAFFB0  run/action boolean
+0x02DAF3C0  aim boolean
+```
+
+Mapeo desde la ruta NPC:
+
+```text
+0x027A0Dxx -> 0x02DB1570 -> uNpc+0x1670 move
+0x027A0Dxx -> 0x02DB1910/0x02DB1C90 -> uNpc+0x1678 rotate
+0x027A0Dxx -> 0x02DB1740 -> uNpc+0x1680 aim
+0x027A0E26 -> 0x02DAFFB0 -> uNpc+0x1688 run
+0x027A0E87 -> 0x02DAF3C0 -> uNpc+0x1689 aim flag
+```
+
+### Implicación
+
+El experimento anterior que modificaba el selector devuelto por `0x027A27B0` no podía separar físicamente Pad 1/Pad 2 mientras estos getters siguieran forzando el global.
+
+El siguiente experimento debe hacer que las implementaciones respeten el selector que ya reciben.
