@@ -20,6 +20,11 @@ Solo se incluyen hipótesis surgidas durante esta conversación.
 | H14 | P2 debe implementarse desde cero | ya existe infraestructura Main/Sub y varios viewports | DESCARTADA como punto de partida |
 | H15 | El mejor orden es spawn+input+cámara todo a la vez | dificulta aislar fallos | DESCARTADA metodológicamente |
 
+| H16 | Febrero debía ser el target práctico porque importa XInput | import `XINPUT1_3.dll` frente a enero/DInput | CORREGIDA: enero conserva lógica que febrero stubbea |
+| H17 | Un split-screen estático prueba cooperativo local | se pueden configurar dos CameraManage/Viewports | DESCARTADA: falta validar actor, input, cámara activa, HUD y escenas |
+| H18 | La solución de Revelations 2 puede trasplantarse directamente | misma familia MT Framework y antecedentes de local co-op | DESCARTADA como evidencia/trasplante; solo referencia conceptual |
+| H19 | Strings `Pad2`/`PS2Pad2`/`X(2P)` bastan para identificar P2 | nombres muy sugerentes | DESCARTADA como prueba; necesitan owner/xref/flujo ejecutable |
+
 ## Descartes explicados
 
 ### `mCameraList[0]/[1]`
