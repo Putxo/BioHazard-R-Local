@@ -1,0 +1,43 @@
+{
+  "source": "BioRevHD 30-Enero-2013.exe",
+  "source_sha256": "9124bb92d6c54a047ade47dacc8429221b18f9910b504f0e87718d5151013f69",
+  "input_output": "BioRevHD 30-Enero-2013 LOCAL COOP P2 SUB0 PADMODE v6.exe",
+  "input_sha256": "83554753d1d6a86bf256627830f509a313871a847c87338b61da0e3c0a2c0914",
+  "combined_output": "BioRevHD 30-Enero-2013 LOCAL COOP v6 SUB0 PADMODE NATIVE SPLIT.exe",
+  "combined_sha256": "18a429daa0855a7e6de6af91358d867970beee9a99671913303166f8b39a540d",
+  "status": "STATICALLY VERIFIED ONLY - gameplay not executed in this environment",
+  "builder": "patches/build_v6_sub0_padmode.py",
+  "design": {
+    "identity": "Track the exact live uNpc* bound to uPcsPlayerSub0 using the Sub0 vtable 0x04E1649C and the common PCS actor binder.",
+    "thinkmode": "If and only if tracked Sub0 is ThinkMode::Cpu (2), call canonical virtual wrapper 0x01BB8B60 -> 0x0278CC40 with ThinkMode::Pad (1). Existing Pad and Network (3) remain untouched.",
+    "pad": "The NPC pad selector returns 1 only for the exact tracked Sub0; restored PC sGamePad getters honor their existing selector parameter and therefore access PadData[1].",
+    "camera": "Combined output applies camera split v4: Self->VIEW_0 TOP, Partner->VIEW_1 BOTTOM, both display 0."
+  },
+  "canonical_thinkmode_path": {
+    "virtual_thunk": "0x01BB8B60",
+    "wrapper": "0x0278CC40",
+    "direct_setter_thunk": "0x01BE3257",
+    "direct_setter": "0x027F1290",
+    "behavior": "The wrapper invokes the real setter and refreshes the associated controller object. CPU->Pad does not take the Network teardown branch in the setter."
+  },
+  "diff": {
+    "input_same_size": true,
+    "input_different_bytes": 201,
+    "input_ranges": 19,
+    "combined_same_size": true,
+    "combined_different_bytes": 373,
+    "combined_ranges": 21
+  },
+  "improvements_over_v5": [
+    "No ThinkMode branch in the uNpc control routine is patched.",
+    "The exact SubPlayer0 actor is changed to the game's native ThinkMode::Pad instead of remaining Cpu while one function is diverted.",
+    "ThinkMode::Network remains untouched, preserving the original network route.",
+    "AI systems that key on ThinkMode::Cpu should see Sub0 as Pad after the canonical switch; runtime confirmation is still required."
+  ],
+  "limitations": [
+    "Runtime validation is still required.",
+    "A second physical controller must actually populate sGamePad/PadData slot 1 in the user's Windows setup.",
+    "Partner camera lifecycle, HUD, inventory, pause, scripted interactions and QTEs remain to test.",
+    "Exact old/new bytes and cave bodies are preserved in patches/build_v6_sub0_padmode.py."
+  ]
+}
