@@ -1,52 +1,63 @@
 {
   "source": "BioRevHD 30-Enero-2013.exe",
   "source_sha256": "9124bb92d6c54a047ade47dacc8429221b18f9910b504f0e87718d5151013f69",
-  "camera_only_output": "BioRevHD 30-Enero-2013 CAMERA SPLIT v4.exe",
-  "camera_only_sha256": "12ca6dae126e3e7354719637e144253d10a72cc6a8739de704f74e8aa0bcf172",
-  "combined_output": "BioRevHD 30-Enero-2013 LOCAL COOP v4 NATIVE SPLIT.exe",
-  "combined_sha256": "2b0e7b71cbac09cfb7fd5f3904f2e4709b2fdbfcbf372880e79f301cb95718ad",
-  "status": "STATICALLY VERIFIED ONLY - gameplay not executed in this environment",
-  "hook": {
-    "va": "0x0203E3A9",
-    "file_offset": "0x004C57A9",
-    "target": "0x0203E3BD",
-    "bytes": 5
-  },
-  "cave": {
-    "va": "0x0203E3BD",
-    "file_offset": "0x004C57BD",
-    "length": 167,
-    "capacity_before_next_function": 179,
-    "next_function": "0x0203E470"
-  },
-  "behavior": {
-    "self_manager": "sGameCamera+0xCE0",
-    "partner_manager": "sGameCamera+0xCE4",
-    "readiness_check": "0x01B7BA8A; if false initialize with mode 0x13 via 0x01B8AAEE",
-    "activation": "0x01BF353F for both managers; does not deactivate either",
-    "binding": "native helper 0x01C34D5A -> 0x01EBD610",
-    "viewport0": "Self, visible=1, mMode=TOP(2), mDisplay=0",
-    "viewport1": "Partner, visible=1, mMode=BOTTOM(3), mDisplay=0",
-    "refresh": "0x01BFD4B8 after viewport flags/modes",
-    "untouched": [
-      "VIEW_4/free-debug camera",
-      "uCameraManage::mPadNo"
-    ]
-  },
-  "camera_only_diff": {
+  "camera_only_output": {
+    "name": "BioRevHD 30-Enero-2013 CAMERA SPLIT v4.exe",
+    "sha256": "12ca6dae126e3e7354719637e144253d10a72cc6a8739de704f74e8aa0bcf172",
     "same_size": true,
     "different_bytes": 172,
-    "contiguous_ranges": 2
+    "ranges": [
+      {"start":"0x004C57A9","end_exclusive":"0x004C57AE","bytes":5},
+      {"start":"0x004C57BD","end_exclusive":"0x004C5864","bytes":167}
+    ]
   },
-  "combined_diff_vs_original": {
+  "combined_output": {
+    "name": "BioRevHD 30-Enero-2013 LOCAL COOP v4 NATIVE SPLIT.exe",
+    "sha256": "2b0e7b71cbac09cfb7fd5f3904f2e4709b2fdbfcbf372880e79f301cb95718ad",
+    "base_input": "P2 INPUT v3",
     "same_size": true,
-    "different_bytes": 283,
-    "contiguous_ranges": 19
+    "different_bytes_vs_original": 283,
+    "ranges": 19
   },
-  "notes": [
-    "Uses the same readiness and activation routines used by the stock Self View / Partner View selector.",
-    "Uses the native viewport-binding helper instead of directly writing mpCamera.",
-    "Does not write uCameraManage::mPadNo because no physical-pad semantics have been demonstrated.",
-    "Does not repurpose VIEW_4; stock VIEW_4 is tied to a separate 0xB0 camera object."
-  ]
+  "hook": {
+    "va": "0x0203E3A9",
+    "cave_va": "0x0203E3BD",
+    "next_function_va": "0x0203E470",
+    "cave_bytes": 167,
+    "cave_capacity": 179
+  },
+  "native_calls": {
+    "check_camera_ready": "0x01B7BA8A",
+    "init_camera_mode": "0x01B8AAEE",
+    "activate_manager": "0x01BF353F",
+    "set_view_camera": "0x01C34D5A",
+    "refresh_camera": "0x01BFD4B8",
+    "stack_check": "0x01C82CBC"
+  },
+  "camera_managers": {
+    "self": "sGameCamera+0xCE0",
+    "partner": "sGameCamera+0xCE4"
+  },
+  "viewports": {
+    "viewport0": {
+      "camera": "Self",
+      "visible": 1,
+      "mode": 2,
+      "mode_name": "TOP",
+      "display": 0
+    },
+    "viewport1": {
+      "camera": "Partner",
+      "visible": 1,
+      "mode": 3,
+      "mode_name": "BOTTOM",
+      "display": 0
+    }
+  },
+  "explicit_non_changes": [
+    "VIEW_4 is left untouched",
+    "uCameraManage::mPadNo is not modified",
+    "no manual viewport rectangle coordinates are written"
+  ],
+  "status": "STATICALLY VERIFIED ONLY - runtime gameplay validation still required"
 }
