@@ -179,3 +179,37 @@ No volver a tratarlas como hooks P1/P2 salvo nueva evidencia.
 ```
 
 No se mezclará pantalla partida con input antes de demostrar que Sub0 puede recibir un segundo mando de forma aislada.
+
+
+---
+
+### Corrección de la salida stock de cámaras
+
+`sGameCamera+0xCE0` y `sGameCamera+0xCE4` son dos `uCameraManage` reales correspondientes a Self y Partner.
+
+La inicialización stock **no** los dibuja simultáneamente:
+
+```text
+Self View / Partner View
+        |
+        v
+seleccionan uno de los dos uCameraManage
+        |
+        v
+VIEW_0
+```
+
+Los callbacks debug llaman a `0x0203E8A0`, que activa el manager seleccionado, desactiva el otro y enlaza el seleccionado a VIEW_0 usando el helper nativo `0x01EBD610`.
+
+VIEW_4 no contiene el Partner Manager: recibe un tercer objeto de cámara de `0xB0` bytes creado durante la inicialización, asociado a la salida debug/free-view.
+
+La estrategia actual de pantalla partida es:
+
+```text
+Self uCameraManage    -> VIEW_0 -> TOP(2)    -> display 0
+Partner uCameraManage -> VIEW_1 -> BOTTOM(3) -> display 0
+```
+
+activando ambos managers simultáneamente y enlazándolos mediante el helper nativo.
+
+`uCameraManage::mPadNo +0x88` ya no forma parte del parche nuevo: el nombre parecía prometedor, pero todavía no existe evidencia de que seleccione `sGamePad` o un dispositivo físico.
