@@ -2503,3 +2503,29 @@ Detalle: docs/11-persistent-camera-v8.md
 Builder: patches/build_v8_persistent_split.py
 Assembly: research/patches/camera_persistence_v8.S
 Manifest: research/manifests/p2-fullpad-persistent-split-v8.json
+
+---
+
+# 50. cDebugPlayer y equipamiento 2P
+
+Se identificó `cDebugPlayer` con tamaño `0x34`, vtable `0x04CC620C` y constructor `0x01D7CAB0`.
+
+El constructor deja `+0x10` (usar configuración de personaje) a 0 y `+0x11` (2P necesario) a 1.
+
+Todavía no se considera `+0x11` un switch de spawn P2: falta localizar un consumidor que lo demuestre.
+
+El bloque `地形アクションテスト` registra callbacks reales y separados para equipamiento 1P/2P.
+
+Slots comunes: Weapon0=0, Weapon1=1, Weapon2=2, SubWeapon=4, Genesis=0xE.
+
+Los callbacks 1P y 2P usan la misma API de inventario/equipo, pero resuelven actores distintos antes de acceder a ella.
+
+**CONFIRMADO:** la build conserva lectura/escritura de equipamiento 2P independiente.
+
+Detalle: `docs/12-cdebugplayer-p2-equipment.md`.
+
+# 51. for2P descartado como hook genérico
+
+`for2P @ 0x04DB5308` se siguió hasta un parser alrededor de `0x028F5DB0` junto a `SetFlag` y configuración de objetos/ride.
+
+No pertenece al bloque cDebugPlayer ni aporta evidencia de HUD/input global 2P. Se conserva como pista descartada.
