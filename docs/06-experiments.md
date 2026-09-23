@@ -594,3 +594,37 @@ La siguiente versión debe escribir el enum de región en:
 Viewport0 base sCamera+0x30  -> mRegion sCamera+0x48
 Viewport1 base sCamera+0x1C0 -> mRegion sCamera+0x1D8
 ```
+
+
+---
+
+## RECTIFICACIÓN — mMode=2/3 sí es TOP/BOTTOM
+
+La corrección inmediatamente anterior sobre `mRegion` fue provisional y resultó incorrecta.
+
+La tabla enum interna de `sCamera::Viewport`, localizada junto a la vtable `0x04EC9954`, establece:
+
+```text
+FULLSCREEN=0
+FREE=1
+TOP=2
+BOTTOM=3
+LEFT=4
+RIGHT=5
+TOPLEFT=6
+BOTTOMLEFT=7
+TOPRIGHT=8
+BOTTOMRIGHT=9
+VIRTUAL=10
+```
+
+Por tanto los experimentos 2 y 4 sí escribían correctamente:
+
+```text
+mMode=2 -> TOP
+mMode=3 -> BOTTOM
+```
+
+`mRegion @ +0x18` es un rectángulo/estructura de 16 bytes, no el enum.
+
+La anotación anterior se conserva como parte del historial, pero queda superseded por esta rectificación.
