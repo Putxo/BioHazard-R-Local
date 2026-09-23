@@ -62,6 +62,7 @@ Hallazgo más reciente: la build de enero contiene RTTI/clases diferenciadas par
 - [sGamePad, sPcsManager y clases Main/Sub](docs/05-sgamepad-spcsmanager.md)
 - [Experimentos estáticos y sus limitaciones](docs/06-experiments.md)
 - [Roles Main/Sub y ruta real de pad](docs/07-player-roles-and-pad-routing.md)
+- [ThinkMode y control local](docs/08-thinkmode-local-input.md)
 - [Mapa de strings/direcciones](research/key-string-addresses.md)
 - [Manifest P2 input](research/manifests/p2-input-experimental.json)
 - [Manifest split-screen v2](research/manifests/splitscreen-v2-experimental.json)
