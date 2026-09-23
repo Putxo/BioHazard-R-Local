@@ -1195,3 +1195,194 @@ PadData[1] local
 ```
 
 Detalle completo: `docs/08-player-pad-sync.md`.
+
+
+---
+
+# 29. Productor nativo de cPlayerPadSyncData
+
+Después de identificar el receptor remoto `0x027B1D70`, se localizó también el productor/sender:
+
+```text
+0x0274B200
+```
+
+Esta rutina construye un `cPlayerPadSyncData` temporal en la pila y obtiene los seis valores de control desde el `uNpc` owner.
+
+### Campos rellenados
+
+```text
+packet +0x08 moveAnalog
+  getter thunk 0x01BF5416 -> 0x0208B7E0
+  origen uNpc+0x1670
+
+packet +0x10 rotateAnalog
+  thunk 0x01C7EB03 -> 0x02703130
+  origen uNpc+0x1678
+
+packet +0x18 aimAnalog
+  thunk 0x01C6253E -> 0x02728570
+  origen uNpc+0x1680
+
+packet +0x20 waistRotateX
+  thunk 0x01C3B1AA -> 0x02089BC0
+  devuelve uNpc+0x16C0; el sender toma el primer float
+
+packet +0x24 isRun
+  thunk 0x01C3DD56 -> 0x0272D790
+  origen uNpc+0x1688
+
+packet +0x25 isAim
+  thunk 0x01BC4D43 -> 0x0208E9D0
+  cálculo basado en el estado de aim del NPC
+```
+
+El paquete actual se compara con una copia cacheada dentro de `cNetSyncData`, comenzando alrededor de `+0x70`. Solo se transmite cuando cambia o cuando corresponde un refresco periódico.
+
+Envío observado alrededor de `0x0274B68B`, terminando en:
+
+```text
+thunk 0x01BC43D4 -> 0x02DA4C30
+```
+
+Después el paquete se copia a la cache mediante:
+
+```text
+thunk 0x01BD6A07 -> 0x0274B9A0
+```
+
+### Caller desde el control del NPC
+
+El sender tiene un call relevante desde:
+
+```text
+0x027A1027
+  thunk 0x01BED879
+  -> 0x0274B200
+```
+
+Ese call está en la misma rutina de control NPC `0x027A0CA0`.
+
+Esto demuestra el pipeline completo:
+
+```text
+estado de control del NPC
+ -> cPlayerPadSyncData
+ -> red
+ -> cPlayerPadSyncData remoto
+ -> 0x027B1D70
+ -> estado de control del NPC remoto
+```
+
+---
+
+# 30. Corrección crítica: los getters PC de sGamePad ignoran el selector recibido
+
+La rutina NPC llama a una función selectora:
+
+```text
+thunk 0x01C6C746 -> 0x027A27B0
+```
+
+En el original:
+
+```asm
+xor eax,eax
+ret
+```
+
+El resultado se pasa como argumento a varias APIs de `sGamePad`.
+
+La hipótesis anterior era que cambiar ese 0 por 1 seleccionaría el segundo pad.
+
+Al desmontar las implementaciones PC se comprobó que **el argumento existe pero se ignora**. Los getters leen en su lugar:
+
+```text
+sGamePad::mStartPadNo @ +0x970
+```
+
+### Métodos confirmados
+
+```text
+move analog
+thunk 0x01BC4177 -> 0x02DB1570
+
+aim analog
+thunk 0x01BBA276 -> 0x02DB1740
+
+rotate analog
+thunk 0x01C39DA0 -> 0x02DB1910
+
+alternate rotate analog
+thunk 0x01C41E88 -> 0x02DB1C90
+
+run/action boolean
+thunk 0x01BA896D -> 0x02DAFFB0
+
+aim boolean
+thunk 0x01C484F9 -> 0x02DAF3C0
+```
+
+Los cuatro getters analógicos reciben dos argumentos y retornan con `ret 8`, pero la segunda entrada —el selector pasado por el caller— no se usa para escoger el PadData. Se carga `mStartPadNo` global.
+
+Los dos getters booleanos presentan la misma idea: reciben un selector, pero la implementación termina consultando `mStartPadNo`.
+
+### Consecuencia sobre el experimento P2 INPUT anterior
+
+**CORRECCIÓN:** el parche antiguo que hacía que `0x027A27B0` devolviera 1 para modos secundarios no basta para separar Pad 1/Pad 2 en esta versión PC.
+
+Aunque el flujo de control llegaba a la ruta correcta, las implementaciones PC de `sGamePad` seguían leyendo el pad global inicial.
+
+El experimento se conserva como historial y como prueba de flujo, pero no debe considerarse una separación real de mandos.
+
+### Nueva estrategia de parche
+
+La API ya conserva la interfaz correcta: los getters reciben un selector.
+
+Por tanto la ruta más limpia es restaurar esa semántica:
+
+```text
+sGamePad getter(selector)
+  usar selector
+  en lugar de mStartPadNo global
+```
+
+y después:
+
+```text
+Main / pad local normal -> selector 0
+Partner remoto convertido a local -> selector 1
+```
+
+Esto evita cambiar globalmente `mStartPadNo`, lo cual afectaría simultáneamente a ambos jugadores.
+
+---
+
+# 31. Interpretación provisional de los modos NPC
+
+En `0x027A0CA0` el modo se obtiene de un objeto cuyo getter termina leyendo `+0x34`.
+
+Se observó además el nombre debug:
+
+```text
+ThinkModes
+```
+
+La distribución de comportamiento es:
+
+```text
+modo 1:
+  calcula move/rotate/aim/run/aim desde sGamePad
+  luego puede llamar al sender 0x0274B200
+
+modo 2:
+  alimenta los mismos campos desde otra estructura/ruta
+  fuerte candidato a AI/otra fuente local
+
+modo 3:
+  no recalcula los tres vectores principales
+  mantiene estado auxiliar
+  encaja con recibir los campos asíncronamente mediante cPlayerPadSyncData
+```
+
+**Estado:** modo 1 = local y modo 3 = remoto/network es una hipótesis fuerte por comportamiento, pero todavía no se marca como nombre de enum confirmado hasta recuperar las etiquetas del metadata.
