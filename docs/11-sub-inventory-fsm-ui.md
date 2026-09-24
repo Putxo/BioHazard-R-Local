@@ -762,3 +762,120 @@ PcsSub actions
 ```
 
 No se necesita añadir un parche nuevo para estas operaciones antes de la validación runtime.
+
+
+---
+
+## 14. FsmPickupItem puede entregar al Main o al Partner
+
+La recogida genérica no está implementada como una acción PcsSub llamada `PickupItem`. PcsSub sí registra `PcsSubItemSetEnablePickup`, pero la acción que añade realmente el objeto es la común:
+
+```text
+FsmPickupItem
+callback thunk 0x01B7A487 -> 0x029971C0
+```
+
+### Parámetro confirmado por metadata
+
+La rutina de metadata alrededor de `0x02997020` registra:
+
+```text
++0x04 mIsDrawMessage
++0x05 mIsAddMainPlayer
++0x08 mListNo
++0x0C mDataNo
++0x10 mArrange
+```
+
+El nombre `mIsAddMainPlayer` elimina la ambigüedad sobre la bifurcación de destinatario.
+
+### Validación del objeto recogido
+
+El handler resuelve el objeto y lo valida contra el DTI global:
+
+```text
+0x05579584
+```
+
+La inicialización estática de ese DTI usa la string literal:
+
+```text
+"uItem"
+```
+
+Por tanto el objeto recogido se valida realmente como `uItem`.
+
+### Selección del destinatario
+
+El handler bifurca con:
+
+```text
+if (param.mIsAddMainPlayer)
+    actor = ruta Main
+else
+    actor = ruta other/partner
+```
+
+Rutas:
+
+```text
+Main:
+  0x01C2C7F4 -> 0x01CB7400
+
+Partner/other:
+  0x01BCA0C2 -> 0x01D115B0
+```
+
+Ambas recorren la colección de actores.
+
+La rama Main usa un predicado que exige que el ID del candidato coincida con la identidad de referencia.
+
+La rama Partner usa un predicado que exige que el ID sea distinto de la identidad de referencia, además de validaciones de estado/actividad.
+
+No se asignan nombres más fuertes a esos predicados secundarios hasta recuperar sus metadatos.
+
+### El objeto termina en el pack del actor seleccionado
+
+Una vez elegido el actor:
+
+```text
+0x01BCC327 -> 0x01D336A0
+```
+
+obtiene:
+
+```text
+uNpc + 0x1524 -> cBioItemPack
+```
+
+Después se invoca el virtual del pack:
+
+```text
+vslot 6 / +0x18
+thunk 0x01BD549A -> 0x02433B40
+```
+
+con el item recogido.
+
+Esa implementación modifica el propio pack destinatario y contiene las rutas normales de munición/hierbas/items.
+
+### Consecuencia
+
+**CONFIRMADO estáticamente:** la acción común de pickup ya sabe añadir un objeto tanto al Main como al Partner.
+
+No hay que redirigir manualmente un pickup de P2 hacia el inventario de P1 ni crear una acción PcsSub nueva.
+
+El flujo nativo ya es:
+
+```text
+uItem
+ -> mIsAddMainPlayer ?
+      Main actor
+      Partner actor
+ -> actor uNpc
+ -> uNpc+0x1524
+ -> cBioItemPack propio
+ -> add item
+```
+
+Pendiente: seguir `sItem::cNetSyncData::cPickupItemSyncData` para comprobar cómo la recogida interactiva/sincronizada transporta la identidad del destinatario y si esa capa necesita adaptación para local co-op.
