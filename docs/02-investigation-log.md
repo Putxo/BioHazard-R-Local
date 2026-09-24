@@ -3064,3 +3064,33 @@ v11 SHA:
 ```
 
 Es v10 + 36 bytes efectivos en 2 rangos, y revertir solo esos bytes reproduce exactamente el SHA de v10.
+
+
+---
+
+# 46. Pickup común ya selecciona Self/Partner
+
+Se reconstruyó `FsmPickupItem` (`0x029971C0`).
+
+El parámetro `cPickupItemParameter+0x05` selecciona el actor:
+
+```text
++0x05 != 0 -> chara::getSelf
++0x05 == 0 -> Partner
+```
+
+La ruta Self se confirmó por el assert literal del ejecutable:
+
+```text
+(chara::getSelf()( pPlayer ))
+```
+
+asociado al mismo predicado `0x01BB3192 -> 0x01CB7560`.
+
+La ruta Partner usa el resolver emparejado `0x01BCA0C2 -> 0x01D115B0`.
+
+Después el actor seleccionado se convierte a su `cBioItemPack` mediante `uNpc+0x1524` y el pickup se aplica a ese pack.
+
+La ruta de red `cPickupItemSyncData -> 0x02459C20` también resuelve el actor remoto y modifica su propio pack.
+
+Detalle completo: `docs/12-pickup-coop.md`.
