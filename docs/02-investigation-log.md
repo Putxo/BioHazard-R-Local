@@ -2799,3 +2799,36 @@ Al revertir solo esos dos cambios se reproduce exactamente el SHA publicado de v
 Builder: `patches/build_v10_itembox_from_v9.py`.
 
 Manifest: `research/manifests/local-coop-v10-itembox.json`.
+
+
+---
+
+# 44. ItemBox Coop separa player y NPC
+
+El normalizador de IDs `0x01D4B120` aplica `id & 0xF00F0000`.
+
+Un switch interno asigna etiquetas:
+
+```text
+0x80010000 -> pl
+0x80020000 -> np
+0x80030000 -> em
+0x80040000 -> it
+0x80050000 -> wp
+0x80060000 -> om
+```
+
+Por tanto `0x80010000` es categoría player y `0x80020000` categoría NPC.
+
+Además:
+
+```text
+sItemBox slots 14/15     -> nullptr
+sItemBoxCoop slots 14/15 -> lookup 0x80020000
+```
+
+La implementación cooperativa añade explícitamente acceso a un bag NPC/partner que no existe en el ItemBox normal.
+
+Esto encaja con Sub0: sigue siendo un `uNpc` incluso después de la transición nativa Cpu->Pad.
+
+Detalle: `docs/09-inventory-coop.md`.
