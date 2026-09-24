@@ -2832,3 +2832,39 @@ La implementación cooperativa añade explícitamente acceso a un bag NPC/partne
 Esto encaja con Sub0: sigue siendo un `uNpc` incluso después de la transición nativa Cpu->Pad.
 
 Detalle: `docs/09-inventory-coop.md`.
+
+
+---
+
+# 45. PcsSub opera nativamente sobre inventario NPC
+
+Se verificaron las implementaciones comunes usadas por PcsSub para:
+
+- AddWeapon;
+- ClearWeapon;
+- NpcSetWeaponSlot;
+- NpcResetWeaponSlot;
+- NpcChangeEquipSlot.
+
+Todas las variantes Npc/alta/borrado relevantes aceptan explícitamente:
+
+```text
+pl = 0x80010000
+np = 0x80020000
+```
+
+antes de continuar.
+
+Los wrappers Sub pasan su contexto `[this+0x1078]`.
+
+Ese contexto procede de una tabla de punteros reales de `sPcsManager+0xB44`; el setter `0x02DD04E0` guarda el objeto y en una tabla paralela guarda su ID derivado.
+
+AddWeapon/ClearWeapon continúan por:
+
+```text
+actor -> uNpc -> uNpc+0x1524 -> cBioItemPack
+```
+
+por lo que las acciones Sub modifican el pack del actor/partner y no el del jugador principal.
+
+Detalle completo: `docs/11-sub-inventory-fsm-ui.md`.
