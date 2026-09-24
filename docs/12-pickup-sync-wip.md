@@ -1,3 +1,5 @@
+> **HISTÓRICO / SUPERSEDED:** este documento conserva el punto exacto de un turno interrumpido, pero ya no representa trabajo pendiente. La investigación posterior resolvió `0x049A8023` como DTI de `uItem`, cerró la ruta de pickup, produjo v11/v12 y después v13. Para el estado actual leer `START_HERE_NEW_CHAT.md`, `docs/12-pickup-coop.md`, `docs/12-v11-pickup-actioncommand.md` y `docs/13-door-2p.md`.
+
 # 12 — Pickup sync / inventario P2 — WIP exacto al cierre del chat
 
 Build de referencia: **BioRevHD 30-Enero-2013.exe**.
