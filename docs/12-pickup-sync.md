@@ -271,3 +271,80 @@ Todavía no se renombran hasta cerrar sus consumidores uno por uno.
 2. demostrar si la interacción local de Sub0 genera directamente la misma ruta sin necesitar transporte de red;
 3. comprobar munición/hierbas/objetos especiales por los mismos caminos;
 4. determinar si v10 necesita un hook adicional o si las rutas actor-local ya bastan.
+
+
+---
+
+## 8. cFsmAction::cPickupItemParameter — campos recuperados
+
+Metadata de propiedades en `0x02997020`:
+
+```text
++0x04 mIsDrawMessage
++0x05 mIsAddMainPlayer
++0x08 mListNo
++0x0C mDataNo
++0x10 mArrange
+```
+
+Esto corrige cualquier lectura provisional de `+0x08/+0x0C` como IDs directos: son `mListNo` y `mDataNo`.
+
+## 9. FsmPickupItem selecciona Main o Partner de forma nativa
+
+Implementación común:
+
+```text
+FsmPickupItem
+0x029971C0
+```
+
+### mIsAddMainPlayer != 0
+
+Selector:
+
+```text
+0x01C2C7F4 -> 0x01CB7400
+predicate 0x01BB3192 -> 0x01CB7560
+```
+
+El predicate obtiene el ID local actual y lo compara con `candidate+0xE3C`. Solo acepta el candidato cuyo ID coincide con el ID local, además de una condición de validez.
+
+Por tanto esta rama selecciona **Main/Self**.
+
+### mIsAddMainPlayer == 0
+
+Selector:
+
+```text
+0x01BCA0C2 -> 0x01D115B0
+predicate 0x01C8731B -> 0x01D116C0
+```
+
+El predicate vuelve a obtener el ID local, pero **rechaza** el candidato si `candidate+0xE3C` coincide con él. Para el candidato no-Self exige además dos condiciones de validez.
+
+Por tanto esta rama selecciona **el partner/non-Self**.
+
+### Aplicación al inventario
+
+Ambas ramas convergen en:
+
+```text
+selected actor
+ -> 0x01BCC327
+ -> 0x01D336A0
+ -> actor+0x1524
+ -> cBioItemPack
+```
+
+Después ejecutan el mismo virtual del pack en `vtable+0x18`.
+
+**CONFIRMADO estáticamente:**
+
+```text
+mIsAddMainPlayer = 1 -> Main/Self cBioItemPack
+mIsAddMainPlayer = 0 -> Partner/non-Self cBioItemPack
+```
+
+No hace falta sustituir el pickup local por una ruta de red para P2. La acción común ya contiene la selección Main/Partner.
+
+Pendiente: localizar quién construye `cPickupItemParameter` en las interacciones de Sub0 y verificar que la ruta partner usa `mIsAddMainPlayer=0`.
