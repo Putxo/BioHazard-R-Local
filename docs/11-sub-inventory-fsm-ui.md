@@ -1127,3 +1127,84 @@ v12 ya entrega el pickup principal al pack correcto de Sub0.
 Lo que todavía no replica en Campaign local es esta regla secundaria de Coop para repartir/bonificar munición al otro participante, porque `mGameMode` global permanece en Campaign por diseño.
 
 No se fuerza `mGameMode`: el siguiente análisis debe encontrar el hook local mínimo para activar solo esta regla cuando `gLocalCoopActive=1`.
+
+
+---
+
+## 14. Bloqueo confirmado: el pickup local exige categoría pl
+
+La ruta de recogida local alcanza:
+
+```text
+0x01C639B6 -> 0x024646F0
+```
+
+Entrada relevante:
+
+```text
+this = objeto/item
+arg1 = actor que recoge
+```
+
+Al comienzo de `0x024646F0`:
+
+```asm
+test arg1,arg1
+je   exit
+
+mov  ecx,arg1
+call 0x01C53859        ; obtiene ID/categoría
+push eax
+call 0x01C8C9A1        ; -> 0x01D77EB0, predicate "pl"
+test al,al
+je   exit
+```
+
+El predicado `0x01D77EB0` ya está identificado como:
+
+```text
+normalize(id) == 0x80010000
+```
+
+es decir, categoría interna:
+
+```text
+pl
+```
+
+La función **no prueba después `np`** como sí hacen `AddWeapon`, `ClearWeapon`, `NpcSetWeaponSlot`, `NpcResetWeaponSlot` y `NpcChangeEquipSlot`.
+
+### Consecuencia para Sub0 local
+
+Sub0 sigue siendo un actor `uNpc` / categoría:
+
+```text
+np = 0x80020000
+```
+
+aunque v6/v7/v9/v10 lo cambien de:
+
+```text
+ThinkMode::Cpu -> ThinkMode::Pad
+```
+
+Por tanto el pickup local stock no puede asumirse funcional para P2.
+
+**CONFIRMADO:** existe un bloqueo explícito `pl-only` en la ruta de recogida.
+
+### Siguiente línea de investigación
+
+No se parcheará todavía el predicado a ciegas.
+
+El juego ya contiene:
+
+```text
+sItem::cNetSyncData::cPickupItemSyncData
+```
+
+usado por el cooperativo online. Se está reconstruyendo su productor/receptor para saber cómo Capcom replica una recogida hecha por el partner remoto y decidir si:
+
+1. el hook correcto es permitir exactamente al Sub0 local atravesar `0x024646F0`; o
+2. conviene reutilizar la ruta de `cPickupItemSyncData`.
+
+Hasta cerrar esa comparación no se crea una nueva versión del EXE.
