@@ -6,29 +6,15 @@ Investigación para añadir cooperativo local a **Resident Evil Revelations / Bi
 >
 > **[START_HERE_NEW_CHAT.md](START_HERE_NEW_CHAT.md)**
 >
-> Ese archivo contiene el estado canónico, la base actual, lo confirmado/descartado y el punto exacto desde el que continuar.
+> Ese archivo contiene el estado canónico completo, la cadena de versiones correcta y el punto exacto desde el que continuar.
 
 ## Alcance
 
-Este repositorio documenta **únicamente la investigación realizada en este chat** sobre las cuatro builds aportadas aquí.
+Este repositorio documenta **únicamente la investigación realizada en este chat** sobre las builds aportadas aquí.
 
 No se incorporan resultados de otros chats.
 
-## Objetivo
-
-Conseguir, en una sola instancia:
-
-- P1 y P2 locales reales;
-- dos mandos físicos independientes;
-- Sub0/partner controlado localmente;
-- dos cámaras y pantalla partida;
-- inventario/equipamiento/pickups correctos;
-- HUD, pausa, interacciones, QTE, transiciones y cutscenes compatibles;
-- preservar comportamiento stock/online cuando el modo local no está activo.
-
-## Base de ingeniería inversa
-
-Build principal:
+## Build principal
 
 `BioRevHD 30-Enero-2013.exe`
 
@@ -36,131 +22,160 @@ SHA-256:
 
 `9124bb92d6c54a047ade47dacc8429221b18f9910b504f0e87718d5151013f69`
 
-Es `FullDebugWin32` y conserva RTTI, menús internos y lógica eliminada después.
-
-La build 23-Feb-2013 se usa como comparación: conserva parte de la interfaz debug, pero algunas rutas como `CreateRaidPlayer` terminan en stubs.
+Build `FullDebugWin32`, usada como base de ingeniería inversa y parche.
 
 ## Base experimental canónica actual
 
-**v10**
+**v13 — SYMMETRIC AMMO RELIEF**
 
-`BioRevHD 30-Enero-2013 LOCAL COOP v10 CLEAN SPLIT COOP ITEMBOX.exe`
+`BioRevHD 30-Enero-2013 LOCAL COOP v13 SYMMETRIC AMMO RELIEF.exe`
 
 SHA-256:
 
-`5060269e5115ef8df53aa0ad4e26c09b4b273d4cfeb6628a7a4f902c606bb4e6`
+`3df0e1020b58b3ccc7e31a9046a2a3ce9e5230e1764869b517943b4a808838aa`
 
 Estado:
 
-**STATICALLY VERIFIED ONLY — todavía no validado dentro del juego.**
+**STATICALLY VERIFIED ONLY — runtime pendiente.**
 
 Builder:
 
-`patches/build_v10_itembox_from_v9.py`
+`patches/build_v13_ammo_relief.py`
+
+Assembly:
+
+`research/patches/ammo_relief_v13.S`
 
 Manifest:
 
-`research/manifests/local-coop-v10-itembox.json`
+`research/manifests/local-coop-v13-ammo-relief.json`
 
-v10 = v9 exacto + 23 bytes efectivos de selección de `sItemBoxCoop`.
+## Cadena canónica reciente
 
-## Qué contiene v10
+```text
+v7 input-only
+ -> v9 clean persistent split
+ -> v10 Coop ItemBox
+ -> v11 canonical pickup
+ -> v12 pickup Pad 2
+ -> v13 symmetric ammo relief
+```
+
+SHA canónicos:
+
+```text
+v9  5dc7a7a413ce5916c2758be43b3107d5adf00beee93533b4acf5d83cec97c4be
+v10 5060269e5115ef8df53aa0ad4e26c09b4b273d4cfeb6628a7a4f902c606bb4e6
+v11 2c69c5f16626dc7478a6221c2bac98ed19f5b37dcf7991fc78f744f35f192d69
+v12 5aafc3fd4273d608b4c9b8b60631256b56cb27d6aab0ecca8d2718d824dd28e8
+v13 3df0e1020b58b3ccc7e31a9046a2a3ce9e5230e1764869b517943b4a808838aa
+```
+
+**Importante:** hubo varias iteraciones históricas llamadas v11. La v11 que pertenece a la cadena v12/v13 es la de SHA `2c69c5...`.
+
+## Qué cubre ya la línea actual
 
 - exacto `uPcsPlayerSub0` rastreado hasta su `uNpc`;
 - transición canónica `ThinkMode::Cpu(2) -> Pad(1)`;
 - `ThinkMode::Network(3)` intacto;
-- segundo pad real mediante `PadData[1]`;
-- restauración de selector en la capa PC `sGamePad`;
-- Partner target = exacto Sub0;
+- segundo pad físico/DirectInput y `PadData[1]`;
+- restauración completa del selector en la ruta NPC localizada;
+- Self/Partner CameraManage simultáneos;
 - Self -> VIEW_0 TOP;
 - Partner -> VIEW_1 BOTTOM;
-- split persistente solo cuando `gLocalCoopActive=1`;
-- comportamiento cámara stock cuando el flag local está apagado;
-- selección de `sItemBoxCoop` cuando el local co-op está activo sin cambiar globalmente `mGameMode`.
+- split persistente solo con local coop activo;
+- ItemBox Coop sin cambiar globalmente GameMode;
+- pickup local del Sub0 exacto;
+- ActionCommand del pickup usando Pad 2;
+- entrega del pickup al `cBioItemPack` propio de Sub0;
+- réplica local de la regla Coop de reparto/relief de munición al otro jugador.
 
-## Punto exacto actual
+## Punto actual real
 
-La investigación está ahora en la ruta de **pickup/item/ammo/herb del partner**.
+Después de v13 la investigación avanzó a **puertas/interacciones de dos participantes**.
 
-Tipo clave:
+Infraestructura confirmada:
 
-`sItem::cNetSyncData::cPickupItemSyncData`
+```text
+uDoor2pBase
+mReadyFlag[0/1]
+mGuestStatusFlag[0/1]
+mLocalFlag[0/1]
+```
 
-Receiver prioritario:
+Setter actor-específico:
 
-`0x02459C20`
+```text
+0x01C9217B -> 0x02588D20
+```
 
-Punto adicional interrumpido por timeout:
+Callsites prioritarios:
 
-`0x049A8023`
+```text
+0x0257185D
+0x0257198A
+```
 
-Detalle completo:
+Detalle:
 
-**[docs/12-pickup-sync-wip.md](docs/12-pickup-sync-wip.md)**
+**[docs/13-door-2p.md](docs/13-door-2p.md)**
 
 ## Documentación principal
 
-1. [START_HERE_NEW_CHAT.md](START_HERE_NEW_CHAT.md) — handoff autocontenido.
-2. [docs/02-investigation-log.md](docs/02-investigation-log.md) — cronología exhaustiva.
-3. [docs/03-hypotheses-and-discarded-paths.md](docs/03-hypotheses-and-discarded-paths.md) — hipótesis, errores y descartes.
-4. [docs/13-version-lineage.md](docs/13-version-lineage.md) — v1→v10 y qué está superseded.
-5. [docs/10-physical-pad-binding.md](docs/10-physical-pad-binding.md) — dos pads físicos DirectInput.
-6. [docs/11-sub-inventory-fsm-ui.md](docs/11-sub-inventory-fsm-ui.md) — PcsSub/inventario/equipamiento.
-7. [docs/12-pickup-sync-wip.md](docs/12-pickup-sync-wip.md) — trabajo exacto pendiente.
-8. [docs/09-inventory-coop.md](docs/09-inventory-coop.md) — `sItemBoxCoop`, bags pl/np y GameMode.
-9. [docs/08-player-pad-sync.md](docs/08-player-pad-sync.md) — `cPlayerPadSyncData`.
-10. [docs/05-sgamepad-spcsmanager.md](docs/05-sgamepad-spcsmanager.md) — `sGamePad` / `sPcsManager`.
+1. [START_HERE_NEW_CHAT.md](START_HERE_NEW_CHAT.md)
+2. [docs/02-investigation-log.md](docs/02-investigation-log.md)
+3. [docs/03-hypotheses-and-discarded-paths.md](docs/03-hypotheses-and-discarded-paths.md)
+4. [docs/13-version-lineage.md](docs/13-version-lineage.md)
+5. [docs/12-pickup-coop.md](docs/12-pickup-coop.md)
+6. [docs/12-v11-pickup-actioncommand.md](docs/12-v11-pickup-actioncommand.md)
+7. [docs/13-door-2p.md](docs/13-door-2p.md)
+8. [docs/11-sub-inventory-fsm-ui.md](docs/11-sub-inventory-fsm-ui.md)
+9. [docs/10-physical-pad-binding.md](docs/10-physical-pad-binding.md)
+10. [docs/09-inventory-coop.md](docs/09-inventory-coop.md)
+11. [docs/08-player-pad-sync.md](docs/08-player-pad-sync.md)
+12. [research/current_state.json](research/current_state.json)
 
-## Historial técnico
+## Historial y trazabilidad
 
-También se conservan todos los experimentos y errores intermedios.
+Se conservan:
 
-Entre otros:
+- hipótesis correctas;
+- errores;
+- caminos descartados;
+- versiones superseded;
+- builders;
+- manifests;
+- evidencia de offsets;
+- correcciones posteriores.
 
-- v1/v2: selector de pad insuficiente;
-- v3: primera restauración de selector PC;
-- v4: split nativo;
-- v5: filtro exacto Sub0 manteniendo Cpu;
-- v6: Sub0 Cpu→Pad nativo;
-- v7: FULLPAD;
-- v8: persistent split con herencia de cámara incondicional — **superseded**;
-- v9: clean persistent split;
-- v10: ItemBox Coop condicional.
-
-No borrar las versiones históricas: forman parte de la trazabilidad solicitada.
+No borrar trabajo antiguo: forma parte de la auditoría pedida.
 
 ## Política del repositorio
 
-No se suben:
-
-- ejecutables del juego;
-- DLL/PDB propietarios;
-- assets;
-- dumps propietarios.
+No se suben EXE/DLL/PDB/assets propietarios.
 
 Sí se suben:
 
 - hashes;
 - offsets;
-- desensamblado mínimo como evidencia;
+- desensamblado mínimo;
 - documentación;
-- builders/patchers reproducibles;
+- builders reproducibles;
 - manifests;
-- hipótesis descartadas;
-- rectificaciones.
-
-## Estado de archivos locales
-
-Tras un reinicio del entorno, los EXE derivados v5–v10 pueden no seguir presentes localmente.
-
-Los cuatro EXE fuente originales sí son la referencia.
-
-Los derivados deben reconstruirse mediante los builders versionados; no asumir que siguen montados.
+- assembly propio;
+- rectificaciones;
+- estado actual.
 
 ## Regla para continuar
 
-No crear una nueva versión por cada hallazgo.
+**No crear v14 todavía.**
 
-**v10 sigue siendo la base hasta que se demuestre un cambio de código necesario.**
+Primero demostrar si la infraestructura nativa de `uDoor2pBase` ya maneja Sub0 correctamente.
 
-Siguiente trabajo: cerrar `cPickupItemSyncData` y comprobar si los pickups de Sub0 ya llegan a su `cBioItemPack / bag np` o si necesitan un hook local mínimo.
+Siguiente trabajo exacto:
+
+- identificar el owner/state de los callsites `0x0257185D` y `0x0257198A`;
+- reconstruir qué actor se pasa a `0x02588D20`;
+- verificar llegada de PcsSub/Sub0;
+- separar gameplay de sincronización/feedback basado en índice local global;
+- parchear solo si aparece un bloqueo concreto.
