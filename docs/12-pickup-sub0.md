@@ -330,3 +330,203 @@ gLocalCoopActive 0x057D9188
 ```
 
 No se habilitará pickup para NPCs genéricos.
+
+
+---
+
+## 14. El botón de pickup lo gestiona cActionCommand
+
+La investigación posterior a v11 cerró una duda importante: ni `FsmPickupItem` ni el callback final `0x02460610` leen directamente el mando.
+
+### uItem DTI confirmado en 0x049A8023
+
+La inicialización global alrededor de:
+
+```text
+0x049A7FF0..0x049A8023
+```
+
+registra un tipo de tamaño aproximado `0x10F0`.
+
+La string usada por el registro, en:
+
+```text
+0x04D30838
+```
+
+es literalmente:
+
+```text
+uItem
+```
+
+El objeto DTI/global asociado es:
+
+```text
+0x05579584
+```
+
+Esto confirma que las comprobaciones de DTI encontradas en la ruta de pickup son comprobaciones reales contra `uItem`.
+
+### FsmPickupItem
+
+String:
+
+```text
+FsmPickupItem
+VA 0x04DD2660
+```
+
+Registro:
+
+```text
+~0x02A9F0C7
+callback thunk 0x01B7A487
+ -> 0x029971C0
+```
+
+`0x029971C0`:
+
+- resuelve parámetros/objetos;
+- valida el target como `uItem` usando DTI `0x05579584`;
+- obtiene el actor/contexto;
+- obtiene su `cBioItemPack`;
+- aplica la operación de inventario correspondiente.
+
+**No contiene lectura directa de sGamePad.**
+
+Por tanto la decisión de “se ha pulsado recoger” sucede antes de esta acción FSM.
+
+### PcsSubItemSetEnablePickup
+
+String/action:
+
+```text
+PcsSubItemSetEnablePickup
+```
+
+Callback:
+
+```text
+0x01C7BF39 -> 0x02A93350
+```
+
+`0x02A93350` pasa el contexto Sub `[this+0x1078]` a:
+
+```text
+0x01BAB4F1 -> 0x02A18150
+```
+
+La función resuelve un objeto, valida DTI `uItem` y habilita/deshabilita su estado de pickup.
+
+**Tampoco es el lector del botón.**
+
+## 15. uItem contiene un cActionCommand
+
+El tipo:
+
+```text
+cActionCommand
+```
+
+tiene:
+
+```text
+size = 0x110
+DTI/global = 0x05564ED8
+```
+
+y se registra globalmente alrededor de:
+
+```text
+0x0493DB40
+```
+
+El layout de `uItem` contiene exactamente un bloque de ese tamaño en:
+
+```text
+uItem + 0xFD0
+```
+
+La inicialización de `uItem` alrededor de:
+
+```text
+0x0245F3D4..
+```
+
+configura ese `cActionCommand`.
+
+Entre los delegates creados aparece:
+
+```text
+0x01BDFA9E -> 0x02460610
+```
+
+es decir, el callback de pickup que v11 ya amplió para aceptar al Sub0 exacto.
+
+Configuración observada sobre `uItem+0xFD0`:
+
+```text
+~0x0245F4E3
+  action ID 0x201
+  call 0x01C2427F
+
+~0x0245F4F6
+  config 0x10
+  call 0x01B960D3
+
+~0x0245F50C
+  delegate/callback
+  call 0x01C7F26A
+
+~0x0245F51E
+  push 2
+  call 0x01C20779
+
+~0x0245F53C / 0x0245F54E
+  config type 0x0C / 0x0D
+  call 0x01C10FD1
+```
+
+### Conclusión
+
+La ruta relevante para que Pad 2 dispare el pickup es ahora:
+
+```text
+uItem+0xFD0 cActionCommand
+  -> detecta acción/botón
+  -> delegate
+  -> 0x02460610
+  -> entrega del item
+```
+
+v11 ya resuelve:
+
+- selección P1/Sub0 del candidato;
+- gates exact-Sub0;
+- entrega a cBioItemPack.
+
+Lo pendiente es **hacer que cActionCommand evalúe el pad correspondiente al actor candidato**, en vez de asumir el pad local principal.
+
+## 16. Strings/tipos útiles del subsistema ActionCommand
+
+Se localizaron:
+
+```text
+cActionCommand
+cActionCommand::cParamTriggerButton
+cParamPressButton
+cParamRepeatButton
+cParamStick
+sActionCommand
+Pad1
+Pad2
+Pad3
+Pad4
+mPadNo
+e:\bhr\source\biorevhd\prog\game\action_command\cactioncommand.cpp
+```
+
+Importante: la string compartida `mPadNo` no se toma todavía como prueba de que cada `cActionCommand` posea un selector físico de pad. Algunos xrefs pertenecen a metadata/tester y otros a `uCameraManage`.
+
+La siguiente tarea es identificar la rutina concreta de `cParamTriggerButton` / `sActionCommand` que acaba consultando `sGamePad`.
