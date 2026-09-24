@@ -1,0 +1,27 @@
+{
+  "base": "BioRevHD 30-Enero-2013 LOCAL COOP v9 FULLPAD CLEAN PERSISTENT SPLIT.exe",
+  "base_sha256": "5dc7a7a413ce5916c2758be43b3107d5adf00beee93533b4acf5d83cec97c4be",
+  "output": "BioRevHD 30-Enero-2013 LOCAL COOP v10 CLEAN SPLIT COOP ITEMBOX.exe",
+  "output_sha256": "5060269e5115ef8df53aa0ad4e26c09b4b273d4cfeb6628a7a4f902c606bb4e6",
+  "status": "STATICALLY VERIFIED ONLY - gameplay not executed in this environment",
+  "change": "ItemBox normal selector returns stock GameMode::Coop OR gLocalCoopActive; mGameMode itself remains unchanged.",
+  "wrapper_va": "0x1c95100",
+  "callsite_va": "0x1d067af",
+  "local_flag": "0x57d9188",
+  "stock_is_coop_thunk": "0x1c076cf",
+  "diff_vs_v9": {
+    "different_bytes": 23,
+    "ranges": 2,
+    "same_file_size": true
+  },
+  "expected_behavior": {
+    "campaign_local_off": "stock slot 0",
+    "stock_coop": "stock slot 1",
+    "campaign_local_on": "slot 1 sItemBoxCoop"
+  },
+  "lineage_check": "Removing only the v10 ItemBox wrapper and restoring the original 5-byte call reproduces v9 SHA-256 exactly: 5dc7a7a413ce5916c2758be43b3107d5adf00beee93533b4acf5d83cec97c4be.",
+  "limitations": [
+    "Runtime validation required.",
+    "Menu/pause input ownership is not yet proven independent for Pad 2."
+  ]
+}
