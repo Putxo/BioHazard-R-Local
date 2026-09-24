@@ -1,0 +1,34 @@
+{
+  "base": "BioRevHD 30-Enero-2013 LOCAL COOP v12 SUB0 PICKUP PAD2.exe",
+  "base_sha256": "5aafc3fd4273d608b4c9b8b60631256b56cb27d6aab0ecca8d2718d824dd28e8",
+  "output": "BioRevHD 30-Enero-2013 LOCAL COOP v13 SYMMETRIC AMMO RELIEF.exe",
+  "output_sha256": "3df0e1020b58b3ccc7e31a9046a2a3ce9e5230e1764869b517943b4a808838aa",
+  "status": "STATICALLY VERIFIED ONLY - gameplay not executed in this environment",
+  "purpose": "Replicate only the stock Coop ammo-relief rule in local Campaign without globally changing GameMode.",
+  "helper": {
+    "base_va": "0x01C95220",
+    "size": 186,
+    "coop_or_local": "0x01C95220",
+    "select_relief_other": "0x01C95234",
+    "valid_relief_other": "0x01C952A0",
+    "ammo_multiplier_local": "0x01C952C5"
+  },
+  "design": {
+    "coop_gate": "0x027ABFE0 enters for stock Coop OR gLocalCoopActive",
+    "symmetry": "P1 -> exact Sub0; Sub0 -> stock local P1 lookup",
+    "validation": "stock NPC/Cpu validator remains; local pl actor is additionally accepted for reciprocal Sub0->P1 relief",
+    "multiplier": "local uses [0x05479970] = 1.5, internally labeled 入手弾数倍率 (ammo acquisition amount multiplier)",
+    "preservation": "when gLocalCoopActive=0 all four paths fall back to stock behavior"
+  },
+  "diff_vs_v12": {
+    "same_file_size": true,
+    "different_bytes": 202,
+    "ranges": 5
+  },
+  "lineage_check": "Removing only the v13 helper and restoring its four hook sites reconstructs v12 byte-for-byte and reproduces SHA-256 5aafc3fd4273d608b4c9b8b60631256b56cb27d6aab0ecca8d2718d824dd28e8.",
+  "limitations": [
+    "Runtime validation required.",
+    "Normal pickup delivery is unchanged from v11/v12 and already reaches the selected actor's own cBioItemPack.",
+    "Pickup candidate arbitration still chooses the nearer P1/Sub0 before full stock eligibility validation."
+  ]
+}
