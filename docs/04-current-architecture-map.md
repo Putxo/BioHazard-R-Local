@@ -2,364 +2,339 @@
 
 Build de referencia: **BioRevHD 30-Enero-2013.exe**.
 
-## Arquitectura de trabajo
+Base experimental canónica: **v10 CLEAN SPLIT COOP ITEMBOX**.
+
+SHA-256 v10:
+
+`5060269e5115ef8df53aa0ad4e26c09b4b273d4cfeb6628a7a4f902c606bb4e6`
+
+Estado: **verificado estáticamente; runtime pendiente**.
+
+---
+
+## 1. Arquitectura actual
 
 ```text
+uPcsPlayerMain
+uPcsPlayerSub0
+uPcsPlayerSub1
+      |
+      v
 sPcsManager
-├── Main  -> uPcsPlayerMain
-├── Sub0  -> uPcsPlayerSub0
-└── Sub1  -> uPcsPlayerSub1
+      |
+      +--> actor uNpc exacto de Sub0
+             |
+             +--> ThinkMode::Pad
+             +--> selector 1
+             +--> PadData[1]
+             +--> cBioItemPack propio
+             +--> Partner uCameraManage target
 
-sGamePad
-├── mStartPadNo @ +0x970
-└── PadData / estructuras de entrada
+Pad físico 0 -> sPad::Pad[0] -> PadData[0] -> P1
+Pad físico 1 -> sPad::Pad[1] -> PadData[1] -> Sub0
 
-uCameraManage
-├── mCameraIdx
-├── mTargetNo
-└── mPadNo @ +0x88
+Self uCameraManage    -> VIEW_0 -> TOP
+Partner uCameraManage -> VIEW_1 -> BOTTOM
 
-sCamera
-└── Viewport[0..7]
+gLocalCoopActive
+  |
+  +--> cámara persistente
+  +--> ItemBox Coop slot 1
 ```
 
-## 1. sPcsManager
+---
 
-Slots confirmados:
+## 2. Roles PCS
+
+Vtables:
 
 ```text
-0 = Main Player
-1 = Sub Player 0
-2 = Sub Player 1
+uPcsPlayerMain  0x04E1642C
+uPcsPlayerSub0  0x04E1649C
+uPcsPlayerSub1  0x04E1650C
 ```
 
-Campos debug:
+Slot de identidad nativo:
 
 ```text
-+0x1308 mIsDebug
-+0x130C mDebugPlayerMainID
-+0x1310 mDebugPlayerSub0ID
-+0x1314 mDebugPlayerSub1ID
+Main=0
+Sub0=1
+Sub1=2
 ```
 
-Rutina común tras cambiar IDs:
+Actor vivo Sub0:
 
 ```text
-0x01BC1F58 -> 0x02DD16F0
+uPcsPlayerSub0+0x44 -> exact uNpc*
 ```
 
-La rutina procesa los tres slots consecutivamente.
-
-## 2. Clases de jugador
-
-RTTI identificado:
+Tracker local:
 
 ```text
-app::game::pcs::uPcsPlayerMain
-app::game::pcs::uPcsPlayerSub0
-app::game::pcs::uPcsPlayerSub1
+gSub0Npc = 0x057D9184
 ```
 
-Esto convierte la investigación actual en un problema de **reactivar/conectar clases ya existentes**, no de inventar un segundo jugador desde cero.
+---
 
-## 3. Entrada
-
-`sGamePad::mStartPadNo`:
+## 3. ThinkMode
 
 ```text
-sGamePad + 0x970
-default = 0
+Invalid=0
+Pad=1
+Cpu=2
+Network=3
 ```
 
-Regiones observadas:
+v6+ usa la ruta canónica:
 
 ```text
-+0x668
-+0x7E8
+Sub0 exacto en Cpu(2)
+ -> 0x01BB8B60
+ -> 0x0278CC40
+ -> 0x027F1290
+ -> Pad(1)
 ```
 
-separadas por `0x180`, con construcción de dos elementos de `0xC0`.
+Network(3) queda intacto.
 
-Interpretación actual: candidatos a bloques `PadData`, todavía pendiente de reconstrucción completa.
+---
 
-Objetivo:
+## 4. Input físico y lógico
+
+Dos pads físicos DirectInput confirmados.
 
 ```text
-uPcsPlayerMain -> PadData 0
-uPcsPlayerSub0 -> PadData 1
+dispositivo
+ -> socket 0/1
+ -> Pad lógico 0/1
+ -> sPad::Pad[index]
+ -> PadData[index]
+ -> sGamePad(selector)
 ```
 
-sin cambiar globalmente el pad principal.
-
-## 4. Movimiento PCS
-
-Cadenas/rutas activas:
+Helper PadData:
 
 ```text
-mMovePcs
-mMoveSubPcs
+0x02DBE720
+index < 2
+stride 0xC0
 ```
 
-Pendiente determinar si controlan:
-
-- movimiento real;
-- selección del PCS activo;
-- modo debug;
-- o exposición de estado en herramientas internas.
-
-## 5. Cámara
-
-`uCameraManage` contiene:
+v7 restaura el selector en los sitios PC que originalmente forzaban:
 
 ```text
-mCameraIdx
-mTargetNo
-mPadNo
+mStartPadNo @ +0x970
 ```
 
-El campo identificado `mPadNo` está en:
+Resultado:
 
 ```text
-+0x88
+P1 -> selector 0
+Sub0 exacto -> selector 1
 ```
 
-y no pertenece a `uPlayer`.
+---
 
-Cadena encontrada:
+## 5. Cámara v9
+
+Managers:
 
 ```text
-uCameraManage::setCameraIdx() : uPlayer::switchCamera()
+Self    = sGameCamera+0xCE0
+Partner = sGameCamera+0xCE4
 ```
 
-Esto confirma una relación directa entre el gestor de cámara y operaciones del jugador.
-
-## 6. Viewports
-
-`sCamera` contiene infraestructura:
+Flag:
 
 ```text
-VIEW_0
-VIEW_1
-VIEW_2
-VIEW_3
-VIEW_4
-VIEW_5
-VIEW_6
-VIEW_7
+gLocalCoopActive = 0x057D9188
 ```
 
-El análisis del constructor indica objetos Viewport reales, de tamaño aproximado `0x190`.
+Solo se activa después de la transición canónica de Sub0 a Pad.
 
-Objetivo futuro:
+Target Partner:
 
 ```text
-Viewport A -> Camera Main
-Viewport B -> Camera Sub0
+0x01C275EC -> 0x02066AB0
 ```
 
-con regiones separadas de pantalla.
+Viewports:
 
-## 7. Rutas no válidas como solución principal
+```text
+Self    -> VIEW_0 -> TOP(2)    -> display 0
+Partner -> VIEW_1 -> BOTTOM(3) -> display 0
+```
+
+Helper persistente:
+
+```text
+0x01C94FC0..0x01C950FA
+ensure_split = 0x01C9504C
+```
+
+Cuando el flag local está apagado, v9 preserva la inicialización de cámara stock.
+
+---
+
+## 6. ItemBox v10
+
+Slots globales:
+
+```text
+0x05562878 + index*4
+slot 0 = sItemBox
+slot 1 = sItemBoxCoop
+```
+
+`sItemBoxCoop` se crea automáticamente por el sistema doble.
+
+Selector stock:
+
+```text
+cSystemData<Game>::mGameMode
+Campaign=0
+Coop=1
+```
+
+v10 no cambia GameMode global.
+
+Wrapper:
+
+```text
+0x01C95100
+```
+
+Semántica:
+
+```cpp
+return stock_isCoop() || gLocalCoopActive;
+```
+
+Callsite:
+
+```text
+0x01D067AF
+```
+
+---
+
+## 7. Bags cooperativos
+
+Categorías:
+
+```text
+0x80010000 = pl
+0x80020000 = np
+```
+
+`sItemBoxCoop` aporta:
+
+```text
+pSharedBag -> 0x80010000
+pMyBag     -> 0x80011000
+NPC/partner accessors -> 0x80020000
+```
+
+`cBagCoop+0xB8/+0xBC` son estado `cCoopSkill`, no IDs de jugador.
+
+---
+
+## 8. PcsSub / equipamiento
+
+PcsSub tiene 77 acciones y las 77 tienen equivalente Main.
+
+Contexto Sub:
+
+```text
+cFsmActionPcsSub+0x1078
+```
+
+proviene de una tabla de punteros reales de:
+
+```text
+sPcsManager+0xB44
+```
+
+Acciones relevantes que aceptan `pl` o `np`:
+
+```text
+AddWeapon
+ClearWeapon
+NpcSetWeaponSlot
+NpcResetWeaponSlot
+NpcChangeEquipSlot
+```
+
+Ruta:
+
+```text
+PcsSub context
+ -> actor pl/np
+ -> uNpc
+ -> uNpc+0x1524
+ -> cBioItemPack
+```
+
+Campos pack:
+
+```text
++0xA0 mSubWeapon[5]
++0xB4 mSubBulletSlot[4]
++0xC8 mHerbNum
++0xCC mCoopKeyNum
+```
+
+El cambio rápido de arma de Sub0 ya usa PadData[1].
+
+---
+
+## 9. Caminos descartados
+
+No usar como hooks principales:
 
 ```text
 mCameraList[0]/[1] -> uObjModel
 mPadViewportNo     -> sVibration
+uCameraManage::mPadNo -> no demostrado como selector físico
+VIEW_4 -> no es Partner stock
 ```
 
-No volver a tratarlas como hooks P1/P2 salvo nueva evidencia.
-
-## 8. Orden de implementación
-
-```text
-1. Main/Sub0 existen simultáneamente
-2. input independiente
-3. camera independiente
-4. segundo viewport
-5. compatibilidad de gameplay
-```
-
-No se mezclará pantalla partida con input antes de demostrar que Sub0 puede recibir un segundo mando de forma aislada.
-
+No reutilizar v8 como base.
 
 ---
 
-### Corrección de la salida stock de cámaras
+## 10. Punto pendiente actual
 
-`sGameCamera+0xCE0` y `sGameCamera+0xCE4` son dos `uCameraManage` reales correspondientes a Self y Partner.
+La siguiente capa es **pickup/item/ammo/herb del partner**.
 
-La inicialización stock **no** los dibuja simultáneamente:
-
-```text
-Self View / Partner View
-        |
-        v
-seleccionan uno de los dos uCameraManage
-        |
-        v
-VIEW_0
-```
-
-Los callbacks debug llaman a `0x0203E8A0`, que activa el manager seleccionado, desactiva el otro y enlaza el seleccionado a VIEW_0 usando el helper nativo `0x01EBD610`.
-
-VIEW_4 no contiene el Partner Manager: recibe un tercer objeto de cámara de `0xB0` bytes creado durante la inicialización, asociado a la salida debug/free-view.
-
-La estrategia actual de pantalla partida es:
+Tipo:
 
 ```text
-Self uCameraManage    -> VIEW_0 -> TOP(2)    -> display 0
-Partner uCameraManage -> VIEW_1 -> BOTTOM(3) -> display 0
+sItem::cNetSyncData::cPickupItemSyncData
 ```
 
-activando ambos managers simultáneamente y enlazándolos mediante el helper nativo.
-
-`uCameraManage::mPadNo +0x88` ya no forma parte del parche nuevo: el nombre parecía prometedor, pero todavía no existe evidencia de que seleccione `sGamePad` o un dispositivo físico.
-
-
----
-
-## 9. Cámara Self/Partner confirmada
-
-`sGameCamera` contiene dos punteros `uCameraManage` reales:
+Receiver prioritario:
 
 ```text
-+0xCE0 Self
-+0xCE4 Partner
+0x01B9F142 -> 0x02459C20
 ```
 
-Los callbacks debug `Self View` y `Partner View` usan esos punteros y convergen en `0x0203E8A0`.
-
-La función stock hace que solo uno esté activo a la vez y lo enlaza a VIEW_0.
-
-Para cooperativo local, v4 modifica únicamente esa política:
+Dentro alcanza:
 
 ```text
-Self    -> activo -> VIEW_0 -> TOP    -> display 0
-Partner -> activo -> VIEW_1 -> BOTTOM -> display 0
+0x01BCC327 -> 0x01D336A0
+ -> uNpc+0x1524
+ -> cBioItemPack
 ```
 
-Se usa el helper nativo de enlace de cámara a viewport:
+Punto exacto adicional pendiente:
 
 ```text
-0x01C34D5A
+0x049A8023
 ```
 
-y las mismas funciones de preparación/activación usadas por Capcom:
+Ver:
 
-```text
-check ready  0x01B7BA8A
-init mode 13 0x01B8AAEE
-activate     0x01BF353F
-```
+`docs/12-pickup-sync-wip.md`
 
-VIEW_4 queda intacto porque pertenece a una tercera cámara/debug.
-
-`uCameraManage::mPadNo +0x88` queda fuera del parche actual: no se ha demostrado que seleccione el dispositivo físico.
-
-
----
-
-## 10. Ruta local actual v6
-
-La identidad del segundo jugador ya no depende de nombres de personaje ni de un modo global.
-
-```text
-sPcsManager
-   |
-   +-- uPcsPlayerSub0
-          |
-          +-- +0x40 native PCS ID
-          |
-          +-- common binder 0x02DF4F30
-                 |
-                 +-- compara [uNpc+0xE3C]
-                 |
-                 +-- +0x44 = uNpc* exacto de Sub0
-```
-
-v6 guarda ese `uNpc*` en `gLocalCoopSub0Npc`.
-
-Si:
-
-```text
-Sub0 ThinkMode == Cpu(2)
-```
-
-usa el setter virtual oficial:
-
-```text
-0x01BB8B60 -> 0x0278CC40 -> 0x027F1290
-```
-
-para pasar únicamente ese actor a:
-
-```text
-ThinkMode::Pad(1)
-```
-
-Si el actor está en `Network(3)`, no se modifica.
-
-### Entrada
-
-```text
-P1 / actor normal
- -> selector 0
- -> PadData[0]
-
-SubPlayer0 exacto
- -> selector 1
- -> PadData[1]
-```
-
-La capa PC `sGamePad` se corrige para usar el selector que su ABI ya recibe, en vez de forzar `mStartPadNo`.
-
-### Cámara
-
-```text
-Self uCameraManage
- -> VIEW_0
- -> TOP
- -> display 0
-
-Partner uCameraManage
- -> VIEW_1
- -> BOTTOM
- -> display 0
-```
-
-Ambos se activan con las mismas funciones nativas que usa el selector debug Self/Partner.
-
-### Lo que v6 no toca
-
-- `ThinkMode::Network`;
-- IA de otros NPC;
-- VIEW_4;
-- `uCameraManage::mPadNo`;
-- coordenadas manuales de viewport;
-- un global `mStartPadNo`.
-
-## Siguiente capa a reconstruir
-
-El control ya cubre de forma confirmada los campos sincronizados:
-
-```text
-moveAnalog
-rotateAnalog
-aimAnalog
-waistRotateX
-isRun
-isAim
-```
-
-Falta comprobar qué rutas gestionan de manera separada:
-
-- disparo/ataque;
-- recarga;
-- interacción/acción;
-- esquiva;
-- cambio de arma;
-- uso de objeto;
-- menú/inventario;
-- QTE;
-- comandos contextuales.
-
-También falta demostrar que Partner Camera continúa actualizándose de forma válida con Self y Partner activos simultáneamente.
+No crear v11 hasta demostrar que la ruta de pickup necesita un cambio de código.
