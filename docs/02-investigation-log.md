@@ -3122,3 +3122,19 @@ El sender tiene tres callers directos: `0x02434322`, `0x02460890` y `0x02460B3E`
 También se localizó la rutina central de pickup `0x0244D3D0` y una string de código fuente que admite target de categoría Player **o** Npc.
 
 Detalle completo: `docs/12-pickup-coop.md`.
+
+---
+
+# 47. Pickup local excluye np/Sub0
+
+La ruta normal de uItem fue seguida hasta el actor interactuante en uItem+0xF48.
+
+Stock: la actualizacion obtiene la identidad local, 0x02DA3840 acepta solo categoria pl y el candidato se guarda en uItem+0xF48.
+
+La recogida 0x02460610 vuelve a exigir pl, y el helper local 0x024646F0 repite esa validacion. Cuando el actor pasa el filtro, el helper opera correctamente sobre el cBioItemPack del propio actor.
+
+Conclusion: el bloqueo de P2 no esta en el almacenamiento del item sino en que la interaccion local esta hardcodeada al pl de esa maquina. El online acredita el resultado al partner remoto np mediante cPickupItemSyncData.
+
+La siguiente correccion debe aceptar solo pl OR (local-coop && exact Sub0) y permitir que uItem+0xF48 elija tambien al Sub0 local.
+
+Detalle: docs/12-pickup-coop.md.
