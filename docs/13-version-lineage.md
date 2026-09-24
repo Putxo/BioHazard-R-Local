@@ -1,4 +1,4 @@
-# 13 — Línea canónica de versiones v1 → v10
+# 13 — Línea canónica de versiones v1 → v13
 
 Este archivo evita la ambigüedad entre **builds originales del juego** y **versiones experimentales del parche** creadas durante este chat.
 
