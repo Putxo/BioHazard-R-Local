@@ -2967,3 +2967,33 @@ SHA v12:
 `5aafc3fd4273d608b4c9b8b60631256b56cb27d6aab0ecca8d2718d824dd28e8`
 
 Detalle: `docs/12-v11-pickup-actioncommand.md`.
+
+
+---
+
+# 46. Pickup Sub0 llega a su propio pack; Coop añade ammo relief
+
+Tras los gates de v11/v12, la entrega `0x024646F0` usa el actor admitido para obtener:
+
+```text
+uNpc+0x1524 -> cBioItemPack
+```
+
+y ejecuta ahí la lógica normal de añadir el objeto.
+
+**CONFIRMADO:** Sub0 recibe el pickup en su propio pack.
+
+Existe además una rama independiente para el grupo normalizado `0x80040200` que llama a `0x027ABFE0`.
+
+`0x027ABFE0` solo corre en `GameMode::Coop` y concede al otro actor una cantidad de munición mediante `cBioItemPack+0x34`.
+
+Su multiplicador de cantidad es:
+
+```text
+Campaign 1.0
+Coop     1.5
+```
+
+y el metadata interno lo etiqueta `入手弾数倍率` (multiplicador de cantidad de munición obtenida).
+
+Por tanto v12 ya resuelve la entrega principal de pickups; queda pendiente replicar esta regla secundaria de reparto de munición Coop mediante un hook local específico, sin cambiar `mGameMode` global.
