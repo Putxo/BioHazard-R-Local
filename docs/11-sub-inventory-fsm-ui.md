@@ -1012,3 +1012,118 @@ interacción de Sub0
 ```
 
 Pendiente: identificar quién construye/establece `cPickupItemParameter::mIsAddMainPlayer` en la interacción real para comprobar que el flujo iniciado por Sub0 ya selecciona la rama Partner o necesita un hook mínimo.
+
+
+---
+
+## 14. Pickup de Sub0 entrega al cBioItemPack propio
+
+La finalización local del pickup converge en:
+
+```text
+0x024646F0
+```
+
+v11/v12 solo amplían el filtro inicial para admitir al **Sub0 exacto** cuando el cooperativo local está activo.
+
+Una vez superado ese filtro, se reutiliza el código stock.
+
+En las ramas normales de entrega:
+
+```text
+0x02464855 / 0x02464931
+  actor = [ebp-0x14]
+  -> 0x01BCC327
+  -> uNpc+0x1524
+  -> cBioItemPack
+  -> 0x01C79B3F -> 0x02439270
+```
+
+Por tanto, cuando el actor admitido es el Sub0 local:
+
+```text
+uItem
+ -> Sub0 uNpc
+ -> Sub0 cBioItemPack
+ -> add/item handling stock
+```
+
+**CONFIRMADO estáticamente:** el pickup no se entrega al pack de P1 por el hecho de estar en una Campaign. La ruta usa el actor pasado a `0x024646F0` y obtiene el `cBioItemPack` de ese actor.
+
+## 15. Rama adicional Coop: relief/reparto de munición
+
+Al final de `0x024646F0` existe una condición extra:
+
+```text
+0x01C78FA0 -> 0x01D754A0
+normalized ID == 0x80040200
+```
+
+Si se cumple, llama:
+
+```text
+0x01B8A1AC -> 0x027ABFE0
+```
+
+`0x027ABFE0` sale inmediatamente si el juego no está en `GameMode::Coop`.
+
+En Coop:
+
+1. obtiene otro actor distinto del actor actual;
+2. valida ese actor;
+3. calcula un `dropID/dropVal`;
+4. obtiene un multiplicador de munición;
+5. multiplica/redondea la cantidad;
+6. obtiene el `cBioItemPack` del otro actor;
+7. llama al virtual `+0x34`.
+
+El virtual:
+
+```text
+0x01BD8B63 -> 0x0242C590
+```
+
+mapea:
+
+```text
+0x80040200 -> mBullet[0]
+0x80040201 -> mBullet[1]
+0x80040202 -> mBullet[2]
+0x80040203 -> mBullet[3]
+0x80040204 -> mBullet[4]
+```
+
+e incrementa la munición respetando el máximo.
+
+Esto identifica `0x027ABFE0` como lógica adicional de reparto/relief de munición al compañero, no como la entrega básica del pickup.
+
+### Multiplicador
+
+El getter:
+
+```text
+0x01B8D7F8 -> 0x02506FE0
+```
+
+devuelve:
+
+```text
+Campaign -> 1.0
+Coop     -> [0x05479970] = 1.5
+```
+
+La propiedad `0x05479970` está registrada con la etiqueta japonesa:
+
+```text
+入手弾数倍率
+```
+
+que significa **multiplicador de cantidad de munición obtenida**.
+
+### Consecuencia para v12
+
+v12 ya entrega el pickup principal al pack correcto de Sub0.
+
+Lo que todavía no replica en Campaign local es esta regla secundaria de Coop para repartir/bonificar munición al otro participante, porque `mGameMode` global permanece en Campaign por diseño.
+
+No se fuerza `mGameMode`: el siguiente análisis debe encontrar el hook local mínimo para activar solo esta regla cuando `gLocalCoopActive=1`.
