@@ -67,6 +67,10 @@ Solo se incluyen hipótesis surgidas durante esta conversación.
 | H48 | Para v9 hay que crear un inventario P2 desde cero | existe sItemBoxCoop completo en slot 1 | DESCARTADA |
 | H49 | El parche mínimo debe reutilizar el selector de ItemBox existente | GameMode ya conmuta slot 0/1 | ACTIVA / PRIORITARIA |
 
+| H50 | Cambiar globalmente `mGameMode` a Coop es necesario para usar sItemBoxCoop | stock selector usa mGameMode | DESCARTADA: basta ensanchar solo el selector ItemBox con gLocalCoopActive |
+| H51 | El selector local puede preservar Campaign para el resto del juego | wrapper stock_isCoop OR local flag en 0x01D067AF | IMPLEMENTADA EN v10 |
+| H52 | v10 deriva limpiamente de v9 | revertir los 2 rangos nuevos reproduce exactamente SHA v9 | CONFIRMADA |
+
 ## Descartes explicados
 
 ### `mCameraList[0]/[1]`
