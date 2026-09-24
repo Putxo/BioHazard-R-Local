@@ -3094,3 +3094,31 @@ Después el actor seleccionado se convierte a su `cBioItemPack` mediante `uNpc+0
 La ruta de red `cPickupItemSyncData -> 0x02459C20` también resuelve el actor remoto y modifica su propio pack.
 
 Detalle completo: `docs/12-pickup-coop.md`.
+
+
+---
+
+# 46. cPickupItemSyncData y recuperación del turno cortado
+
+La dirección `0x049A8023` mostrada en la captura del turno interrumpido pertenece a la inicialización global del DTI de `uItem`.
+
+La investigación continuó hasta identificar:
+
+```text
+sItem::cNetSyncData::cPickupItemSyncData
+DTI    0x05578DF0
+size   0x1C
+factory 0x02443DA0
+ctor    0x0245A120
+sender  0x0244CF30
+recv dispatcher 0x02449820
+recv handler    0x02459C20
+```
+
+El paquete contiene cinco campos en `+0x08/+0x0C/+0x10/+0x14/+0x18`.
+
+El sender tiene tres callers directos: `0x02434322`, `0x02460890` y `0x02460B3E`.
+
+También se localizó la rutina central de pickup `0x0244D3D0` y una string de código fuente que admite target de categoría Player **o** Npc.
+
+Detalle completo: `docs/12-pickup-coop.md`.
