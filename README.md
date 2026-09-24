@@ -6,6 +6,8 @@ Investigación para añadir cooperativo local a **Resident Evil Revelations / Bi
 >
 > **[START_HERE_NEW_CHAT.md](START_HERE_NEW_CHAT.md)**
 >
+> Si quieres un texto listo para pegar como primer mensaje de otro chat: **[CONTINUE_IN_NEW_CHAT.md](CONTINUE_IN_NEW_CHAT.md)**
+>
 > Ese archivo contiene el estado canónico completo, la cadena de versiones correcta y el punto exacto desde el que continuar.
 
 ## Alcance
