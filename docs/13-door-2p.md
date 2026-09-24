@@ -2,7 +2,9 @@
 
 Build principal: **BioRevHD 30-Enero-2013.exe**.
 
-Base experimental vigente: **v11 PICKUP**.
+Base experimental canónica vigente: **v13 SYMMETRIC AMMO RELIEF**.
+
+> Nota de continuidad: este documento empezó cuando la línea estaba en v11, pero la investigación siguió a v12 y v13 antes de cerrar la auditoría de puertas. **No existe todavía un parche de puertas/v14.** El contenido técnico de puertas sigue vigente; la base a preservar es v13.
 
 Este documento inicia la auditoría de interacciones de mundo después de haber cerrado input, cámara, ItemBox y pickup.
 
