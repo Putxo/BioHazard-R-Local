@@ -278,3 +278,35 @@ No se considera aún prueba suficiente hasta seguir el xref ejecutable.
 3. identificar target/receptor del pickup;
 4. seguir la llamada final hacia `cBioItemPack/sItemBoxCoop`;
 5. comprobar si Sub0 local usa esa misma ruta sin parche adicional.
+
+---
+
+## 8. Bloqueo real del pickup interactivo local
+
+La ruta interactiva normal de uItem en 0x02460610 usa uItem+0xF48 como actor asociado.
+
+En 0x0246065E obtiene el ID del actor y en 0x02460664 llama a 0x01C8C9A1, ya demostrado como predicado de categoria pl. Si falla, sale.
+
+El helper local 0x01C639B6 -> 0x024646F0 vuelve a aplicar el mismo filtro pl en 0x02464726. Si el actor pasa, obtiene su propio cBioItemPack y ejecuta el virtual +0x18 con el uItem.
+
+Por tanto el almacenamiento ya es actor-specific; el bloqueo de Sub0 esta en la clasificacion local como pl.
+
+## 9. Como se rellena uItem+0xF48
+
+El constructor pone uItem+0xF48=0 en 0x0245EA1E. La actualizacion comun alrededor de 0x02461FF0 termina guardando el candidato en 0x024626B3.
+
+La seleccion stock usa 0x02462146 -> 0x01C85962 -> 0x02DA3050 y 0x02462159 -> 0x01C07341 -> 0x02DA3840. 0x02DA3840 recorre la coleccion, exige categoria pl en 0x02DA3898 y compara la identidad contra la identidad local.
+
+Resultado: el candidato stock almacenado en +0xF48 es deliberadamente el pl local.
+
+## 10. Diferencia local/remoto
+
+Local: uItem -> pl local -> cBioItemPack local -> opcionalmente enviar cPickupItemSyncData.
+
+Remoto: cPickupItemSyncData -> resolver actor remoto np -> cBioItemPack de ese actor.
+
+Esto explica por que el online funciona aunque la ruta local no acepte np. En v10, P2 sigue siendo el uNpc/np Sub0 aunque su ThinkMode sea Pad.
+
+## 11. Requisito del siguiente parche
+
+La correccion debe aceptar pl OR (gLocalCoopActive && actor == gSub0Npc), solo en las validaciones locales pertinentes, y permitir que uItem+0xF48 seleccione tambien al Sub0 local. No se parcheara globalmente isPl.
