@@ -1,261 +1,280 @@
-# 12 — Pickup cooperativo: Self / Partner y cBioItemPack
+# 12 — Pickup cooperativo y cPickupItemSyncData
 
 Build principal: **BioRevHD 30-Enero-2013.exe**.
 
-Este documento continúa la línea canónica actual: **v10**. No se añade aquí ningún parche nuevo; se documenta la ruta de pickup ya existente.
+Este documento continúa la investigación de inventario/equipamiento sobre **v10**. Registra únicamente hallazgos estáticos confirmados en esta conversación.
 
-## 1. cPickupItemSyncData — pickup remoto cooperativo
+## 1. Recuperación del punto donde se cortó la respuesta
 
-RTTI:
+La dirección que aparecía en la captura del turno interrumpido:
 
 ```text
-app::game::chara::sItem::cNetSyncData::cPickupItemSyncData
+0x049A8023
+```
+
+pertenece a la inicialización global del DTI de **uItem**.
+
+En la zona `0x049A7FF0` se observa el registro de la clase usando la string:
+
+```text
+uItem
+VA 0x04D30838
+```
+
+La siguiente string relevante es:
+
+```text
+uItem::cNetSyncData::cGetItemSyncData
+VA 0x04D30850
+```
+
+Por tanto el análisis que quedó cortado seguía dentro de la ruta de objetos/pickup; no era una rama distinta.
+
+---
+
+## 2. cPickupItemSyncData
+
+Nombre interno:
+
+```text
+sItem::cNetSyncData::cPickupItemSyncData
+VA 0x04D2FC5C
+```
+
+DTI global:
+
+```text
+0x05578DF0
+```
+
+La inicialización global alrededor de `0x049A5300` registra el tipo con tamaño:
+
+```text
+0x1C bytes
+```
+
+Factoría:
+
+```text
+0x02443DA0
+```
+
+- reserva `0x1C`;
+- llama al constructor:
+  `0x01C89A3A -> 0x0245A120`.
+
+Constructor `0x0245A120`:
+
+```text
 vtable 0x04D2F344
++0x08 = 0x80000000
++0x0C = 0x80000000
++0x10 = 0xFFFFFFFF
++0x14 = 0x80000000
++0x18 = 0
 ```
 
-Constructor/init aproximado:
+## 3. Setters/getters del paquete
+
+Setters confirmados:
 
 ```text
-0x0244D050
++0x08 -> thunk 0x01C672D7 -> 0x0244D0F0
++0x0C -> thunk 0x01C3072D -> 0x0244D140
++0x10 -> thunk 0x01B879ED -> 0x0244D190
++0x14 -> thunk 0x01C0D8B8 -> 0x0244D1E0
++0x18 -> thunk 0x01C2CDA3 -> 0x0244D230   (BYTE)
 ```
 
-Layout confirmado por setters/getters:
+Getters confirmados:
 
 ```text
-+0x08 dword
-+0x0C dword
-+0x10 dword
-+0x14 dword
-+0x18 byte
++0x08 -> thunk 0x01C008CA -> 0x02459E20
++0x0C -> thunk 0x01BEF3C2 -> 0x02459E60
++0x10 -> thunk 0x01C936F2 -> 0x02459EA0
++0x14 -> thunk 0x01BB1540 -> 0x02459EE0
++0x18 -> thunk 0x01B9072D -> 0x02459F20
 ```
 
-Sender:
+Los nombres semánticos exactos de los cinco campos todavía no se fijan; se documentan por offset hasta cerrar todos sus productores/consumidores.
+
+---
+
+## 4. Sender nativo de pickup
+
+Rutina:
 
 ```text
-0x01BD0B93 -> 0x0244CF30
+0x0244CF30
+thunk 0x01BD0B93
 ```
 
-El sender construye el paquete a partir de `uItem`.
+Construye un `cPickupItemSyncData` local, rellena sus cinco campos y lo envía por el canal de sincronización del `sItem/uItem`.
 
-El primer DWORD (`+0x08`) procede de:
+Tipo/mensaje observado al enviar:
 
 ```text
-0x01C53859 -> 0x027F1200
+0x10
 ```
 
-y en el receptor se usa como ID/tipo del item recogido.
+Callers directos localizados:
 
-## 2. Receptor remoto
+```text
+0x02434322
+0x02460890
+0x02460B3E
+```
 
-El dispatcher de red reconoce el DTI de `cPickupItemSyncData` y registra:
+En los callers `0x02460890` y `0x02460B3E`, los campos proceden del mismo `uItem`.
+
+Mapeo de getters de ese `uItem`:
+
+```text
+packet +0x08
+  0x01C53859
+  getter de ID usado también en otras rutas de objetos/jugador
+
+packet +0x0C
+  0x01BEDBB7 -> 0x01CB7610
+  retorna [this+0xE3C]
+
+packet +0x10
+  0x01C69771 -> 0x02437330
+  retorna [this+0xF28]
+
+packet +0x14
+  0x01C1729B -> 0x02437530
+  retorna [this+0xF40]
+
+packet +0x18
+  0x01C1A1D0 -> 0x024374F0
+  retorna BYTE [this+0xF3D]
+```
+
+Esto demuestra que el paquete describe el objeto recogido y su estado asociado; todavía no se atribuyen nombres finales a esos cinco miembros.
+
+---
+
+## 5. Dispatcher de red y handler receptor
+
+Dispatcher entrante:
+
+```text
+0x02449820
+```
+
+Dentro de esa rutina, la rama de `cPickupItemSyncData` aparece alrededor de:
+
+```text
+0x024499AF
+```
+
+y compara el DTI entrante contra:
+
+```text
+0x05578DF0
+```
+
+Al reconocer el paquete instala/llama el delegate:
 
 ```text
 0x01B9F142 -> 0x02459C20
 ```
 
-como callback de recepción.
-
-La rutina resuelve el actor participante mediante su identidad/sesión y termina localizando un `uNpc` vivo.
-
-Después:
+Por tanto:
 
 ```text
-uNpc
- -> 0x01BCC327 -> 0x01D336A0
- -> uNpc+0x1524
- -> cBioItemPack
+0x02459C20
 ```
 
-y llama a:
+es el handler receptor de `cPickupItemSyncData`.
+
+## 6. Consumo inicial del paquete en 0x02459C20
+
+El handler recibe:
 
 ```text
-0x01B8695D -> 0x0243D100
+arg1 = cPickupItemSyncData*
 ```
 
-pasando el ID de item de `cPickupItemSyncData+0x08`.
+y consume los cinco campos a través de sus getters.
 
-**CONFIRMADO:** un pickup remoto del partner se aplica al `cBioItemPack` del actor remoto/partner, no al pack de P1.
+Entre las rutas observadas:
+
+```text
++0x0C -> 0x01BEF3C2
++0x18 -> 0x01B9072D
++0x14 -> 0x01BB1540
++0x08 -> 0x01C008CA
++0x10 -> 0x01C936F2
+```
+
+Después realiza búsquedas/validaciones de objetos antes de aplicar el pickup.
+
+La semántica exacta de cada campo y, sobre todo, qué actor/inventario recibe finalmente el objeto siguen bajo análisis.
 
 ---
 
-## 3. FsmPickupItem local/común
+## 7. Rutina central de pickup
 
-String:
-
-```text
-FsmPickupItem
-```
-
-Registro de acción:
+Se identificó además una rutina grande:
 
 ```text
-~0x02A9F0DA
-callback thunk 0x01B7A487 -> 0x029971C0
+0x0244D3D0
+thunk 0x01B880E6
 ```
 
-Parameter type:
+retorna con:
 
 ```text
-cFsmAction::cPickupItemParameter
-size 0x34
-vtable 0x04DBC9D4
-MyDTI 0x0558D340
-constructor 0x029569D0
+ret 0x24
 ```
 
-Inicialización relevante:
+por lo que consume un bloque amplio de argumentos relacionado con la operación de pickup.
+
+Observaciones iniciales:
+
+- inspecciona un objeto/target recibido;
+- obtiene IDs mediante `0x01C53859`;
+- ejecuta tests de categoría;
+- entra en lógica de jugador/actor e inventario;
+- es una candidata prioritaria para demostrar cómo se enruta el pickup hacia Main o partner.
+
+Todavía no se atribuyen nombres a sus argumentos hasta reconstruir su flujo completo.
+
+---
+
+## 8. Evidencia textual muy prometedora pendiente de xref
+
+En .rdata aparece literalmente una condición del código fuente:
 
 ```text
-+0x04 byte = 0
-+0x05 byte = 1
-+0x08 dword = 0
-+0x0C dword = 0
+(game_id::Category::isPlayer( target->getDTI().getID() ) ||
+ game_id::Category::isNpc( target->getDTI().getID() ))
 ```
 
-Los nombres exactos de esos miembros no se inventan si no aparecen en metadata recuperada.
+Esta string constituye una pista directa de que alguna ruta de pickup admite tanto categoría player como NPC.
 
-## 4. El target es un uItem real
+El siguiente paso es localizar su xref exacto y demostrar si pertenece a la misma ruta `FsmPickupItem/0x0244D3D0`.
 
-`FsmPickupItem` usa `+0x08/+0x0C` para localizar el objeto de mundo y valida su DTI contra:
+No se considera aún prueba suficiente hasta seguir el xref ejecutable.
 
-```text
-uItem
-DTI global 0x05579584
-string literal "uItem"
-size registrado 0x10F0
-```
+---
 
-La validación/cast pasa por:
+## Estado
 
-```text
-0x01C174F8 -> 0x01FFF070
-```
+**CONFIRMADO:**
 
-## 5. +0x05 selecciona Self o Partner
+- existe un paquete de sincronización de pickup específico;
+- tiene factoría, RTTI, layout y sender reales;
+- existe un handler receptor real;
+- el sender se alimenta del estado del `uItem`;
+- el juego contiene lógica de pickup que contempla categorías player/NPC.
 
-Dentro de `0x029971C0`:
+**PENDIENTE INMEDIATO:**
 
-```text
-if parameter+0x05 != 0:
-    resolver A
-else:
-    resolver B
-```
-
-### Resolver A = Self
-
-Ruta:
-
-```text
-0x01BDF98B -> 0x01CB51A0
-0x01C2C7F4 -> 0x01CB7400
-```
-
-`0x01CB7400` recorre la colección y usa el predicado:
-
-```text
-0x01BB3192 -> 0x01CB7560
-```
-
-La identidad del predicado queda demostrada por un assert de otra ruta del mismo ejecutable, alrededor de `0x0204710B`:
-
-```text
-call 0x01BB3192(candidate)
-...
-"(chara::getSelf()( pPlayer ))"
-"chara::getSelf()( pPlayer )"
-```
-
-Por tanto el predicado es literalmente el usado por `chara::getSelf`.
-
-**CONFIRMADO:** `parameter+0x05 != 0` selecciona Self.
-
-### Resolver B = Partner
-
-Ruta:
-
-```text
-0x01BDF98B -> 0x01CB51A0
-0x01BCA0C2 -> 0x01D115B0
-```
-
-`0x01D115B0` recorre la misma colección con un predicado distinto:
-
-```text
-0x01C8731B -> 0x01D116C0
-```
-
-El predicado:
-
-- compara el ID del candidato contra el mismo ID usado por Self;
-- exige que **no** sea Self;
-- añade comprobaciones de validez/estado;
-- devuelve el otro actor elegible.
-
-Existe además código que llama consecutivamente:
-
-```text
-getSelf  -> 0x01C2C7F4
-Partner  -> 0x01BCA0C2
-```
-
-y usa ambos actores simultáneamente, por ejemplo alrededor de `0x01D46194..0x01D461C6`.
-
-**CONFIRMADO por estructura y uso emparejado:** el segundo resolver es la contraparte Partner.
-
-Así:
-
-```text
-cPickupItemParameter+0x05 = 1 -> Self
-cPickupItemParameter+0x05 = 0 -> Partner
-```
-
-El constructor pone `+0x05=1`, por lo que Self es el valor por defecto.
-
-## 6. El pickup se aplica al pack del actor seleccionado
-
-Después de escoger Self/Partner:
-
-```text
-selected actor
- -> 0x01BCC327 -> 0x01D336A0
- -> cBioItemPack del actor
-```
-
-A continuación `FsmPickupItem` invoca el virtual `+0x18` del pack con:
-
-```text
-arg1 = 0x0F
-arg2 = uItem*
-arg3 = 0
-```
-
-**CONFIRMADO:** la acción común de pickup no está fijada a P1; contiene un selector Self/Partner y opera sobre el pack del actor seleccionado.
-
-## 7. Implicación para v10
-
-Ya existen dos mecanismos nativos consistentes:
-
-```text
-pickup local/common:
-  selector Self/Partner
-  -> pack del actor
-
-pickup network:
-  participant remoto
-  -> uNpc remoto
-  -> pack del actor
-```
-
-Por tanto no se justifica introducir un parche de inventario para "copiar" pickups de P1 a P2.
-
-### Pendiente
-
-La siguiente comprobación es la ruta de **pickup interactivo normal en gameplay**:
-
-- si Sub0 en ThinkMode::Pad puede iniciar esa recogida directamente;
-- qué valor/selector usa al crear la acción;
-- si la lógica local reutiliza el selector Partner ya existente;
-- si alguna condición sigue dependiendo de sesión de red.
-
-Hasta cerrar eso, no se crea v11.
+1. localizar el xref de la condición Player || Npc;
+2. reconstruir `0x0244D3D0`;
+3. identificar target/receptor del pickup;
+4. seguir la llamada final hacia `cBioItemPack/sItemBoxCoop`;
+5. comprobar si Sub0 local usa esa misma ruta sin parche adicional.
