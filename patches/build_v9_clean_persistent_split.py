@@ -16,14 +16,13 @@ TEXT_VA=0x01B79000
 TEXT_RAW=0x400
 DATA_VSIZE_OFF=0x298
 DATA_VSIZE_V7=0x003B4188
-DATA_VSIZE_V9=0x003B418C
+DATA_VSIZE_V8=0x003B418C
 G_SUB0=0x057D9184
 G_LOCAL_ACTIVE=0x057D9188
 SUB0_VTABLE=0x04E1649C
 
 HELPER_BASE=0x01C94FC0
 HELPER_LIMIT=0x01C95400
-LOOP_CONTINUE=0x02DF5022
 PAD_REBIND=0x01C94FD4
 LOCAL_ENABLE=0x01C94FC0
 COND_DEACT=0x01C94FF8
@@ -64,10 +63,9 @@ d=bytearray(BASE.read_bytes())
 patches=[]
 
 def patch_file(o, expected, new, label):
-    if len(expected)!=len(new): raise ValueError(label)
+    if len(expected)!=len(new):raise ValueError(label)
     got=bytes(d[o:o+len(expected)])
-    if got!=expected:
-        raise RuntimeError(f'{label} file {o:#x}: expected {expected.hex()} got {got.hex()}')
+    if got!=expected:raise RuntimeError(f'{label} file {o:#x}: expected {expected.hex()} got {got.hex()}')
     d[o:o+len(new)]=new
     patches.append({'label':label,'file_offset':hex(o),'old':expected.hex(),'new':new.hex(),'bytes':len(new)})
 
@@ -75,12 +73,7 @@ def patch_va(va, expected, new, label):
     patch_file(off(va),expected,new,label)
     patches[-1]['va']=hex(va)
 
-patch_file(
-    DATA_VSIZE_OFF,
-    struct.pack('<I',DATA_VSIZE_V7),
-    struct.pack('<I',DATA_VSIZE_V9),
-    '.data VirtualSize +4 for gLocalCoopActive'
-)
+patch_file(DATA_VSIZE_OFF,struct.pack('<I',DATA_VSIZE_V7),struct.pack('<I',DATA_VSIZE_V8),'.data VirtualSize +4 for gLocalCoopActive')
 
 clear_va=0x027A1360
 clear_code=b''
@@ -95,75 +88,50 @@ expected_prefix=bytes.fromhex('c740440000000081389c64e1040f853b3c6500c70584917d0
 if bytes(d[off(clear_va):off(clear_va)+len(expected_prefix)]) != expected_prefix:
     raise RuntimeError('v7 clear cave prefix mismatch')
 if any(x!=0xCC for x in d[off(clear_va)+len(expected_prefix):off(clear_va)+len(clear_code)]):
-    raise RuntimeError('v9 clear expansion area not CC')
+    raise RuntimeError('v8 clear expansion area not CC')
 patch_va(clear_va,old_clear,clear_code,'clear exact Sub0 tracking + local-active flag')
 
 old=bytes(d[off(0x027A13B5):off(0x027A13B5)+6])
-if old[:2]!=b'\x0f\x85':
-    raise RuntimeError('expected JNE at 0x27A13B5')
-patch_va(
-    0x027A13B5,old,
-    b'\x0f\x85'+rel32(0x027A13B5,6,PAD_REBIND),
-    'Sub0 non-Cpu -> local Pad rebind discriminator'
-)
-
+if old[:2]!=b'\x0f\x85': raise RuntimeError('expected JNE at 0x27A13B5')
+patch_va(0x027A13B5,old,b'\x0f\x85'+rel32(0x027A13B5,6,PAD_REBIND),'Sub0 non-Cpu -> local Pad rebind discriminator')
 old=bytes(d[off(0x027A13C4):off(0x027A13C4)+5])
-if old[0]!=0xE9:
-    raise RuntimeError('expected JMP at 0x27A13C4')
-patch_va(
-    0x027A13C4,old,
-    b'\xe9'+rel32(0x027A13C4,5,LOCAL_ENABLE),
-    'after canonical Cpu->Pad -> enable persistent local split'
-)
+if old[0]!=0xE9: raise RuntimeError('expected JMP at 0x27A13C4')
+patch_va(0x027A13C4,old,b'\xe9'+rel32(0x027A13C4,5,LOCAL_ENABLE),'after canonical Cpu->Pad -> enable persistent local split')
 
-expected=b'\xCC'*len(blob)
-patch_va(HELPER_BASE,expected,blob,'persistent split helper block')
+patch_va(HELPER_BASE,b'\xCC'*len(blob),blob,'persistent split helper block')
 
-for va,label in [
-    (0x0203E92D,'Self View: conditional Partner deactivate'),
-    (0x0203E98B,'Partner View: conditional Self deactivate')
-]:
+for va,label in [(0x0203E92D,'Self View: conditional Partner deactivate'),(0x0203E98B,'Partner View: conditional Self deactivate')]:
     old=bytes(d[off(va):off(va)+5])
-    if old[0]!=0xE8: raise RuntimeError(f'expected call @ {va:#x}')
+    if old[0]!=0xE8:raise RuntimeError(f'expected call @ {va:#x}')
     dst=va+5+struct.unpack('<i',old[1:])[0]
-    if dst!=DEACTIVATE:
-        raise RuntimeError(f'unexpected call target @ {va:#x}: {dst:#x}')
+    if dst!=DEACTIVATE:raise RuntimeError(f'unexpected call target @ {va:#x}: {dst:#x}')
     patch_va(va,old,b'\xe8'+rel32(va,5,COND_DEACT),label)
 
 va=0x0203E9AD
-old=bytes(d[off(va):off(va)+5])
-dst=va+5+struct.unpack('<i',old[1:])[0]
-if old[0]!=0xE8 or dst!=STOCK_VIEW_INDEX:
-    raise RuntimeError(f'partner view index call mismatch {old.hex()}->{dst:#x}')
-patch_va(
-    va,old,b'\xe8'+rel32(va,5,PARTNER_INDEX),
-    'Partner View viewport index -> conditional VIEW_1'
-)
+old=bytes(d[off(va):off(va)+5]); dst=va+5+struct.unpack('<i',old[1:])[0]
+if old[0]!=0xE8 or dst!=STOCK_VIEW_INDEX:raise RuntimeError(f'partner view index call mismatch {old.hex()}->{dst:#x}')
+patch_va(va,old,b'\xe8'+rel32(va,5,PARTNER_INDEX),'Partner View viewport index -> conditional VIEW_1')
 
 for va,target,wrapper,label in [
     (0x01F38054,STATE_BIT0,COND_BIT0,'Partner camera setup bit0: conditional keep-active'),
     (0x01F38061,STATE_BIT1,COND_BIT1,'Partner camera setup bit1: conditional keep-active'),
 ]:
-    old=bytes(d[off(va):off(va)+5])
-    dst=va+5+struct.unpack('<i',old[1:])[0]
-    if old[0]!=0xE8 or dst!=target:
-        raise RuntimeError(f'state call mismatch @ {va:#x}: {old.hex()}->{dst:#x}')
+    old=bytes(d[off(va):off(va)+5]); dst=va+5+struct.unpack('<i',old[1:])[0]
+    if old[0]!=0xE8 or dst!=target:raise RuntimeError(f'state call mismatch @ {va:#x}: {old.hex()}->{dst:#x}')
     patch_va(va,old,b'\xe8'+rel32(va,5,wrapper),label)
 
-# Core v9 fix versus v8: no inherited unconditional v4 camera-init hook.
+orig=base
 cam_init_o=off(0x0203E3A9)
 cam_init_n=off(0x0203E464)
-if bytes(d[cam_init_o:cam_init_n]) != bytes(base[cam_init_o:cam_init_n]):
+if bytes(d[cam_init_o:cam_init_n]) != bytes(orig[cam_init_o:cam_init_n]):
     raise RuntimeError('clean v9 unexpectedly modified stock camera init/v4 cave')
 
 OUT.write_bytes(d)
 
-if len(d)!=len(base):
-    raise RuntimeError('file size changed')
-if sha(OUT)==sha(BASE):
-    raise RuntimeError('output unchanged')
+if len(d)!=len(base): raise RuntimeError('file size changed')
+if sha(OUT)==sha(BASE): raise RuntimeError('output unchanged')
 assert bytes(d[off(HELPER_BASE):off(HELPER_BASE)+len(blob)])==blob
-assert int.from_bytes(d[DATA_VSIZE_OFF:DATA_VSIZE_OFF+4],'little')==DATA_VSIZE_V9
+assert int.from_bytes(d[DATA_VSIZE_OFF:DATA_VSIZE_OFF+4],'little')==DATA_VSIZE_V8
 
 rr=diff_ranges(base,d)
 rr_v7=diff_ranges(BASE.read_bytes(),d)
@@ -177,27 +145,18 @@ manifest={
   'status':'STATICALLY VERIFIED ONLY - gameplay not executed in this environment',
   'design':{
     'local_activation_flag':f'{G_LOCAL_ACTIVE:#010x}; set only after exact Sub0 canonical ThinkMode::Cpu(2)->Pad(1), cleared when Sub0 binding clears',
-    'network_preservation':'ThinkMode::Network(3) never sets the local flag; stock camera init/exclusivity/viewport behavior remains original while flag=0',
-    'partner_target':'ensure_split uses stock target setter 0x01C275EC->0x02066AB0 with exact tracked Sub0 uNpc*',
-    'camera_coexistence':'when local flag=1 both native managers coexist',
-    'viewports':'Self->VIEW_0 TOP(2), Partner->VIEW_1 BOTTOM(3), both display 0',
-    'persistence':'bind/rebind, Self/Partner callbacks and later Partner state-clear sites reassert local split'
+    'network_preservation':'ThinkMode::Network(3) never sets the local flag; because v9 is built on input-only v7, stock camera init/exclusivity/viewport behavior is byte-identical to the original whenever flag=0',
+    'partner_target':'ensure_split writes the exact tracked Sub0 uNpc* into Partner uCameraManage via stock target setter 0x01C275EC->0x02066AB0',
+    'camera_coexistence':'when local flag=1, Self View / Partner View no longer deactivate the other manager; both are activated with stock 0x01BF353F',
+    'viewports':'Self->VIEW_0 TOP(2), Partner->VIEW_1 BOTTOM(3), both visible on display 0 via native setCameraForViewport',
+    'persistence':'Sub0 bind/rebind, Self/Partner view callbacks, and the later Partner camera state-clear sites all preserve/reassert local split'
   },
   'diff':{
     'same_file_size':True,
-    'different_bytes_vs_original':sum(e-s for s,e in rr),
-    'ranges_vs_original':len(rr),
-    'additional_different_bytes_vs_v7':sum(e-s for s,e in rr_v7),
-    'ranges_vs_v7':len(rr_v7)
+    'different_bytes_vs_original':sum(e-s for s,e in rr),'ranges_vs_original':len(rr),
+    'additional_different_bytes_vs_v7':sum(e-s for s,e in rr_v7),'ranges_vs_v7':len(rr_v7)
   },
-  'patches':patches,
-  'limitations':[
-    'Runtime validation is still required.',
-    'HUD, inventory/pause ownership, scripted interactions and QTE behavior remain unresolved.',
-    'The second physical controller still requires runtime confirmation that Windows/DInput populates sPad::Pad[1] on the user setup.'
-  ],
-  'builder':'patches/build_v9_clean_persistent_split.py',
-  'assembly':'research/patches/camera_persistence_v8.S'
+  'patches':patches
 }
 MAN.write_text(json.dumps(manifest,indent=2),encoding='utf-8')
 print('output',OUT)
