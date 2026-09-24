@@ -2,17 +2,17 @@
 
 Build de referencia: **BioRevHD 30-Enero-2013.exe**.
 
-Base experimental canónica: **v10 CLEAN SPLIT COOP ITEMBOX**.
+Base experimental canónica actual: **v13 SYMMETRIC AMMO RELIEF**.
 
-SHA-256 v10:
+SHA-256 v13:
 
-`5060269e5115ef8df53aa0ad4e26c09b4b273d4cfeb6628a7a4f902c606bb4e6`
+`3df0e1020b58b3ccc7e31a9046a2a3ce9e5230e1764869b517943b4a808838aa`
 
 Estado: **verificado estáticamente; runtime pendiente**.
 
 ---
 
-## 1. Arquitectura actual
+## 1. Arquitectura canónica
 
 ```text
 uPcsPlayerMain
@@ -22,13 +22,14 @@ uPcsPlayerSub1
       v
 sPcsManager
       |
-      +--> actor uNpc exacto de Sub0
+      +--> exact Sub0 uNpc
              |
              +--> ThinkMode::Pad
              +--> selector 1
              +--> PadData[1]
-             +--> cBioItemPack propio
+             +--> own cBioItemPack
              +--> Partner uCameraManage target
+             +--> local pickup target when selected
 
 Pad físico 0 -> sPad::Pad[0] -> PadData[0] -> P1
 Pad físico 1 -> sPad::Pad[1] -> PadData[1] -> Sub0
@@ -38,8 +39,11 @@ Partner uCameraManage -> VIEW_1 -> BOTTOM
 
 gLocalCoopActive
   |
-  +--> cámara persistente
-  +--> ItemBox Coop slot 1
+  +--> persistent split
+  +--> Coop ItemBox slot 1
+  +--> exact-Sub0 pickup exception
+  +--> uItem ActionCommand member 1
+  +--> symmetric Coop ammo-relief rule
 ```
 
 ---
@@ -54,7 +58,7 @@ uPcsPlayerSub0  0x04E1649C
 uPcsPlayerSub1  0x04E1650C
 ```
 
-Slot de identidad nativo:
+Índices nativos:
 
 ```text
 Main=0
@@ -62,16 +66,17 @@ Sub0=1
 Sub1=2
 ```
 
-Actor vivo Sub0:
+Actor vivo:
 
 ```text
 uPcsPlayerSub0+0x44 -> exact uNpc*
 ```
 
-Tracker local:
+Globals propios del parche:
 
 ```text
-gSub0Npc = 0x057D9184
+gSub0Npc          = 0x057D9184
+gLocalCoopActive  = 0x057D9188
 ```
 
 ---
@@ -85,10 +90,10 @@ Cpu=2
 Network=3
 ```
 
-v6+ usa la ruta canónica:
+Transición canónica del partner:
 
 ```text
-Sub0 exacto en Cpu(2)
+exact Sub0 in Cpu(2)
  -> 0x01BB8B60
  -> 0x0278CC40
  -> 0x027F1290
@@ -99,20 +104,20 @@ Network(3) queda intacto.
 
 ---
 
-## 4. Input físico y lógico
+## 4. Entrada física y lógica
 
-Dos pads físicos DirectInput confirmados.
+Backend PC confirmado con dos pads DirectInput.
 
 ```text
-dispositivo
+device
  -> socket 0/1
- -> Pad lógico 0/1
+ -> logical Pad 0/1
  -> sPad::Pad[index]
  -> PadData[index]
  -> sGamePad(selector)
 ```
 
-Helper PadData:
+Indexer:
 
 ```text
 0x02DBE720
@@ -120,7 +125,7 @@ index < 2
 stride 0xC0
 ```
 
-v7 restaura el selector en los sitios PC que originalmente forzaban:
+v7 restaura el selector en los sitios conocidos donde la implementación PC forzaba:
 
 ```text
 mStartPadNo @ +0x970
@@ -129,13 +134,13 @@ mStartPadNo @ +0x970
 Resultado:
 
 ```text
-P1 -> selector 0
-Sub0 exacto -> selector 1
+P1   -> selector 0
+Sub0 -> selector 1
 ```
 
 ---
 
-## 5. Cámara v9
+## 5. Cámara heredada de v9
 
 Managers:
 
@@ -144,15 +149,7 @@ Self    = sGameCamera+0xCE0
 Partner = sGameCamera+0xCE4
 ```
 
-Flag:
-
-```text
-gLocalCoopActive = 0x057D9188
-```
-
-Solo se activa después de la transición canónica de Sub0 a Pad.
-
-Target Partner:
+Target setter:
 
 ```text
 0x01C275EC -> 0x02066AB0
@@ -172,13 +169,13 @@ Helper persistente:
 ensure_split = 0x01C9504C
 ```
 
-Cuando el flag local está apagado, v9 preserva la inicialización de cámara stock.
+Con `gLocalCoopActive=0`, v9 preserva la política de cámara stock.
 
 ---
 
-## 6. ItemBox v10
+## 6. ItemBox heredado de v10
 
-Slots globales:
+Slots:
 
 ```text
 0x05562878 + index*4
@@ -188,15 +185,14 @@ slot 1 = sItemBoxCoop
 
 `sItemBoxCoop` se crea automáticamente por el sistema doble.
 
-Selector stock:
+GameMode stock:
 
 ```text
-cSystemData<Game>::mGameMode
 Campaign=0
 Coop=1
 ```
 
-v10 no cambia GameMode global.
+v10 NO cambia GameMode global.
 
 Wrapper:
 
@@ -216,10 +212,6 @@ Callsite:
 0x01D067AF
 ```
 
----
-
-## 7. Bags cooperativos
-
 Categorías:
 
 ```text
@@ -227,21 +219,11 @@ Categorías:
 0x80020000 = np
 ```
 
-`sItemBoxCoop` aporta:
-
-```text
-pSharedBag -> 0x80010000
-pMyBag     -> 0x80011000
-NPC/partner accessors -> 0x80020000
-```
-
-`cBagCoop+0xB8/+0xBC` son estado `cCoopSkill`, no IDs de jugador.
+`cBagCoop+0xB8/+0xBC` son estado `cCoopSkill`, no player IDs.
 
 ---
 
-## 8. PcsSub / equipamiento
-
-PcsSub tiene 77 acciones y las 77 tienen equivalente Main.
+## 7. PcsSub / cBioItemPack
 
 Contexto Sub:
 
@@ -249,13 +231,13 @@ Contexto Sub:
 cFsmActionPcsSub+0x1078
 ```
 
-proviene de una tabla de punteros reales de:
+Fuente:
 
 ```text
 sPcsManager+0xB44
 ```
 
-Acciones relevantes que aceptan `pl` o `np`:
+Acciones confirmadas para `pl` o `np`:
 
 ```text
 AddWeapon
@@ -284,57 +266,240 @@ Campos pack:
 +0xCC mCoopKeyNum
 ```
 
-El cambio rápido de arma de Sub0 ya usa PadData[1].
+El cambio rápido de arma del Sub0 ya usa PadData[1].
 
 ---
 
-## 9. Caminos descartados
+## 8. Pickup canónico v11/v12
 
-No usar como hooks principales:
+### uItem
+
+DTI:
+
+```text
+global 0x05579584
+string "uItem" @ 0x04D30838
+size 0x10F0
+```
+
+Target local stock:
+
+```text
+uItem+0xF48
+```
+
+Stock solo encuentra/acepta `pl`.
+
+### v11 canónico
+
+SHA:
+
+`2c69c5f16626dc7478a6221c2bac98ed19f5b37dcf7991fc78f744f35f192d69`
+
+Añade exclusivamente el exacto Sub0 como candidato local adicional:
+
+- conserva P1 stock;
+- compara distancia P1/Sub0 al mismo `uItem`;
+- guarda el más cercano en `+0xF48`;
+- gates posteriores admiten stock `pl` o exact Sub0 con local activo;
+- no habilita NPC genéricos.
+
+### FsmPickupItem
+
+`cFsmAction::cPickupItemParameter`:
+
+```text
++0x04 mIsDrawMessage
++0x05 mIsAddMainPlayer
++0x08 mListNo
++0x0C mDataNo
++0x10 mArrange
+```
+
+`mIsAddMainPlayer=1` selecciona Self/Main.
+
+`mIsAddMainPlayer=0` selecciona partner/non-Self.
+
+Ambas ramas terminan en:
+
+```text
+actor
+ -> uNpc+0x1524
+ -> cBioItemPack
+ -> addItem
+```
+
+### v12
+
+SHA:
+
+`5aafc3fd4273d608b4c9b8b60631256b56cb27d6aab0ecca8d2718d824dd28e8`
+
+Corrige el `cActionCommand` de `uItem`.
+
+Stock selector:
+
+```text
+0x01BA99B7 -> 0x026D7AD0
+```
+
+v12:
+
+```text
+target P1   -> member 0 -> PadData[0]
+target Sub0 -> member 1 -> PadData[1]
+```
+
+Además `0x02DB2B50` pasa a respetar el selector en vez de recargar `mStartPadNo`.
+
+**CONFIRMADO estáticamente:** el pickup de Sub0 llega a su propio `cBioItemPack`.
+
+---
+
+## 9. v13 — symmetric ammo relief
+
+Ruta stock:
+
+```text
+0x027ABFE0
+```
+
+Grupo normalizado:
+
+```text
+0x80040200
+```
+
+En Coop real reparte/bonifica munición al otro actor.
+
+Multiplicador stock Coop:
+
+```text
+[0x05479970] = 1.5
+```
+
+Metadata:
+
+```text
+入手弾数倍率
+```
+
+v13 replica esa regla bajo local co-op sin cambiar `mGameMode`.
+
+Helper:
+
+```text
+0x01C95220...
+```
+
+Comportamiento:
+
+```text
+P1 recoge   -> other = exact Sub0
+Sub0 recoge -> other = P1 stock
+```
+
+Acepta `pl` recíproco bajo local co-op y conserva comportamiento stock cuando flag=0.
+
+---
+
+## 10. Punto actual: puertas 2P
+
+La investigación actual está en:
+
+```text
+uDoor2pBase
+```
+
+Infraestructura duplicada:
+
+```text
++0x1010 mReadyFlag[0]
++0x1011 mReadyFlag[1]
+
++0x1018 mGuestStatusFlag[0]
++0x1019 mGuestStatusFlag[1]
+
++0x1024 mLocalFlag[0]
++0x1025 mLocalFlag[1]
+```
+
+Setter actor-específico:
+
+```text
+0x01C9217B -> 0x02588D20
+```
+
+Callsites directos:
+
+```text
+0x0257185D
+0x0257198A
+```
+
+Deriva índice 0/1 del actor mediante:
+
+```text
+0x01BEDBB7 -> 0x01CB7610
+```
+
+No filtra categoría `pl/np`.
+
+Ready setter:
+
+```text
+0x02589040
+```
+
+recibe índice 0/1 y actualiza estado paralelo.
+
+La lógica de la puerta consulta ambos slots.
+
+### Incógnita actual
+
+Hay otras rutas que usan:
+
+```text
+0x01C85962 -> 0x02DA3050
+```
+
+como índice local global.
+
+No está demostrado si esas lecturas son:
+
+- gameplay crítico;
+- red;
+- visual/feedback local;
+- o una mezcla.
+
+No tratarlas como bloqueo hasta seguir los callers.
+
+---
+
+## 11. Próximo paso exacto
+
+1. identificar owner/state de `0x0257185D` y `0x0257198A`;
+2. reconstruir actor pasado a `0x02588D20`;
+3. comprobar si PcsSub/Sub0 llega de forma nativa;
+4. separar gameplay de red/feedback;
+5. no modificar globalmente el índice local;
+6. crear v14 solo si aparece un bloqueo concreto.
+
+---
+
+## 12. Rutas históricas descartadas
+
+No reutilizar:
 
 ```text
 mCameraList[0]/[1] -> uObjModel
-mPadViewportNo     -> sVibration
-uCameraManage::mPadNo -> no demostrado como selector físico
-VIEW_4 -> no es Partner stock
+mPadViewportNo     -> vibration
+uCameraManage::mPadNo -> physical pad selector no demostrado
+VIEW_4 -> not Partner stock
 ```
 
-No reutilizar v8 como base.
+No usar v8 como base.
 
----
+No usar una v11 no canónica para reconstruir v12/v13.
 
-## 10. Punto pendiente actual
-
-La siguiente capa es **pickup/item/ammo/herb del partner**.
-
-Tipo:
-
-```text
-sItem::cNetSyncData::cPickupItemSyncData
-```
-
-Receiver prioritario:
-
-```text
-0x01B9F142 -> 0x02459C20
-```
-
-Dentro alcanza:
-
-```text
-0x01BCC327 -> 0x01D336A0
- -> uNpc+0x1524
- -> cBioItemPack
-```
-
-Punto exacto adicional pendiente:
-
-```text
-0x049A8023
-```
-
-Ver:
-
-`docs/12-pickup-sync-wip.md`
-
-No crear v11 hasta demostrar que la ruta de pickup necesita un cambio de código.
+El punto `0x049A8023` ya está resuelto como DTI de `uItem`; no volver a tratarlo como pendiente.
