@@ -3023,3 +3023,44 @@ No existe en esa entrada el fallback `pl -> np` que sí aparece en las acciones 
 Como Sub0 local sigue siendo categoría `np`, **v10 todavía no tiene demostrado el pickup local de P2**.
 
 Se inicia la reconstrucción de `sItem::cNetSyncData::cPickupItemSyncData` para comparar con la ruta cooperativa online antes de decidir el parche.
+
+
+---
+
+# 47. cGetItemSyncData, PickUpState y v11
+
+La sincronización coop de pickup contiene dos mensajes distintos.
+
+`cPickupItemSyncData` replica estado del objeto, mientras:
+
+```text
+uItem::cNetSyncData::cGetItemSyncData
+```
+
+resuelve al actor remoto y vuelve a llamar al mismo handler local:
+
+```text
+0x024646F0
+```
+
+El punto `0x049A8023` que quedó visible en el turno cortado pertenece a la inicialización global del DTI de `uItem`.
+
+Además, `player::PickUpState::0x0270AC70` convierte explícitamente su actor a `uNpc` y `0x0270AD00` llama después a `uItem::pickup(actor)`.
+
+Esto demuestra que el flujo de pickup está preparado para recibir un `uNpc`; el bloqueo estaba concentrado en el predicate inicial `pl-only`.
+
+Se construyó v11 con una excepción mínima:
+
+```text
+si stock is_pl == false:
+    permitir solo si gLocalCoopActive != 0
+    y actor == gSub0Npc
+```
+
+v11 SHA:
+
+```text
+66b8a6ac440a2b676ce687860073a500617ff86de71d588464eeedc38532b415
+```
+
+Es v10 + 36 bytes efectivos en 2 rangos, y revertir solo esos bytes reproduce exactamente el SHA de v10.
