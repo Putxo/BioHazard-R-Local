@@ -3510,3 +3510,164 @@ stock_isPl(id) || (gLocalCoopActive && gSub0Npc && gSub0Npc->getID()==id)
 No se abrirán pickups a otros NPC y no se tocará el comportamiento online.
 
 Detalle: `docs/12-pickup-sync.md`.
+
+
+---
+
+# 50. CORRECCIÓN CANÓNICA FINAL DEL HANDOFF: v13 y puertas 2P
+
+Durante la preparación del handoff para un chat nuevo se añadió al final del diario una recapitulación basada en el tramo visible reciente que señalaba v10/pickup como punto actual.
+
+La auditoría posterior del **historial completo de commits de este mismo repositorio/chat** demostró que esa recapitulación estaba desactualizada respecto al trabajo que ya había sido persistido antes.
+
+Por tanto:
+
+- las secciones de este diario que describen v10 como “base actual” se conservan como cronología histórica;
+- **NO representan el endpoint actual**;
+- la base canónica real más reciente es **v13**;
+- pickups ya avanzaron a v11/v12/v13;
+- el trabajo actual está en **puertas/interacciones 2P**.
+
+## Cadena canónica reciente
+
+```text
+v9
+5dc7a7a413ce5916c2758be43b3107d5adf00beee93533b4acf5d83cec97c4be
+
+v10
+5060269e5115ef8df53aa0ad4e26c09b4b273d4cfeb6628a7a4f902c606bb4e6
+
+v11 CANÓNICA
+2c69c5f16626dc7478a6221c2bac98ed19f5b37dcf7991fc78f744f35f192d69
+
+v12
+5aafc3fd4273d608b4c9b8b60631256b56cb27d6aab0ecca8d2718d824dd28e8
+
+v13
+3df0e1020b58b3ccc7e31a9046a2a3ce9e5230e1764869b517943b4a808838aa
+```
+
+## Advertencia sobre v11
+
+Existieron varias iteraciones históricas llamadas “v11”.
+
+La única v11 que pertenece a la cadena canónica que produce v12/v13 es:
+
+```text
+2c69c5f16626dc7478a6221c2bac98ed19f5b37dcf7991fc78f744f35f192d69
+```
+
+No usar como base las otras v11 históricas.
+
+## Pickup ya cerrado hasta v12
+
+El punto `0x049A8023`, que había quedado visible en un timeout, fue resuelto:
+
+```text
+uItem DTI
+string "uItem" @ 0x04D30838
+global DTI 0x05579584
+size 0x10F0
+```
+
+También se confirmó:
+
+- `cPickupItemSyncData` y `cGetItemSyncData`;
+- FsmPickupItem selecciona Main/partner nativamente mediante `mIsAddMainPlayer`;
+- stock local `uItem` tiene un bloqueo pl-only;
+- v11 canónica añade únicamente al exacto Sub0 como candidato/gate local;
+- v12 hace que el `cActionCommand` del `uItem` use member 1 / PadData[1] cuando el target es Sub0;
+- la entrega stock usa el actor seleccionado y alcanza su propio `cBioItemPack`.
+
+## v13
+
+v13 replica la regla secundaria stock de Coop de reparto/relief de munición para el grupo:
+
+```text
+0x80040200
+```
+
+Ruta:
+
+```text
+0x027ABFE0
+```
+
+Multiplicador Coop:
+
+```text
+[0x05479970] = 1.5
+```
+
+La regla se vuelve simétrica:
+
+```text
+P1   -> otro = Sub0
+Sub0 -> otro = P1
+```
+
+sin cambiar `mGameMode` global.
+
+## Punto actual real
+
+Después de v13 se abrió la auditoría de:
+
+```text
+uDoor2pBase
+```
+
+El objeto contiene estado explícito por participante:
+
+```text
+mReadyFlag[0/1]
+mGuestStatusFlag[0/1]
+mLocalFlag[0/1]
+```
+
+Setter actor-específico:
+
+```text
+0x01C9217B -> 0x02588D20
+```
+
+Callsites a seguir:
+
+```text
+0x0257185D
+0x0257198A
+```
+
+Ready setter:
+
+```text
+0x02589040
+```
+
+El setter actor-específico deriva índice 0/1 del actor y **no filtra pl/np**.
+
+La pregunta aún abierta es si las otras lecturas del índice local global:
+
+```text
+0x01C85962 -> 0x02DA3050
+```
+
+son gameplay crítico o solamente sincronización/feedback local.
+
+## Regla desde este punto
+
+**No crear v14 todavía.**
+
+Primero:
+
+1. identificar el owner/state de los dos callsites de `0x02588D20`;
+2. reconstruir el actor que llega;
+3. comprobar llegada de PcsSub/Sub0;
+4. separar gameplay de red/feedback;
+5. parchear únicamente si aparece un bloqueo demostrado.
+
+Los archivos canónicos de handoff son:
+
+- `START_HERE_NEW_CHAT.md`;
+- `research/current_state.json`;
+- `docs/04-current-architecture-map.md`;
+- `docs/13-door-2p.md`.
