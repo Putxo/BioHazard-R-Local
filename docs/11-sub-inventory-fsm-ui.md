@@ -521,3 +521,244 @@ para conseguir el cambio funcional de arma.
 `notifyPadInput` se mantiene interpretado como notificación/actualización visual de la ventana; la acción real ocurre en gameplay, dentro de la ruta `uNpc`.
 
 No se establece aquí ninguna prioridad funcional adicional. Este hallazgo solo confirma que el cambio de arma de Sub0 ya usa PadData[1]; cualquier investigación posterior se limitará a lo necesario para completar el cooperativo local solicitado.
+
+
+---
+
+## 12. Las acciones PcsSub aceptan explícitamente categoría NPC
+
+Se siguieron las implementaciones comunes usadas por los wrappers Main/Sub.
+
+Los predicados de categoría están confirmados:
+
+```text
+0x01C8C9A1 -> 0x01D77EB0
+  normalize(id) == 0x80010000  ; "pl"
+
+0x01C2B557 -> 0x01D77F10
+  normalize(id) == 0x80020000  ; "np"
+```
+
+El normalizador es:
+
+```text
+0x01C1C8B8 -> 0x01D4B120
+id & 0xF00F0000
+```
+
+### NpcChangeEquipSlot
+
+Wrapper Sub:
+
+```text
+0x02A94850
+  [this+0x1078]
+  -> tercer argumento
+  -> 0x01C4C437
+  -> 0x02A29590
+```
+
+La implementación común hace:
+
+```text
+pl ? continuar
+si no:
+np ? continuar
+si no: salir
+```
+
+Bloques:
+
+```text
+0x02A29619 -> is "pl"
+0x02A29646 -> is "np"
+0x02A29655 -> ruta común admitida
+```
+
+Por tanto NpcChangeEquipSlot acepta expresamente player o NPC.
+
+### AddWeapon
+
+Wrapper Sub:
+
+```text
+0x02A93120
+  [this+0x1078]
+  -> tercer argumento
+  -> 0x01C92914
+  -> 0x02A16E80
+```
+
+Filtro:
+
+```text
+0x02A16F0D -> pl
+0x02A16F3A -> np
+0x02A16F4D -> ruta común
+```
+
+Después:
+
+```text
+0x01B9D60D -> 0x0208FCB0
+```
+
+valida/convierte por el DTI de `uNpc`.
+
+El DTI global usado en esa conversión (`0x055894DC`) se registra con la string literal:
+
+```text
+"uNpc"
+```
+
+A continuación:
+
+```text
+0x01BCC327 -> 0x01D336A0
+```
+
+accede al miembro en:
+
+```text
+uNpc + 0x1524
+```
+
+y devuelve el puntero contenido en ese wrapper/scoped_ptr. Las llamadas posteriores utilizan la interfaz del `cBioItemPack` ya reconstruida.
+
+Ruta relevante:
+
+```text
+PcsSub context
+ -> actor pl/np
+ -> uNpc
+ -> uNpc+0x1524
+ -> cBioItemPack
+ -> alta de arma/item
+```
+
+### ClearWeapon
+
+Wrapper Sub:
+
+```text
+0x02A93190
+  [this+0x1078]
+  -> 0x01C80A70
+  -> 0x02A17270
+```
+
+Filtro:
+
+```text
+0x02A172FD -> pl
+0x02A1732A -> np
+0x02A1733D -> ruta común
+```
+
+Después vuelve a usar:
+
+```text
+0x01B9D60D -> uNpc
+0x01BCC327 -> uNpc+0x1524 -> cBioItemPack
+```
+
+y limpia las colecciones internas del pack, incluidos slots/subweapon/bullets.
+
+### NpcSetWeaponSlot
+
+Wrapper Sub:
+
+```text
+0x02A94070
+  [this+0x1078]
+  -> 0x01BA7D15
+  -> 0x02A23C90
+```
+
+Filtro:
+
+```text
+0x02A23D19 -> pl
+0x02A23D46 -> np
+```
+
+Después convierte por `uNpc` y aplica el slot.
+
+### NpcResetWeaponSlot
+
+Wrapper Sub:
+
+```text
+0x02A940E0
+  [this+0x1078]
+  -> 0x01BA014B
+  -> 0x02A23F80
+```
+
+Filtro:
+
+```text
+0x02A24009 -> pl
+0x02A24036 -> np
+```
+
+Después vuelve a la misma ruta `uNpc` y resetea el estado de slot.
+
+## 13. Qué es +0x1078
+
+El setter:
+
+```text
+0x01C3696B -> 0x02DCFBC0
+```
+
+guarda en `cFsmActionPcsSub+0x1078` el tercer contexto recibido desde `sPcsManager`.
+
+La fuente es una tabla:
+
+```text
+sPcsManager + 0xB44
+```
+
+organizada en grupos de `0x44 = 17 * 4` bytes.
+
+El setter real de esa tabla:
+
+```text
+0x01C171AB -> 0x02DD04E0
+```
+
+recibe un **puntero de objeto real** y lo almacena directamente en:
+
+```text
+[sPcsManager + group*0x44 + 0xB44 + index*4]
+```
+
+En paralelo obtiene un ID del mismo objeto y lo guarda en la tabla hermana:
+
+```text
+sPcsManager + group*0x44 + 0x704 + index*4
+```
+
+Por tanto `+0x1078` no es un ID ni una bandera: es un contexto de objeto vivo mantenido por `sPcsManager`.
+
+Todavía no se fuerza un nombre C++ más específico al puntero de `+0x1078`, porque los seis productores de la tabla se están siguiendo por separado. Lo ya demostrado es suficiente para las acciones de inventario: las implementaciones comunes validan dinámicamente el objeto como categoría `pl` o `np` antes de operar.
+
+## Consecuencia
+
+La capa de gameplay ya soporta de forma nativa que las acciones Sub modifiquen el inventario/equipamiento de un actor NPC/partner.
+
+Esto complementa la evidencia de `sItemBoxCoop`:
+
+```text
+sItemBoxCoop
+  player bag  -> categoría pl
+  partner bag -> categoría np
+
+PcsSub actions
+  aceptan pl o np
+  -> uNpc
+  -> cBioItemPack propio
+```
+
+No se necesita añadir un parche nuevo para estas operaciones antes de la validación runtime.
