@@ -2752,3 +2752,50 @@ slot 1 = sItemBoxCoop
 **CONFIRMADO:** incluso partiendo de Campaign, el objeto cooperativo está disponible; no es necesario crearlo manualmente para v9.
 
 Pendiente: elegir el hook mínimo para que el modo local use el slot cooperativo sin cambiar más sistemas de los necesarios.
+
+
+---
+
+# 44. v10: ItemBox cooperativo local sin cambiar GameMode
+
+Se cerró el registro exacto de `cGameSystem`:
+
+```text
+slot address = 0x05562878 + index*4
+slot 0 = 0x05562878
+slot 1 = 0x0556287C
+```
+
+`0x02D0A094` escribe la instancia y `0x01D06B20` la lee del mismo array.
+
+El selector normal de `mItemBox` en `0x01D06730` elige:
+
+```text
+mGameMode!=Coop -> 0x01D06930 -> slot 0
+mGameMode==Coop -> 0x01D069D0 -> slot 1
+```
+
+v10 sustituye solo la condición de `0x01D067AF` por:
+
+```text
+stock GameMode::Coop OR gLocalCoopActive
+```
+
+Wrapper `0x01C95100`.
+
+No se modifica `mGameMode`.
+
+Output:
+
+```text
+BioRevHD 30-Enero-2013 LOCAL COOP v10 CLEAN SPLIT COOP ITEMBOX.exe
+SHA-256 5060269e5115ef8df53aa0ad4e26c09b4b273d4cfeb6628a7a4f902c606bb4e6
+```
+
+Diff vs v9: 23 bytes, 2 rangos, mismo tamaño.
+
+Al revertir solo esos dos cambios se reproduce exactamente el SHA publicado de v9.
+
+Builder: `patches/build_v10_itembox_from_v9.py`.
+
+Manifest: `research/manifests/local-coop-v10-itembox.json`.
