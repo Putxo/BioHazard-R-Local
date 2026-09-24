@@ -423,3 +423,101 @@ La condición textual `isPlayer(target) || isNpc(target)` tiene xrefs en una fun
 No se atribuye esa función directamente a `FsmPickupItem`: el registro real de `FsmPickupItem` apunta a `0x029971C0`.
 
 Se conserva como evidencia separada de soporte Player/Npc en acciones PCS.
+
+
+---
+
+## 13. Diseño del parche local exacto para uItem
+
+La ruta normal de mundo sigue siendo single-local-player aunque Sub0 ya esté en `ThinkMode::Pad`.
+
+### Selección stock de candidato
+
+En el update de `uItem` alrededor de `0x02461FF0`:
+
+```text
+0x0246213F -> get singleton
+0x02462146 -> 0x01C85962 -> 0x02DA3050
+             obtiene la identidad local actual
+
+0x02462159 -> 0x01C07341 -> 0x02DA3840
+             busca el actor por esa identidad
+```
+
+`0x02DA3840` itera actores, pero en `0x02DA3898` exige categoría `pl` antes de comparar el ID.
+
+El candidato resultante se guarda primero en `[ebp-0x2C]` y, tras distancia/validez, finalmente en:
+
+```text
+uItem + 0xF48
+0x024626B3
+```
+
+### Distancia stock
+
+El update obtiene:
+
+```text
+actor position -> 0x01C684B6 -> actor+0x40
+item transform -> virtual +0x60
+item position  -> transform+0x30
+```
+
+y calcula distancia cuadrática XYZ antes de compararla con el umbral de `0x04D02684`.
+
+### Segundo bloqueo en la aplicación
+
+La función `0x02460610` exige:
+
+```text
+uItem+0xF48 != 0
+candidate ID
+ -> 0x01C8C9A1 -> is category pl
+```
+
+en:
+
+```text
+0x02460664
+```
+
+Si no es `pl`, sale inmediatamente.
+
+Por tanto un Sub0 local sigue bloqueado dos veces:
+
+1. no puede ser elegido por el finder `pl` stock;
+2. aunque se colocara manualmente en `+0xF48`, el procesamiento lo rechazaría por ser `np`.
+
+### Parche mínimo propuesto para v11
+
+No modificar globalmente `isPlayer` ni `isNpc`.
+
+Solo en estos dos puntos de `uItem`:
+
+1. envolver el finder de `0x02462159`:
+   - conservar el Main devuelto por stock;
+   - si `gLocalCoopActive==1` y existe `gSub0Npc`, comparar la distancia Main/item con Sub0/item;
+   - devolver el más cercano;
+   - si Main es null, permitir Sub0;
+   - todo el filtrado stock posterior sigue ejecutándose sobre el actor elegido.
+
+2. envolver el guard `0x02460664`:
+   - aceptar el resultado stock `pl`;
+   - si falla, aceptar únicamente cuando:
+     `gLocalCoopActive==1 && uItem->mCandidate(+0xF48)==gSub0Npc`;
+   - rechazar cualquier otro `np`.
+
+Cave verificada libre:
+
+```text
+0x01C95120+
+```
+
+La zona continúa rellena con `0xCC` después de:
+
+```text
+v9 camera helpers: 0x01C94FC0..0x01C950FA
+v10 ItemBox wrapper: 0x01C95100..0x01C95113
+```
+
+Este diseño mantiene el comportamiento stock cuando el cooperativo local está apagado y no convierte a NPCs arbitrarios en jugadores locales.
