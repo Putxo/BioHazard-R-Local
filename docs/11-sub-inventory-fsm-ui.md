@@ -879,3 +879,136 @@ uItem
 ```
 
 Pendiente: seguir `sItem::cNetSyncData::cPickupItemSyncData` para comprobar cómo la recogida interactiva/sincronizada transporta la identidad del destinatario y si esa capa necesita adaptación para local co-op.
+
+
+---
+
+## 15. cPickupItemSyncData sincroniza el ítem, no el destinatario
+
+Se reconstruyó la ruta de red asociada a:
+
+```text
+sItem::cNetSyncData::cPickupItemSyncData
+```
+
+DTI global:
+
+```text
+0x05578DF0
+```
+
+Tamaño registrado:
+
+```text
+0x1C
+```
+
+### Layout observado
+
+La implementación específica expone cinco campos de payload:
+
+```text
++0x08 DWORD
++0x0C DWORD
++0x10 DWORD
++0x14 DWORD
++0x18 BYTE
+```
+
+Setters:
+
+```text
+0x0244D0F0 -> +0x08
+0x0244D140 -> +0x0C
+0x0244D190 -> +0x10
+0x0244D1E0 -> +0x14
+0x0244D230 -> +0x18
+```
+
+Getters del receptor:
+
+```text
+0x02459E20 -> +0x08
+0x02459E60 -> +0x0C
+0x02459EA0 -> +0x10
+0x02459EE0 -> +0x14
+0x02459F20 -> +0x18
+```
+
+### Productor
+
+El productor común:
+
+```text
+0x0244CF30
+```
+
+construye el paquete y rellena esos cinco campos.
+
+Callers confirmados:
+
+```text
+0x02434322
+0x02460890
+0x02460B3E
+```
+
+En los callers se observa que:
+
+- un campo procede del ID/tipo del item;
+- otro procede de la identidad/ID de la instancia `uItem`;
+- los tres restantes proceden de estado de drop/param del objeto.
+
+Strings de depuración adyacentes incluyen:
+
+```text
+dropVal
+dropID
+param
+```
+
+No se asigna todavía cada uno de esos tres nombres a un offset concreto sin evidencia adicional.
+
+### Receptor
+
+El dispatcher de sync reconoce el DTI de `cPickupItemSyncData` y crea un delegate hacia:
+
+```text
+0x01B9F142 -> 0x02459C20
+```
+
+La rutina receptora:
+
+1. localiza/sincroniza la instancia del item mediante los IDs del paquete;
+2. obtiene el actor/inventario local correspondiente por la ruta normal;
+3. extrae:
+   `uNpc+0x1524 -> cBioItemPack`;
+4. usa el campo `+0x08` como valor de item en la operación de inventario.
+
+### Corrección de interpretación
+
+**No existe en este paquete un campo explícito "Main/Partner".**
+
+La sincronización de red transporta el estado/identidad del **ítem**, mientras la selección del destinatario se resuelve en otra capa.
+
+Esto concuerda con `FsmPickupItem`, donde el destinatario sí está nombrado explícitamente mediante:
+
+```text
+mIsAddMainPlayer
+```
+
+### Consecuencia para local co-op
+
+No es necesario convertir el pickup local de P2 en un paquete de red ni introducir un playerID artificial en `cPickupItemSyncData`.
+
+La ruta preferida es mantener el flujo local:
+
+```text
+interacción de Sub0
+ -> FsmPickupItem
+ -> mIsAddMainPlayer = false
+ -> Partner actor
+ -> cBioItemPack del partner
+```
+
+Pendiente: identificar quién construye/establece `cPickupItemParameter::mIsAddMainPlayer` en la interacción real para comprobar que el flujo iniciado por Sub0 ya selecciona la rama Partner o necesita un hook mínimo.
