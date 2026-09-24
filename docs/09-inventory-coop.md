@@ -536,3 +536,80 @@ Al revertir únicamente esos cambios, el SHA vuelve exactamente a v9:
 Estado: **STATICALLY VERIFIED ONLY**.
 
 Pendiente: separar input de GUI/inventario/pausa para Pad 2.
+
+
+---
+
+## Identidad de las claves: pl y np
+
+Se siguió el helper común que normaliza IDs:
+
+```text
+0x01C1C8B8 -> 0x01D4B120
+```
+
+La implementación aplica:
+
+```text
+id & 0xF00F0000
+```
+
+Por tanto las constantes de ItemBox son IDs/categorías del sistema de objetos, no números arbitrarios de bag.
+
+Otra rutina hace un switch explícito sobre esas categorías y las convierte a etiquetas internas:
+
+```text
+0x80010000 -> "pl"
+0x80020000 -> "np"
+0x80030000 -> "em"
+0x80040000 -> "it"
+0x80050000 -> "wp"
+0x80060000 -> "om"
+```
+
+Así:
+
+```text
+0x80010000 = categoría player
+0x80020000 = categoría NPC
+```
+
+`0x80011000` conserva la categoría `pl` al pasar por la máscara, pero incluye bits de instancia/sub-ID adicionales.
+
+Esto refuerza el mapeo ya obtenido por los asserts:
+
+```text
+sItemBoxCoop::pSharedBag -> 0x80010000
+sItemBoxCoop::pMyBag     -> 0x80011000
+```
+
+## Dos virtuales Coop que añaden la bolsa NPC
+
+Slots 14 y 15 de la vtable:
+
+```text
+sItemBox base:
+  slot 14 -> 0x02CF4600 -> nullptr
+  slot 15 -> 0x02CF45C0 -> nullptr
+
+sItemBoxCoop:
+  slot 14 -> 0x02D0C870 -> lookup 0x80020000
+  slot 15 -> 0x02D0C810 -> lookup 0x80020000
+```
+
+Ambos slots son inexistentes funcionalmente en single-player y pasan a resolver la categoría `np` en Coop.
+
+**Interpretación fuerte:** son los accesos a la bolsa asociada al partner/NPC cooperativo. El nombre C++ exacto del método no aparece como string, por lo que se documenta como `NPC/partner bag accessor`, no como nombre de símbolo recuperado.
+
+## Implicación para v10
+
+Al seleccionar `sItemBoxCoop`, v10 no necesita inventar almacenamiento para P2:
+
+- el bag del jugador ya existe;
+- el bag compartido ya existe;
+- la implementación Coop añade un bag específico de categoría NPC;
+- el Sub0 de campaña continúa siendo un `uNpc` aunque su `ThinkMode` pase a Pad.
+
+Por tanto la arquitectura de datos encaja con el cooperativo local: el actor Sub0 puede seguir resolviéndose por la rama NPC del ItemBox mientras recibe input local.
+
+Pendiente: seguir los consumidores de esos accessors y confirmar que las acciones de cambio/equipamiento de Sub0 llegan a ellos sin depender de estado de red.
