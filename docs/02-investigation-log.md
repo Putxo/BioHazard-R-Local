@@ -2891,3 +2891,18 @@ uNpc+0x1524 -> cBioItemPack -> virtual add item
 Por tanto la recogida común ya puede entregar objetos al inventario del partner de forma nativa.
 
 Detalle: `docs/11-sub-inventory-fsm-ui.md`.
+
+
+---
+
+# 47. cPickupItemSyncData no codifica Main/Partner
+
+El payload de `cPickupItemSyncData` mide `0x1C` y contiene cinco campos en `+0x08/+0x0C/+0x10/+0x14/+0x18`.
+
+El productor `0x0244CF30` y el receptor `0x02459C20` demuestran que esos campos describen el item/instancia y estado de drop.
+
+No aparece un selector explícito Main/Partner.
+
+La selección del destinatario de inventario pertenece a la capa `FsmPickupItem`, cuyo parámetro sí contiene `mIsAddMainPlayer`.
+
+Por tanto no se usará el protocolo de red como sustituto artificial del pickup local P2.
