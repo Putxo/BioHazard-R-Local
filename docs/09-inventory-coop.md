@@ -343,3 +343,112 @@ La tercera clave `0x80020000` sigue pendiente de nombre hasta seguir sus callers
 ## Consecuencia
 
 Cuando se usa `sItemBoxCoop`, el motor ya redirige explícitamente las bolsas normalizadas a claves cooperativas. La siguiente pregunta es cuándo se instancia/selecciona `sItemBoxCoop`, no cómo inventar una bolsa nueva para P2.
+
+
+---
+
+## Selector nativo: cSystemData<Game>::mGameMode
+
+La condición que decide si el módulo de inventario usa el slot normal o el cooperativo quedó identificada por RTTI y metadata interna.
+
+El objeto consultado pertenece a:
+
+```text
+cGameSystem<sGameSystemsHolder<Game>,0>
+```
+
+Dentro del holder, el primer subsistema construido fue identificado como:
+
+```text
+cSystemData<Game>
+```
+
+El campo consultado en ese sistema está en:
+
+```text
+cSystemData<Game> + 0x20
+```
+
+y el metadata de propiedades del propio ejecutable lo nombra:
+
+```text
+mGameMode
+```
+
+### Valores de GameMode
+
+El binario registra el array de información de misión por modo con entradas consecutivas:
+
+```text
+mInfoArray[GameMode::Campaign]
+mInfoArray[GameMode::Coop]
+```
+
+y el código trata el valor como un enum indexado desde 0.
+
+El mapeo confirmado es:
+
+```text
+GameMode::Campaign = 0
+GameMode::Coop     = 1
+```
+
+### Consecuencia sobre mItemBox
+
+El selector nativo queda reconstruido como:
+
+```text
+if (cSystemData<Game>::mGameMode == GameMode::Coop)
+    usar slot 1
+else
+    usar slot 0
+```
+
+Por tanto el uso de `sItemBoxCoop` no depende de un ID de jugador ni de una heurística del HUD: depende directamente del modo de juego central.
+
+---
+
+## cGameSystemDouble crea sItemBoxCoop automáticamente
+
+También se cerró la duda de si el slot 1 podría ser nulo durante una Campaign.
+
+RTTI/herencia:
+
+```text
+sItemBox
+  -> cGameSystemDouble<sItemBox,0>
+  -> cGameSystem<sItemBox,1>
+```
+
+El constructor del sistema doble registra la primera instancia en el slot 0 y comprueba el slot 1.
+
+Si el segundo slot no existe, usa el DTI/factoría registrada de:
+
+```text
+sItemBoxCoop
+```
+
+para crear automáticamente la segunda instancia.
+
+La segunda construcción detecta que el slot 0 ya está ocupado y se registra en el slot 1, evitando recursión.
+
+La tabla global de instancias está indexada como:
+
+```text
+0x05562878 + index*4
+```
+
+Por tanto, en una Campaign normal donde existe `sItemBox`:
+
+```text
+slot 0 -> sItemBox
+slot 1 -> sItemBoxCoop
+```
+
+**CONFIRMADO:** el slot cooperativo ya existe; no es necesario crear un `sItemBoxCoop` nuevo al activar el cooperativo local.
+
+### Implicación para v9
+
+El siguiente cambio de inventario, si resulta necesario, puede limitarse a reutilizar el selector existente del juego en vez de fabricar bags o instancias nuevas.
+
+Todavía no se ha aplicado ningún parche de inventario a v9: primero hay que decidir si conviene cambiar globalmente `mGameMode` o redirigir solo las consultas de ItemBox durante el modo local. La segunda opción es potencialmente menos invasiva.
