@@ -5,8 +5,8 @@ Este archivo evita la ambigüedad entre **builds originales del juego** y **vers
 ## Regla
 
 - Las builds originales son Enero/Febrero/Mayo/2024.
-- v1..v10 son iteraciones del parche.
-- Solo **v10** es la base canónica actual.
+- v1..v13 son iteraciones del parche.
+- Solo **v13** es la base canónica actual.
 - Las versiones anteriores se conservan por trazabilidad, no como alternativas equivalentes.
 
 ---
@@ -322,3 +322,111 @@ El candidato más probable, si hace falta, sería un hook mínimo de pickup del 
 Hasta entonces:
 
 **seguir analizando v10, no parchear.**
+
+
+---
+
+## v11 — canonical pickup
+
+**La v11 canónica de la cadena v12/v13 es:**
+
+`BioRevHD 30-Enero-2013 LOCAL COOP v11 SUB0 PICKUP.exe`
+
+SHA-256:
+
+`2c69c5f16626dc7478a6221c2bac98ed19f5b37dcf7991fc78f744f35f192d69`
+
+Base: v10.
+
+Diseño:
+
+- conserva el candidato P1 stock;
+- compara el exacto Sub0 por distancia al mismo `uItem`;
+- guarda el más cercano en `uItem+0xF48`;
+- amplía los gates pl-only únicamente para `gLocalCoopActive && actor==gSub0Npc`;
+- no habilita NPC genéricos;
+- no toca Network.
+
+Hubo otras iteraciones históricas llamadas v11 con SHA diferentes. **No pertenecen a la cadena final v12/v13.**
+
+Builder: `patches/build_v11_sub0_pickup.py`
+
+Manifest: `research/manifests/local-coop-v11-sub0-pickup.json`
+
+---
+
+## v12 — pickup Pad 2
+
+Output: `BioRevHD 30-Enero-2013 LOCAL COOP v12 SUB0 PICKUP PAD2.exe`
+
+SHA-256: `5aafc3fd4273d608b4c9b8b60631256b56cb27d6aab0ecca8d2718d824dd28e8`
+
+Base SHA esperado: `2c69c5f16626dc7478a6221c2bac98ed19f5b37dcf7991fc78f744f35f192d69`
+
+Mejora:
+
+- el `cActionCommand` de `uItem` deja de asumir siempre member 0;
+- si el target del `uItem` es el exacto Sub0 y local coop está activo, devuelve member 1;
+- `0x02DB2B50` respeta su selector en vez de cargar `mStartPadNo`.
+
+Resultado:
+
+```text
+pickup target P1   -> PadData[0]
+pickup target Sub0 -> PadData[1]
+```
+
+Builder: `patches/build_v12_sub0_pickup_pad2.py`
+
+Manifest: `research/manifests/local-coop-v12-sub0-pickup-pad2.json`
+
+---
+
+## v13 — symmetric ammo relief
+
+Output: `BioRevHD 30-Enero-2013 LOCAL COOP v13 SYMMETRIC AMMO RELIEF.exe`
+
+SHA-256: `3df0e1020b58b3ccc7e31a9046a2a3ce9e5230e1764869b517943b4a808838aa`
+
+Base: v12 SHA `5aafc3fd...`
+
+Propósito: replicar únicamente la regla Coop de reparto/relief de munición en Campaign local, sin cambiar `mGameMode` global.
+
+Ruta stock: `0x027ABFE0`
+
+Grupo de item: `0x80040200`
+
+Diseño:
+
+- gate = stock Coop OR `gLocalCoopActive`;
+- P1 actual -> other = exact Sub0;
+- Sub0 actual -> other = P1 stock;
+- acepta P1 como actor `other` bajo local coop;
+- usa multiplicador Coop `[0x05479970] = 1.5`;
+- comportamiento stock preservado cuando flag=0.
+
+Helper: `0x01C95220...`
+
+Builder: `patches/build_v13_ammo_relief.py`
+
+Assembly: `research/patches/ammo_relief_v13.S`
+
+Manifest: `research/manifests/local-coop-v13-ammo-relief.json`
+
+**BASE CANÓNICA ACTUAL.**
+
+---
+
+# Regla para v14
+
+No crear v14 por encontrar otra clase. Solo crear v14 si la auditoría de puertas/interacciones demuestra un bloqueo concreto.
+
+Punto actual:
+
+```text
+uDoor2pBase
+setter 0x02588D20
+callsites 0x0257185D / 0x0257198A
+```
+
+Antes de parchear hay que demostrar qué actor llega y qué parte del uso del índice local global es gameplay crítico.
