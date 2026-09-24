@@ -2933,3 +2933,37 @@ Existe además `sItem::cNetSyncData::cPickupItemSyncData` (size 0x1C), sender `0
 No se parchea todavía: primero hay que demostrar que el resto de la función, después del gate, acepta correctamente al Sub0 exacto.
 
 Detalle: `docs/12-pickup-sub0.md`.
+
+
+---
+
+# 46. v11/v12: pickup de Sub0 y ActionCommand Pad 2
+
+v11 habilita únicamente al Sub0 exacto como target local adicional de `uItem`, usando el slot stock `uItem+0xF48`.
+
+Después se demostró que el `cActionCommand` de `uItem` instala un callback único:
+
+```text
+0x01BA99B7 -> 0x026D7AD0
+```
+
+que en stock siempre devuelve 0.
+
+Ese valor es el member/pad selector que `cActionCommand` pasa a `sGamePad`.
+
+Además `0x02DB2B50` recibía ese selector pero la implementación PC lo ignoraba y cargaba `mStartPadNo`.
+
+v12 corrige ambas piezas:
+
+```text
+uItem target P1   -> member 0 -> PadData[0]
+uItem target Sub0 -> member 1 -> PadData[1]
+```
+
+solo mientras el cooperativo local está activo.
+
+SHA v12:
+
+`5aafc3fd4273d608b4c9b8b60631256b56cb27d6aab0ecca8d2718d824dd28e8`
+
+Detalle: `docs/12-v11-pickup-actioncommand.md`.
