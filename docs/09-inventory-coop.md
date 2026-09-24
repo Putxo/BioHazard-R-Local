@@ -273,3 +273,73 @@ La cantidad de overrides demuestra que el comportamiento cooperativo no es una s
 6. después estudiar pausa/inventario interactivo/HUD de cada jugador.
 
 No se crea una nueva versión de EXE hasta obtener un cambio de código concreto y demostrado.
+
+
+---
+
+## CORRECCIÓN: +0xB8/+0xBC son cCoopSkill, no IDs de jugador
+
+La interpretación provisional de `cBagCoop+0xB8/+0xBC` como posibles identidades de participantes queda descartada.
+
+El owner de la estructura consultada a través de `uPlayer+0xDC0` fue identificado por RTTI como:
+
+```text
+app::game::network::sCoopManager::cCoopSkill
+```
+
+Vtable `0x04E0F7CC`; type descriptor `0x054DF2FC`.
+
+Sus métodos alrededor de `0x02D90160..0x02D905B0` inicializan, actualizan, serializan y limpian dos valores indexados en `this+0x04/+0x08`.
+
+Por tanto los dos DWORD copiados a `cBagCoop+0xB8/+0xBC` son estado/skill cooperativo, no `playerID`.
+
+## playerID real de sItemBox
+
+La ruta `sItemBox::saveData()` obtiene el primer valor de su mensaje de error `playerID` desde el objeto jugador mediante:
+
+```text
+0x01C53859 -> 0x027F1200
+```
+
+`0x027F1200` comprueba un override en `uPlayer+0xE38`; si es distinto del sentinel `0x80000000`, lo devuelve. Si no, deriva el ID desde el objeto asociado.
+
+## Mapeo confirmado de pMyBag y pSharedBag
+
+Una rutina alrededor de `0x02CEFF10` confirma por sus asserts:
+
+```text
+[ebp-0xB4] = pMyBag
+[ebp-0xC0] = pSharedBag
+```
+
+El primero viene del virtual `+0x48` (slot 18), y el segundo del virtual `+0x2C` (slot 11).
+
+### sItemBoxCoop::pSharedBag
+
+```text
+slot 11 / +0x2C
+base: 0x01C3F51B -> 0x02CF42C0
+coop: 0x01C74284 -> 0x02D0C750
+```
+
+`0x02D0C750` hace el lookup con `0x80010000`.
+
+**CONFIRMADO:** `sItemBoxCoop::pSharedBag -> 0x80010000`.
+
+### sItemBoxCoop::pMyBag
+
+```text
+slot 18 / +0x48
+base: 0x01C94AED -> 0x02CF4710
+coop: 0x01C744C3 -> 0x02D0C930
+```
+
+`0x02D0C930` ignora el `playerID/sceneID` recibido y llama a su lookup virtual con `0x80011000, 0`.
+
+**CONFIRMADO:** `sItemBoxCoop::pMyBag -> 0x80011000`.
+
+La tercera clave `0x80020000` sigue pendiente de nombre hasta seguir sus callers.
+
+## Consecuencia
+
+Cuando se usa `sItemBoxCoop`, el motor ya redirige explícitamente las bolsas normalizadas a claves cooperativas. La siguiente pregunta es cuándo se instancia/selecciona `sItemBoxCoop`, no cómo inventar una bolsa nueva para P2.
