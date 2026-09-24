@@ -310,3 +310,116 @@ Esto explica por que el online funciona aunque la ruta local no acepte np. En v1
 ## 11. Requisito del siguiente parche
 
 La correccion debe aceptar pl OR (gLocalCoopActive && actor == gSub0Npc), solo en las validaciones locales pertinentes, y permitir que uItem+0xF48 seleccione tambien al Sub0 local. No se parcheara globalmente isPl.
+
+
+---
+
+## 9. cPickupItemParameter: selector Main/partner confirmado por metadata
+
+DTI:
+
+```text
+cFsmAction::cPickupItemParameter
+global 0x0558D340
+size   0x34
+ctor   0x029569D0
+```
+
+Constructor:
+
+```text
++0x04 BYTE = 0
++0x05 BYTE = 1
++0x08 DWORD = 0
++0x0C DWORD = 0
++0x10 Arrange
+```
+
+Property metadata en `0x02997020`:
+
+```text
++0x04 mIsDrawMessage
++0x05 mIsAddMainPlayer
++0x08 mListNo
++0x0C mDataNo
++0x10 mArrange
+```
+
+Por tanto el booleano usado por FsmPickupItem en `+0x05` se llama literalmente `mIsAddMainPlayer` y su default es true.
+
+## 10. FsmPickupItem elige dos rutas de actor
+
+Registro:
+
+```text
+FsmPickupItem
+ -> 0x01B7A487
+ -> 0x029971C0
+```
+
+La función resuelve el `uItem`, valida DTI `uItem` (`0x05579584`) y consulta `mIsAddMainPlayer`.
+
+Si es true:
+
+```text
+0x01BDF98B -> manager
+0x01C2C7F4 -> 0x01CB7400
+predicate 0x01BB3192 -> 0x01CB7560
+```
+
+El predicado compara `candidate+0xE3C` con la identidad local y exige estado válido.
+
+Si es false:
+
+```text
+0x01BDF98B -> mismo manager
+0x01BCA0C2 -> 0x01D115B0
+predicate 0x01C8731B -> 0x01D116C0
+```
+
+La segunda ruta exige identidad distinta de la local, una condición adicional del candidato (`0x01BE01D8 -> 0x01D11780`) y el mismo estado válido.
+
+El nombre exacto del segundo buscador no aparece como símbolo; se conserva como la alternativa nativa a Main Player, sin renombrarlo más de lo demostrado.
+
+## 11. El pickup termina en el cBioItemPack del actor seleccionado
+
+Después:
+
+```text
+0x01BCC327 -> 0x01D336A0
+actor/uNpc + 0x1524
+ -> cBioItemPack
+```
+
+Luego llama:
+
+```text
+cBioItemPack vslot 6 / +0x18
+0x01BD549A -> 0x02433B40
+```
+
+`0x02433B40` contiene en su propio flujo las strings:
+
+```text
+cBioItemPack::addItem : invalid charaID
+cBioItemPack::addItem : invalid randomBullet charaID
+```
+
+Por tanto:
+
+```text
+FsmPickupItem
+ -> actor elegido por mIsAddMainPlayer
+ -> actor+0x1524
+ -> cBioItemPack::addItem
+```
+
+**CONFIRMADO:** la acción de pickup puede entregar el objeto al pack del actor alternativo; no está fijada exclusivamente al Main Player.
+
+## 12. Corrección sobre la string Player || Npc
+
+La condición textual `isPlayer(target) || isNpc(target)` tiene xrefs en una función de `cfsmactionpcs.cpp` alrededor de `0x02A25F70`.
+
+No se atribuye esa función directamente a `FsmPickupItem`: el registro real de `FsmPickupItem` apunta a `0x029971C0`.
+
+Se conserva como evidencia separada de soporte Player/Npc en acciones PCS.
