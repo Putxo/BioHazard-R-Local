@@ -62,6 +62,11 @@ Solo se incluyen hipótesis surgidas durante esta conversación.
 | H42 | El uNpc no-Self usa Partner CameraManage nativamente | 0x027A2FA0 devuelve Self o Partner según identidad | CONFIRMADA |
 | H43 | Un flag local separado puede preservar online y hacer persistente la cámara | solo se activa tras Cpu->Pad; Network no lo activa | IMPLEMENTADA en v8 |
 
+| H46 | `cSystemData<Game>::mGameMode` gobierna ItemBox normal/coop | property metadata `mGameMode`; Campaign=0, Coop=1 | CONFIRMADA |
+| H47 | El slot 1 de ItemBox puede ser nulo en Campaign | podía parecer creado solo en Coop | DESCARTADA: cGameSystemDouble crea sItemBoxCoop automáticamente |
+| H48 | Para v9 hay que crear un inventario P2 desde cero | existe sItemBoxCoop completo en slot 1 | DESCARTADA |
+| H49 | El parche mínimo debe reutilizar el selector de ItemBox existente | GameMode ya conmuta slot 0/1 | ACTIVA / PRIORITARIA |
+
 ## Descartes explicados
 
 ### `mCameraList[0]/[1]`
