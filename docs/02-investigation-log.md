@@ -2868,3 +2868,26 @@ actor -> uNpc -> uNpc+0x1524 -> cBioItemPack
 por lo que las acciones Sub modifican el pack del actor/partner y no el del jugador principal.
 
 Detalle completo: `docs/11-sub-inventory-fsm-ui.md`.
+
+
+---
+
+# 46. FsmPickupItem selecciona Main o Partner
+
+El metadata de `cFsmAction::cPickupItemParameter` contiene literalmente:
+
+```text
+mIsAddMainPlayer @ +0x05
+```
+
+El handler `0x029971C0` usa ese campo para escoger entre dos rutas de actor.
+
+Después, cualquiera de los dos actores seleccionados termina en:
+
+```text
+uNpc+0x1524 -> cBioItemPack -> virtual add item
+```
+
+Por tanto la recogida común ya puede entregar objetos al inventario del partner de forma nativa.
+
+Detalle: `docs/11-sub-inventory-fsm-ui.md`.
