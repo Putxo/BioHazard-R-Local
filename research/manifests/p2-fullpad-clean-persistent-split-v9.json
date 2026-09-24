@@ -35,23 +35,6 @@
     "additional_different_bytes_vs_v7": 351,
     "ranges_vs_v7": 11
   },
-  "patches": [
-    {"label": ".data VirtualSize +4 for gLocalCoopActive","file_offset": "0x298","old": "88413b00","new": "8c413b00","bytes": 4},
-    {"label": "clear exact Sub0 tracking + local-active flag","file_offset": "0xc28760","old": "c740440000000081389c64e1040f853b3c6500c70584917d0500000000e92c3c6500cccccccccccccccccccc","new": "c740440000000081389c64e1040f853b3c6500c70584917d0500000000c70588917d0500000000e9223c6500","bytes": 44,"va": "0x27a1360"},
-    {"label": "Sub0 non-Cpu -> local Pad rebind discriminator","file_offset": "0xc287b5","old": "0f85673c6500","new": "0f85193c4fff","bytes": 6,"va": "0x27a13b5"},
-    {"label": "after canonical Cpu->Pad -> enable persistent local split","file_offset": "0xc287c4","old": "e9593c6500","new": "e9f73b4fff","bytes": 5,"va": "0x27a13c4"},
-    {"label": "persistent split helper block","file_offset": "0x11c3c0","old": "CC padding (314 bytes)","new": "assembled research/patches/camera_persistence_v8.S","bytes": 314,"va": "0x1c94fc0"},
-    {"label": "Self View: conditional Partner deactivate","file_offset": "0x4c5d2d","old": "e8a29bc2ff","new": "e8c666c5ff","bytes": 5,"va": "0x203e92d"},
-    {"label": "Partner View: conditional Self deactivate","file_offset": "0x4c5d8b","old": "e8449bc2ff","new": "e86866c5ff","bytes": 5,"va": "0x203e98b"},
-    {"label": "Partner View viewport index -> conditional VIEW_1","file_offset": "0x4c5dad","old": "e8019abcff","new": "e85a66c5ff","bytes": 5,"va": "0x203e9ad"},
-    {"label": "Partner camera setup bit0: conditional keep-active","file_offset": "0x3bf454","old": "e8486fd2ff","new": "e8c7cfd5ff","bytes": 5,"va": "0x1f38054"},
-    {"label": "Partner camera setup bit1: conditional keep-active","file_offset": "0x3bf461","old": "e8d055c5ff","new": "e8d0cfd5ff","bytes": 5,"va": "0x1f38061"}
-  ],
-  "clean_base_verification": {
-    "stock_camera_init_range": "0x0203E3A9..0x0203E463",
-    "status": "byte-identical to original in v9",
-    "old_v4_unconditional_hook_present": false
-  },
   "limitations": [
     "Runtime validation is still required.",
     "The patch statically guarantees a distinct Partner camera target and persistent activation/binding when the local flag is active, but rendering correctness, collision/culling and cutscene transitions must be tested in-game.",
