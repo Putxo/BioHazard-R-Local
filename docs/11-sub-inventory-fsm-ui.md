@@ -422,3 +422,102 @@ El problema pendiente se estrecha a:
 5. cómo arbitrar pausa/menús globales.
 
 No se hará un parche UI especulativo hasta identificar ese dispatcher.
+
+
+---
+
+## 11. Cambio rápido de arma de Sub0 ya usa PadData[1]
+
+Se siguió la ruta de selección directa de los cuatro slots de equipo dentro del `uNpc`.
+
+Bloque principal:
+
+```text
+0x0272603F -> selector de pad 0x01C6C746
+             -> sGamePad 0x01C8DD97 -> 0x02DB0E90
+             -> si activo: 0x027ADB10(slot=1)
+
+0x02726080 -> selector
+             -> sGamePad 0x01C2B0D9 -> 0x02DB0F60
+             -> 0x027ADB10(slot=2)
+
+0x027260C1 -> selector
+             -> sGamePad 0x01BA0637 -> 0x02DB1030
+             -> 0x027ADB10(slot=3)
+
+0x02726102 -> selector
+             -> sGamePad 0x01C87F41 -> 0x02DB1100
+             -> 0x027ADB10(slot=0)
+```
+
+Por tanto el orden completo de acciones observadas es:
+
+```text
+1, 2, 3, 0
+```
+
+y las cuatro convergen en la misma rutina de cambio de equipamiento:
+
+```text
+0x01BC4F41 -> 0x027ADB10
+```
+
+### 0x027ADB10
+
+La rutina acepta exclusivamente índices `0..3`, usa una jump table y opera sobre el estado de equipo del `uNpc`.
+
+Entre los campos manipulados:
+
+```text
+uNpc + 0x18DC   estructura/lista de equipamiento
+uNpc + 0x1C78   selección/equipo activo
+```
+
+La rutina además contiene las comprobaciones/sincronización necesarias antes de aplicar el cambio.
+
+### Verificación sobre v10
+
+Los cuatro getters `sGamePad` anteriores son precisamente parte de los sitios corregidos por v7/fullpad.
+
+En v10:
+
+```text
+0x02DB0EC5 / 0x02DB0ECF -> usan [ebp+0x08]
+0x02DB0F95 / 0x02DB0F9F -> usan [ebp+0x08]
+0x02DB1065 / 0x02DB106F -> usan [ebp+0x08]
+0x02DB1135 / 0x02DB113F -> usan [ebp+0x08]
+```
+
+En el original esos sitios cargaban `sGamePad::mStartPadNo`.
+
+Como v6/v7 establece:
+
+```text
+Sub0 exacto -> selector 1
+resto       -> selector 0
+```
+
+el flujo queda:
+
+```text
+PadData[1]
+ -> getter de botón de slot
+ -> uNpc Sub0
+ -> 0x027ADB10(slot)
+ -> equipamiento del partner
+```
+
+### Consecuencia
+
+**CONFIRMADO estáticamente:** el cambio rápido de arma/equipamiento de P2 ya está conectado al segundo pad en v10.
+
+No hace falta parchear:
+
+- `notifyPadInput`;
+- `uGUI_SubEquipWin`;
+
+para conseguir el cambio funcional de arma.
+
+`notifyPadInput` se mantiene interpretado como notificación/actualización visual de la ventana; la acción real ocurre en gameplay, dentro de la ruta `uNpc`.
+
+El trabajo siguiente se centra en otras acciones: recarga, interacción/uso, pickups y pausa.
