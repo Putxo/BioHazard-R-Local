@@ -3138,3 +3138,40 @@ Conclusion: el bloqueo de P2 no esta en el almacenamiento del item sino en que l
 La siguiente correccion debe aceptar solo pl OR (local-coop && exact Sub0) y permitir que uItem+0xF48 elija tambien al Sub0 local.
 
 Detalle: docs/12-pickup-coop.md.
+
+
+---
+
+# 47. FsmPickupItem puede añadir al actor alternativo
+
+Se reconstruyó `cFsmAction::cPickupItemParameter`:
+
+```text
++0x04 mIsDrawMessage
++0x05 mIsAddMainPlayer
++0x08 mListNo
++0x0C mDataNo
++0x10 mArrange
+```
+
+`mIsAddMainPlayer` vale 1 por defecto.
+
+El callback `FsmPickupItem -> 0x029971C0` usa ese booleano para escoger dos buscadores distintos de actor.
+
+Después:
+
+```text
+actor
+ -> actor+0x1524
+ -> cBioItemPack
+ -> vslot 6
+ -> 0x02433B40
+```
+
+`0x02433B40` contiene las strings internas `cBioItemPack::addItem`.
+
+**CONFIRMADO:** el pickup FSM no está fijado al pack Main; puede dirigir la adición al actor alternativo cuando `mIsAddMainPlayer=false`.
+
+También se corrigió la atribución de la string `Player || Npc`: pertenece a otra función de `cfsmactionpcs.cpp`, no al callback FsmPickupItem directamente.
+
+Detalle: `docs/12-pickup-coop.md`.
