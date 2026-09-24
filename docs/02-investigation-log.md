@@ -2682,3 +2682,28 @@ cBagCoop     : sItemBox::cBag
 Todavía no se renombran como playerID: falta identificar el owner de la estructura indexada.
 
 Detalle: `docs/09-inventory-coop.md`.
+
+
+---
+
+# 42. Corrección cCoopSkill y bags cooperativos
+
+La estructura consultada desde `uPlayer+0xDC0` fue identificada por RTTI como `sCoopManager::cCoopSkill`. Por tanto los dos valores guardados en `cBagCoop+0xB8/+0xBC` **no son IDs de jugador**.
+
+El `playerID` real usado por el inventario se obtiene desde `uPlayer` mediante `0x01C53859 -> 0x027F1200`.
+
+También se mapearon, usando los asserts reales de `pMyBag` / `pSharedBag`:
+
+```text
+sItemBoxCoop::pSharedBag
+  slot 11 / +0x2C
+  -> key 0x80010000
+
+sItemBoxCoop::pMyBag
+  slot 18 / +0x48
+  -> key 0x80011000
+```
+
+La clave `0x80020000` sigue sin nombre hasta cerrar sus consumidores.
+
+Detalle: `docs/09-inventory-coop.md`.
