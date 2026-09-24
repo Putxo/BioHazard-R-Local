@@ -3236,3 +3236,33 @@ actor -> actor+0x1524 -> cBioItemPack -> virtual de alta
 **CONFIRMADO:** el pickup local ya puede aplicarse nativamente al pack del partner.
 
 Detalle: `docs/12-pickup-sync.md`.
+
+
+---
+
+# 48. uItem normal sigue siendo P1-only y define el siguiente parche
+
+La ruta normal de `uItem` mantiene dos restricciones `pl`:
+
+- `0x02DA3840` solo encuentra el actor local si es categoría `pl`;
+- `0x02460664` vuelve a exigir `pl` al procesar `uItem+0xF48`.
+
+Sub0 sigue siendo categoría `np` aunque v10 lo convierta a `ThinkMode::Pad`.
+
+Se verificó además que el update calcula distancia actor/item y guarda un único candidato en `uItem+0xF48`.
+
+Diseño de v11:
+
+```text
+finder stock Main
+ OR exact gSub0Npc cuando local coop activo
+ -> elegir candidato por proximidad
+
+processing guard:
+stock pl
+ OR (gLocalCoopActive && candidate == gSub0Npc)
+```
+
+Nunca se permitirá un NPC arbitrario ni se tocarán los predicados globales de categorías.
+
+Detalle: `docs/12-pickup-coop.md`.
