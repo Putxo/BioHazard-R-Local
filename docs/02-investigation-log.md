@@ -3281,3 +3281,196 @@ La lógica de puerta consume ambos slots, aunque algunas rutas siguen consultand
 No se crea parche todavía: primero se rastrean los dos callsites del setter y se separa gameplay de sincronización online.
 
 Detalle: `docs/13-door-2p.md`.
+
+
+---
+
+# 46. v10: ItemBox Coop condicionado por gLocalCoopActive
+
+Se cerró el registro exacto del sistema doble de ItemBox:
+
+```text
+0x01D06C10(index) -> &0x05562878[index]
+0x02D0A094        -> escribe this en el slot
+0x01D06B20(index) -> lee el slot
+```
+
+El selector stock usa `cSystemData<Game>::mGameMode`:
+
+```text
+Campaign = 0
+Coop     = 1
+```
+
+Como `sItemBoxCoop` ya existe automáticamente en el slot 1, no es necesario crearlo ni cambiar globalmente GameMode.
+
+Se implementó v10 como un cambio mínimo sobre v9:
+
+```cpp
+return stock_isCoop() || gLocalCoopActive;
+```
+
+Wrapper:
+
+```text
+0x01C95100
+```
+
+Callsite:
+
+```text
+0x01D067AF
+```
+
+SHA v10:
+
+```text
+5060269e5115ef8df53aa0ad4e26c09b4b273d4cfeb6628a7a4f902c606bb4e6
+```
+
+Diferencia vs v9:
+
+```text
+23 bytes efectivos
+2 rangos
+mismo tamaño
+```
+
+Prueba de linaje:
+
+al retirar únicamente el wrapper v10 y restaurar la llamada original se reproduce exactamente el SHA de v9.
+
+v10 pasa a ser la base canónica actual.
+
+---
+
+# 47. Player/NPC bags y acciones PcsSub
+
+El normalizador de categoría:
+
+```text
+0x01D4B120
+id & 0xF00F0000
+```
+
+mapea:
+
+```text
+0x80010000 -> pl
+0x80020000 -> np
+```
+
+`sItemBoxCoop` añade accessors de bag NPC que no existen en `sItemBox` normal.
+
+Además, las acciones PcsSub:
+
+```text
+AddWeapon
+ClearWeapon
+NpcSetWeaponSlot
+NpcResetWeaponSlot
+NpcChangeEquipSlot
+```
+
+aceptan explícitamente categorías `pl` o `np`, pasan por `uNpc` y alcanzan:
+
+```text
+uNpc+0x1524 -> cBioItemPack
+```
+
+El cambio rápido de arma de Sub0 ya usa PadData[1] en v10.
+
+---
+
+# 48. Punto exacto pendiente: cPickupItemSyncData
+
+La investigación posterior se centró en pickups/munición/hierbas del partner.
+
+Tipo interno:
+
+```text
+sItem::cNetSyncData::cPickupItemSyncData
+```
+
+También existe:
+
+```text
+uItem::cNetSyncData::cGetItemSyncData
+```
+
+Setters parciales localizados:
+
+```text
+0x0244D0F0 -> +0x08
+0x0244D140 -> +0x0C
+0x0244D190 -> +0x10
+0x0244D1E0 -> +0x14
+```
+
+Getters simétricos:
+
+```text
+0x02459E30 -> +0x08
+0x02459E70 -> +0x0C
+0x02459EB0 -> +0x10
+0x02459EF0 -> +0x14
+```
+
+Los campos todavía no tienen nombres semánticos confirmados.
+
+Productor/construcción candidata:
+
+```text
+0x0244CF80
+```
+
+Receiver prioritario:
+
+```text
+0x01B9F142 -> 0x02459C20
+```
+
+Dentro del receiver se observa:
+
+```text
+0x02459D31
+ -> 0x01BCC327
+ -> 0x01D336A0
+ -> uNpc+0x1524 -> cBioItemPack
+```
+
+seguido de:
+
+```text
+0x01B8695D
+```
+
+cuya función exacta sigue pendiente.
+
+Otra ruta candidata:
+
+```text
+0x02460900
+```
+
+usa repetidamente:
+
+```text
+0x01C53859 -> 0x027F1200
+```
+
+(getter real de playerID) y escribe `uItem+0xF14=2`.
+
+El turno quedó interrumpido por timeout mientras se desmontaba:
+
+```text
+0x049A8023
+```
+
+para cerrar el registro/DTI global asociado a la ruta.
+
+Detalle completo:
+
+`docs/12-pickup-sync-wip.md`
+
+**Éste es el punto exacto desde el que debe continuar un chat nuevo.**
