@@ -520,4 +520,4 @@ para conseguir el cambio funcional de arma.
 
 `notifyPadInput` se mantiene interpretado como notificación/actualización visual de la ventana; la acción real ocurre en gameplay, dentro de la ruta `uNpc`.
 
-El trabajo siguiente se centra en otras acciones: recarga, interacción/uso, pickups y pausa.
+No se establece aquí ninguna prioridad funcional adicional. Este hallazgo solo confirma que el cambio de arma de Sub0 ya usa PadData[1]; cualquier investigación posterior se limitará a lo necesario para completar el cooperativo local solicitado.
