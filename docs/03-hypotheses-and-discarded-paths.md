@@ -71,6 +71,11 @@ Solo se incluyen hipótesis surgidas durante esta conversación.
 | H51 | El selector local puede preservar Campaign para el resto del juego | wrapper stock_isCoop OR local flag en 0x01D067AF | IMPLEMENTADA EN v10 |
 | H52 | v10 deriva limpiamente de v9 | revertir los 2 rangos nuevos reproduce exactamente SHA v9 | CONFIRMADA |
 
+| H53 | v10 ya permite a Sub0 recoger cualquier uItem normal | ItemBox/pack ya son actor-specific | DESCARTADA: uItem finder y processor siguen exigiendo categoría pl |
+| H54 | Parchear globalmente isPlayer para aceptar np resolvería pickup | permitiría pasar los guards | DESCARTADA: afectaría todos los NPC del juego |
+| H55 | uItem puede aceptar solo el Sub0 exacto sin alterar categorías globales | gLocalCoopActive + gSub0Npc ya existen | ACTIVA / DISEÑO v11 |
+| H56 | Elegir Main/Sub0 por proximidad preserva P1 y habilita P2 con un solo mCandidate | uItem+0xF48 solo admite un actor y ya calcula distancia | ACTIVA / DISEÑO v11 |
+
 ## Descartes explicados
 
 ### `mCameraList[0]/[1]`
