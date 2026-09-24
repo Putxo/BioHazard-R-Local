@@ -6,13 +6,21 @@
     "flavor": "FullDebugWin32"
   },
   "canonical_patch": {
-    "version": "v10",
-    "file": "BioRevHD 30-Enero-2013 LOCAL COOP v10 CLEAN SPLIT COOP ITEMBOX.exe",
-    "sha256": "5060269e5115ef8df53aa0ad4e26c09b4b273d4cfeb6628a7a4f902c606bb4e6",
+    "version": "v13",
+    "file": "BioRevHD 30-Enero-2013 LOCAL COOP v13 SYMMETRIC AMMO RELIEF.exe",
+    "sha256": "3df0e1020b58b3ccc7e31a9046a2a3ce9e5230e1764869b517943b4a808838aa",
     "runtime_validated": false,
-    "base_v9_sha256": "5dc7a7a413ce5916c2758be43b3107d5adf00beee93533b4acf5d83cec97c4be",
-    "builder": "patches/build_v10_itembox_from_v9.py",
-    "manifest": "research/manifests/local-coop-v10-itembox.json"
+    "base_v12_sha256": "5aafc3fd4273d608b4c9b8b60631256b56cb27d6aab0ecca8d2718d824dd28e8",
+    "builder": "patches/build_v13_ammo_relief.py",
+    "assembly": "research/patches/ammo_relief_v13.S",
+    "manifest": "research/manifests/local-coop-v13-ammo-relief.json"
+  },
+  "canonical_lineage": {
+    "v9": "5dc7a7a413ce5916c2758be43b3107d5adf00beee93533b4acf5d83cec97c4be",
+    "v10": "5060269e5115ef8df53aa0ad4e26c09b4b273d4cfeb6628a7a4f902c606bb4e6",
+    "v11": "2c69c5f16626dc7478a6221c2bac98ed19f5b37dcf7991fc78f744f35f192d69",
+    "v12": "5aafc3fd4273d608b4c9b8b60631256b56cb27d6aab0ecca8d2718d824dd28e8",
+    "v13": "3df0e1020b58b3ccc7e31a9046a2a3ce9e5230e1764869b517943b4a808838aa"
   },
   "globals": {
     "gSub0Npc": "0x057D9184",
@@ -75,51 +83,66 @@
     "pMyBag": "0x80011000",
     "cBagCoopExtraFields": "cCoopSkill state, NOT player IDs"
   },
-  "pscSubInventory": {
-    "contextOffset": "+0x1078",
-    "managerObjectTable": "sPcsManager+0xB44",
-    "managerIdTable": "sPcsManager+0x704",
-    "objectTableSetter": "0x02DD04E0",
-    "itemPackPath": "0x01BCC327 -> 0x01D336A0 -> uNpc+0x1524",
-    "actionsAcceptingPlOrNp": [
-      "AddWeapon 0x02A16E80",
-      "ClearWeapon 0x02A17270",
-      "NpcSetWeaponSlot 0x02A23C90",
-      "NpcResetWeaponSlot 0x02A23F80",
-      "NpcChangeEquipSlot 0x02A29590"
-    ]
+  "pickup": {
+    "uItemDti": "0x05579584",
+    "uItemString": "0x04D30838",
+    "uItemSize": "0x10F0",
+    "candidateOffset": "+0xF48",
+    "pickupHandler": "0x024646F0",
+    "canonicalV11Sha": "2c69c5f16626dc7478a6221c2bac98ed19f5b37dcf7991fc78f744f35f192d69",
+    "actionCommandSelector": "0x026D7AD0",
+    "actionCommandSGamePadGetter": "0x02DB2B50",
+    "v12Sha": "5aafc3fd4273d608b4c9b8b60631256b56cb27d6aab0ecca8d2718d824dd28e8",
+    "delivery": "Selected actor -> uNpc+0x1524 -> its own cBioItemPack",
+    "arbitrationLimitation": "Single uItem target; canonical v11 chooses nearest P1/Sub0 before complete stock eligibility checks."
   },
-  "pickupWip": {
-    "type": "sItem::cNetSyncData::cPickupItemSyncData",
-    "senderCandidate": "0x0244CF80",
-    "receiverThunk": "0x01B9F142",
-    "receiver": "0x02459C20",
-    "setters": {
-      "field08": "0x0244D0F0",
-      "field0C": "0x0244D140",
-      "field10": "0x0244D190",
-      "field14": "0x0244D1E0"
+  "ammoRelief": {
+    "function": "0x027ABFE0",
+    "normalizedGroup": "0x80040200",
+    "coopMultiplierAddress": "0x05479970",
+    "coopMultiplier": 1.5,
+    "v13HelperBase": "0x01C95220",
+    "behavior": "Under local co-op, replicate stock Coop ammo relief symmetrically P1<->Sub0 without changing global GameMode."
+  },
+  "doorAudit": {
+    "class": "uDoor2pBase",
+    "localSetterThunk": "0x01C9217B",
+    "localSetter": "0x02588D20",
+    "directCallsites": [
+      "0x0257185D",
+      "0x0257198A"
+    ],
+    "readySetter": "0x02589040",
+    "actorIndexThunk": "0x01BEDBB7",
+    "actorIndexFunction": "0x01CB7610",
+    "localIndexGetterThunk": "0x01C85962",
+    "localIndexGetter": "0x02DA3050",
+    "arrays": {
+      "ready": [
+        "+0x1010",
+        "+0x1011"
+      ],
+      "guestStatus": [
+        "+0x1018",
+        "+0x1019"
+      ],
+      "local": [
+        "+0x1024",
+        "+0x1025"
+      ]
     },
-    "getters": {
-      "field08": "0x02459E30",
-      "field0C": "0x02459E70",
-      "field10": "0x02459EB0",
-      "field14": "0x02459EF0"
-    },
-    "receiverItemPackCallsite": "0x02459D31",
-    "unresolvedCallAfterItemPack": "0x01B8695D",
-    "otherCandidate": "0x02460900",
-    "interruptedGlobalInit": "0x049A8023",
-    "nextDocument": "docs/12-pickup-sync-wip.md"
+    "currentQuestion": "Do actor-specific setters already update Sub0 slot 1 for local co-op, and are global local-index reads only network/feedback or a gameplay blocker?"
   },
   "doNotRepeat": [
-    "Do not use v8 as base; use v10/v9 lineage.",
+    "Do not use v8 as base; use canonical v13 lineage.",
+    "Do not use non-canonical v11 experiments as base for v12/v13; canonical v11 SHA is 2c69c5f...",
     "Do not hijack ThinkMode::Network.",
     "Do not treat uCameraManage::mPadNo as a proven physical-pad selector.",
     "Do not treat cBagCoop+0xB8/+0xBC as player IDs.",
     "Do not treat mPadViewportNo as pad-to-viewport; it belongs to vibration context.",
-    "Do not treat uObjModel mCameraList[0]/[1] as player cameras."
+    "Do not treat uObjModel mCameraList[0]/[1] as player cameras.",
+    "Do not return to 0x049A8023 as unresolved; it was identified as uItem DTI initialization."
   ],
-  "nextStep": "Resume pickup sync at receiver 0x02459C20 and global init 0x049A8023; prove whether local Sub0 pickups already reach its cBioItemPack/np bag before creating v11.",
+  "nextStep": "Resume door audit: identify the owner/state containing callsites 0x0257185D and 0x0257198A, reconstruct the actor passed to 0x02588D20, verify whether PcsSub/Sub0 reaches it, and separate gameplay logic from global local-index network/feedback use before considering v14.",
   "handoff": "START_HERE_NEW_CHAT.md"
 }
