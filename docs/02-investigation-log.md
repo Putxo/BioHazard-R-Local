@@ -2707,3 +2707,48 @@ sItemBoxCoop::pMyBag
 La clave `0x80020000` sigue sin nombre hasta cerrar sus consumidores.
 
 Detalle: `docs/09-inventory-coop.md`.
+
+
+---
+
+# 43. GameMode selecciona el ItemBox cooperativo
+
+La condición que selecciona el inventario normal/cooperativo fue identificada como:
+
+```text
+cSystemData<Game>::mGameMode @ +0x20
+```
+
+Metadata interna:
+
+```text
+mGameMode
+```
+
+Valores reconstruidos:
+
+```text
+GameMode::Campaign = 0
+GameMode::Coop     = 1
+```
+
+El selector de `mItemBox` usa el slot 1 cuando `mGameMode==Coop` y el slot 0 en Campaign.
+
+Además, el constructor de `cGameSystemDouble<sItemBox,0>` crea automáticamente una segunda instancia mediante el DTI/factoría de `sItemBoxCoop` cuando el slot 1 todavía no existe.
+
+Registro global:
+
+```text
+0x05562878 + index*4
+```
+
+Resultado:
+
+```text
+slot 0 = sItemBox
+slot 1 = sItemBoxCoop
+```
+
+**CONFIRMADO:** incluso partiendo de Campaign, el objeto cooperativo está disponible; no es necesario crearlo manualmente para v9.
+
+Pendiente: elegir el hook mínimo para que el modo local use el slot cooperativo sin cambiar más sistemas de los necesarios.
