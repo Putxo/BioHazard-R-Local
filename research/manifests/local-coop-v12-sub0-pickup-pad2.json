@@ -1,0 +1,23 @@
+{
+  "base": "BioRevHD 30-Enero-2013 LOCAL COOP v11 SUB0 PICKUP.exe",
+  "base_sha256": "2c69c5f16626dc7478a6221c2bac98ed19f5b37dcf7991fc78f744f35f192d69",
+  "output": "BioRevHD 30-Enero-2013 LOCAL COOP v12 SUB0 PICKUP PAD2.exe",
+  "output_sha256": "5aafc3fd4273d608b4c9b8b60631256b56cb27d6aab0ecca8d2718d824dd28e8",
+  "status": "STATICALLY VERIFIED ONLY - gameplay not executed in this environment",
+  "design": {
+    "uitem_member_selector": "stock uItem cActionCommand selector callback 0x026D7AD0 returned 0 unconditionally; v12 returns 1 only when gLocalCoopActive && uItem+0xF48 == exact tracked Sub0, otherwise 0",
+    "unique_binding": "raw function pointer 0x01BA99B7 -> 0x026D7AD0 occurs once in the executable, in uItem cActionCommand setup",
+    "sgamepad": "0x02DB2B50 already receives one selector argument (ret 4); v12 replaces the PC mStartPadNo load with [ebp+8]",
+    "preservation": "when local co-op is inactive or uItem targets P1, cActionCommand member selection remains 0"
+  },
+  "diff_vs_v11": {
+    "same_file_size": true,
+    "different_bytes": 50,
+    "ranges": 3
+  },
+  "limitations": [
+    "Runtime validation is required.",
+    "v11/v12 still use the stock single uItem pickup-target slot and arbitrate P1/Sub0 rather than maintaining two simultaneous prompts.",
+    "Eligibility-aware arbitration when both players are close to the same item still needs static/runtime validation."
+  ]
+}
