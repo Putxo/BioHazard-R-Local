@@ -3206,3 +3206,33 @@ actor -> 0x01BCC327 -> uNpc+0x1524 -> cBioItemPack
 **CONFIRMADO:** el pickup cooperativo se aplica al pack del actor indicado, no a un inventario global fijo de P1.
 
 Detalle: `docs/12-pickup-sync.md`.
+
+
+---
+
+# 47. FsmPickupItem ya selecciona Main o Partner
+
+El metadata de `cFsmAction::cPickupItemParameter` recupera:
+
+```text
++0x04 mIsDrawMessage
++0x05 mIsAddMainPlayer
++0x08 mListNo
++0x0C mDataNo
++0x10 mArrange
+```
+
+En `FsmPickupItem @ 0x029971C0`:
+
+- `mIsAddMainPlayer=1` usa un predicate que exige `candidate+0xE3C == ID local`, seleccionando Main/Self;
+- `mIsAddMainPlayer=0` usa otro predicate que rechaza el ID local y exige candidato válido, seleccionando el partner/non-Self.
+
+Después ambas ramas convergen en:
+
+```text
+actor -> actor+0x1524 -> cBioItemPack -> virtual de alta
+```
+
+**CONFIRMADO:** el pickup local ya puede aplicarse nativamente al pack del partner.
+
+Detalle: `docs/12-pickup-sync.md`.
