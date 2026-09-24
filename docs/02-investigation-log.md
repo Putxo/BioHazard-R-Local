@@ -3474,3 +3474,39 @@ Detalle completo:
 `docs/12-pickup-sync-wip.md`
 
 **Éste es el punto exacto desde el que debe continuar un chat nuevo.**
+
+
+---
+
+# 46. Pickup remoto y gates pl de Sub0 local
+
+Se reconstruyó `sItem::cNetSyncData::cPickupItemSyncData` (0x1C bytes), su sender `0x0244CF30` y su receptor `0x02459C20`.
+
+El receptor termina resolviendo el actor y accediendo:
+
+```text
+uNpc+0x1524 -> cBioItemPack
+```
+
+antes de aplicar el item mediante `0x0243D100`.
+
+La ruta local `0x02460610` aplica primero el pickup y solo después ejecuta la replicación de red.
+
+El bloqueo para Sub0 local son dos checks explícitos de categoría `pl`:
+
+```text
+0x02460664 -> isPl
+0x02464726 -> isPl
+```
+
+Sub0 continúa siendo categoría `np`, aunque v10 lo controle mediante Pad.
+
+Se prepara un wrapper mínimo para esos dos callsites:
+
+```text
+stock_isPl(id) || (gLocalCoopActive && gSub0Npc && gSub0Npc->getID()==id)
+```
+
+No se abrirán pickups a otros NPC y no se tocará el comportamiento online.
+
+Detalle: `docs/12-pickup-sync.md`.
