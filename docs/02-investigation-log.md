@@ -3175,3 +3175,34 @@ actor
 También se corrigió la atribución de la string `Player || Npc`: pertenece a otra función de `cfsmactionpcs.cpp`, no al callback FsmPickupItem directamente.
 
 Detalle: `docs/12-pickup-coop.md`.
+
+
+---
+
+# 46. Pickup cooperativo resuelve el actor antes del cBioItemPack
+
+Se identificó `sItem::cNetSyncData::cPickupItemSyncData` (0x1C bytes), su sender `0x0244CF30` y su receptor `0x02459C20`.
+
+Corrección del turno interrumpido: `0x049A8023` pertenece a la inicialización DTI de `uItem`; el DTI de `cPickupItemSyncData` se registra alrededor de `0x049A5300`.
+
+El primer campo del paquete:
+
+```text
++0x08
+```
+
+se llena en el sender con el getter de ID:
+
+```text
+0x01C53859 -> 0x027F1200
+```
+
+y el receptor lo vuelve a leer, resuelve el actor y termina entrando en:
+
+```text
+actor -> 0x01BCC327 -> uNpc+0x1524 -> cBioItemPack
+```
+
+**CONFIRMADO:** el pickup cooperativo se aplica al pack del actor indicado, no a un inventario global fijo de P1.
+
+Detalle: `docs/12-pickup-sync.md`.
