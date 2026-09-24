@@ -2906,3 +2906,30 @@ No aparece un selector explícito Main/Partner.
 La selección del destinatario de inventario pertenece a la capa `FsmPickupItem`, cuyo parámetro sí contiene `mIsAddMainPlayer`.
 
 Por tanto no se usará el protocolo de red como sustituto artificial del pickup local P2.
+
+
+---
+
+# 46. Pickup de Sub0: gate stock pl
+
+La recogida común de `uItem` usa un actor candidato almacenado en:
+
+```text
+uItem+0xF48
+```
+
+La ruta alrededor de `0x02460610` obtiene su charaID y exige categoría:
+
+```text
+pl = 0x80010000
+```
+
+mediante `0x01C8C9A1 -> 0x01D77EB0`.
+
+Sub0 permanece categoría `np=0x80020000` aunque esté en ThinkMode::Pad, por lo que esta comprobación es un candidato directo a bloquear pickup local de P2.
+
+Existe además `sItem::cNetSyncData::cPickupItemSyncData` (size 0x1C), sender `0x0244CF30` y receiver `0x02459C20`, confirmando que el pickup cooperativo ya tiene una ruta de sincronización propia.
+
+No se parchea todavía: primero hay que demostrar que el resto de la función, después del gate, acepta correctamente al Sub0 exacto.
+
+Detalle: `docs/12-pickup-sub0.md`.
