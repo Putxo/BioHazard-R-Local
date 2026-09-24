@@ -2656,3 +2656,29 @@ La rutina Sub `0x02B439B0` construye la lista de equipo usando una interfaz virt
 **Conclusión actual:** el juego ya tiene almacenamiento, acciones y UI separados para el equipo Sub. Falta identificar el dispatcher que entrega input a `SubEquipWin` y separarlo por Pad 2.
 
 Detalle completo: `docs/11-sub-inventory-fsm-ui.md`.
+
+
+---
+
+# 41. HUD false lead y sItemBoxCoop
+
+Se investigaron `uGUI_MainEquipWin` / `uGUI_SubEquipWin` como posible HUD Main/Sub.
+
+La pista se descartó: `SubEquipWin` corresponde a **sub-weapon**, no a Sub Player.
+
+Después se identificó una vía real de inventario cooperativo:
+
+```text
+sItemBoxCoop : sItemBox
+cBagCoop     : sItemBox::cBag
+```
+
+`cBagCoop` mide `0xC0`, frente a `0xB8` de `cBag`, y añade dos DWORD en `+0xB8/+0xBC`.
+
+`0x02D0CA70` obtiene dos valores de una estructura global mediante índices 0 y 1 y los guarda en esos campos.
+
+`0x02D0CC40` vuelve a compararlos contra la misma fuente, demostrando que forman parte de la identidad/validez del bag cooperativo.
+
+Todavía no se renombran como playerID: falta identificar el owner de la estructura indexada.
+
+Detalle: `docs/09-inventory-coop.md`.
