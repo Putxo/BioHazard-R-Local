@@ -1,0 +1,30 @@
+{
+  "base": "BioRevHD 30-Enero-2013 LOCAL COOP v10 CLEAN SPLIT COOP ITEMBOX.exe",
+  "base_sha256": "5060269e5115ef8df53aa0ad4e26c09b4b273d4cfeb6628a7a4f902c606bb4e6",
+  "output": "BioRevHD 30-Enero-2013 LOCAL COOP v11 PICKUP.exe",
+  "output_sha256": "ef0217bf823edfc81f157ea29045417b56011b7c8b446b7e572e341a80245a71",
+  "status": "STATICALLY VERIFIED ONLY - gameplay not executed in this environment",
+  "design": {
+    "candidate": "stock Main candidate plus exact gSub0Npc when local coop is active; nearest by squared 3D distance, tie keeps Main",
+    "processing_guard": "accept stock pl OR exact gSub0Npc while gLocalCoopActive==1",
+    "helper_guard": "same exact exception inside 0x024646F0; no global category predicate modified",
+    "arbitrary_npc": "never accepted"
+  },
+  "symbols": {
+    "pickup_find_candidate": "0x1c95120",
+    "pickup_accept_f48": "0x1c951f4",
+    "pickup_accept_arg": "0x1c95227"
+  },
+  "helper_size": 304,
+  "diff_vs_v10": {
+    "different_bytes": 313,
+    "ranges": 4,
+    "same_file_size": true
+  },
+  "lineage_check": "Reverting only the v11 helper block and three redirected calls reproduces v10 SHA-256 exactly.",
+  "limitations": [
+    "Runtime validation required.",
+    "uItem has one candidate pointer, so when both players are eligible v11 selects the nearer actor; ties keep Main.",
+    "Other interaction types/QTEs remain separate follow-up work."
+  ]
+}
