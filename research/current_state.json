@@ -1,0 +1,125 @@
+{
+  "scope": "Only the Resident Evil Revelations 1 local-coop investigation from this ChatGPT conversation.",
+  "source_build": {
+    "file": "BioRevHD 30-Enero-2013.exe",
+    "sha256": "9124bb92d6c54a047ade47dacc8429221b18f9910b504f0e87718d5151013f69",
+    "flavor": "FullDebugWin32"
+  },
+  "canonical_patch": {
+    "version": "v10",
+    "file": "BioRevHD 30-Enero-2013 LOCAL COOP v10 CLEAN SPLIT COOP ITEMBOX.exe",
+    "sha256": "5060269e5115ef8df53aa0ad4e26c09b4b273d4cfeb6628a7a4f902c606bb4e6",
+    "runtime_validated": false,
+    "base_v9_sha256": "5dc7a7a413ce5916c2758be43b3107d5adf00beee93533b4acf5d83cec97c4be",
+    "builder": "patches/build_v10_itembox_from_v9.py",
+    "manifest": "research/manifests/local-coop-v10-itembox.json"
+  },
+  "globals": {
+    "gSub0Npc": "0x057D9184",
+    "gLocalCoopActive": "0x057D9188",
+    "itemBoxSlotArray": "0x05562878"
+  },
+  "pcs": {
+    "main_vtable": "0x04E1642C",
+    "sub0_vtable": "0x04E1649C",
+    "sub1_vtable": "0x04E1650C",
+    "role_indices": {
+      "Main": 0,
+      "Sub0": 1,
+      "Sub1": 2
+    },
+    "actor_pointer_offset": "+0x44"
+  },
+  "think_mode": {
+    "Invalid": 0,
+    "Pad": 1,
+    "Cpu": 2,
+    "Network": 3
+  },
+  "input": {
+    "padDataIndexer": "0x02DBE720",
+    "padDataCount": 2,
+    "padDataStride": "0xC0",
+    "physical_backend": "DirectInput",
+    "p1Selector": 0,
+    "sub0Selector": 1,
+    "fullpad_manifest": "research/manifests/p2-fullpad-v7.json"
+  },
+  "camera": {
+    "selfManager": "sGameCamera+0xCE0",
+    "partnerManager": "sGameCamera+0xCE4",
+    "ensureSplit": "0x01C9504C",
+    "targetSetterThunk": "0x01C275EC",
+    "targetSetter": "0x02066AB0",
+    "selfViewport": 0,
+    "partnerViewport": 1,
+    "selfMode": "TOP=2",
+    "partnerMode": "BOTTOM=3",
+    "display": 0
+  },
+  "itemBox": {
+    "slot0": "sItemBox",
+    "slot1": "sItemBoxCoop",
+    "stockSelectorCallsite": "0x01D067AF",
+    "v10Wrapper": "0x01C95100",
+    "stockIsCoopThunk": "0x01C076CF",
+    "gameMode": {
+      "Campaign": 0,
+      "Coop": 1
+    },
+    "categories": {
+      "pl": "0x80010000",
+      "np": "0x80020000"
+    },
+    "pSharedBag": "0x80010000",
+    "pMyBag": "0x80011000",
+    "cBagCoopExtraFields": "cCoopSkill state, NOT player IDs"
+  },
+  "pscSubInventory": {
+    "contextOffset": "+0x1078",
+    "managerObjectTable": "sPcsManager+0xB44",
+    "managerIdTable": "sPcsManager+0x704",
+    "objectTableSetter": "0x02DD04E0",
+    "itemPackPath": "0x01BCC327 -> 0x01D336A0 -> uNpc+0x1524",
+    "actionsAcceptingPlOrNp": [
+      "AddWeapon 0x02A16E80",
+      "ClearWeapon 0x02A17270",
+      "NpcSetWeaponSlot 0x02A23C90",
+      "NpcResetWeaponSlot 0x02A23F80",
+      "NpcChangeEquipSlot 0x02A29590"
+    ]
+  },
+  "pickupWip": {
+    "type": "sItem::cNetSyncData::cPickupItemSyncData",
+    "senderCandidate": "0x0244CF80",
+    "receiverThunk": "0x01B9F142",
+    "receiver": "0x02459C20",
+    "setters": {
+      "field08": "0x0244D0F0",
+      "field0C": "0x0244D140",
+      "field10": "0x0244D190",
+      "field14": "0x0244D1E0"
+    },
+    "getters": {
+      "field08": "0x02459E30",
+      "field0C": "0x02459E70",
+      "field10": "0x02459EB0",
+      "field14": "0x02459EF0"
+    },
+    "receiverItemPackCallsite": "0x02459D31",
+    "unresolvedCallAfterItemPack": "0x01B8695D",
+    "otherCandidate": "0x02460900",
+    "interruptedGlobalInit": "0x049A8023",
+    "nextDocument": "docs/12-pickup-sync-wip.md"
+  },
+  "doNotRepeat": [
+    "Do not use v8 as base; use v10/v9 lineage.",
+    "Do not hijack ThinkMode::Network.",
+    "Do not treat uCameraManage::mPadNo as a proven physical-pad selector.",
+    "Do not treat cBagCoop+0xB8/+0xBC as player IDs.",
+    "Do not treat mPadViewportNo as pad-to-viewport; it belongs to vibration context.",
+    "Do not treat uObjModel mCameraList[0]/[1] as player cameras."
+  ],
+  "nextStep": "Resume pickup sync at receiver 0x02459C20 and global init 0x049A8023; prove whether local Sub0 pickups already reach its cBioItemPack/np bag before creating v11.",
+  "handoff": "START_HERE_NEW_CHAT.md"
+}
