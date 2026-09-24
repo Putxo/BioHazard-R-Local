@@ -76,6 +76,15 @@ Solo se incluyen hipótesis surgidas durante esta conversación.
 | H55 | uItem puede aceptar solo el Sub0 exacto sin alterar categorías globales | gLocalCoopActive + gSub0Npc ya existen | ACTIVA / DISEÑO v11 |
 | H56 | Elegir Main/Sub0 por proximidad preserva P1 y habilita P2 con un solo mCandidate | uItem+0xF48 solo admite un actor y ya calcula distancia | ACTIVA / DISEÑO v11 |
 
+| H57 | La v11 canónica de la cadena v12/v13 es la variante nearest-P1/Sub0 | SHA 2c69c5f... y el builder v12 exige exactamente ese base SHA | CONFIRMADA |
+| H58 | El uItem ActionCommand puede usar Pad 2 para Sub0 | v12 devuelve member 1 solo para target exacto Sub0 y restaura selector en 0x02DB2B50 | IMPLEMENTADA / ESTÁTICAMENTE VERIFICADA |
+| H59 | Pickup de Sub0 termina en el inventario de P1 por estar en Campaign | la entrega stock usa actor admitido -> uNpc+0x1524 -> cBioItemPack propio | DESCARTADA |
+| H60 | La regla Coop de ammo relief puede replicarse sin cambiar mGameMode | v13 envuelve gate, selección del otro actor, validación y multiplicador | IMPLEMENTADA / ESTÁTICAMENTE VERIFICADA |
+| H61 | uDoor2pBase ya contiene estado independiente para dos participantes | mReadyFlag, mGuestStatusFlag y mLocalFlag [0/1], además de setter actor-específico | CONFIRMADA |
+| H62 | El índice local global usado en puertas es necesariamente un bloqueo para local co-op | existen lecturas de 0x02DA3050, pero aún no se separa gameplay de red/feedback | ABIERTA; NO TRATAR COMO BLOQUEO TODAVÍA |
+| H63 | El setter 0x02588D20 puede aceptar Sub0 estructuralmente | deriva índice 0/1 del actor y no filtra pl/np | CONFIRMADA ESTRUCTURALMENTE; falta demostrar caller real |
+| H64 | Hace falta v14 para puertas | todavía no hay bloqueo concreto demostrado | NO DEMOSTRADA; NO CREAR v14 AÚN |
+
 ## Descartes explicados
 
 ### `mCameraList[0]/[1]`
