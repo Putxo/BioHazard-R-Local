@@ -452,3 +452,87 @@ slot 1 -> sItemBoxCoop
 El siguiente cambio de inventario, si resulta necesario, puede limitarse a reutilizar el selector existente del juego en vez de fabricar bags o instancias nuevas.
 
 Todavía no se ha aplicado ningún parche de inventario a v9: primero hay que decidir si conviene cambiar globalmente `mGameMode` o redirigir solo las consultas de ItemBox durante el modo local. La segunda opción es potencialmente menos invasiva.
+
+
+---
+
+## Registro exacto de los dos slots
+
+El helper `0x01C3A719 -> 0x01D06C10` valida `index < 2` y devuelve:
+
+```text
+0x05562878 + index*4
+```
+
+Por tanto:
+
+```text
+slot 0 = 0x05562878
+slot 1 = 0x0556287C
+```
+
+El constructor/register de `cGameSystem` usa ese helper y en `0x02D0A094` ejecuta la escritura real `*[slot] = this`.
+
+El reader común `0x01C8BA01 -> 0x01D06B20` lee después exactamente `*slot[index]`.
+
+Wrappers:
+
+```text
+0x01D06930(arg) -> slot arg
+0x01D069D0(arg) -> slot arg+1
+```
+
+Con `arg=0`, el módulo ItemBox selecciona directamente slot 0 o slot 1.
+
+---
+
+## v10: selector local de sItemBoxCoop sin cambiar GameMode
+
+El getter normal de ItemBox en `0x01D06730` hace stock:
+
+```text
+mGameMode == GameMode::Coop
+  false -> 0x01D06930 -> slot 0
+  true  -> 0x01D069D0 -> slot 1
+```
+
+v10 no modifica `mGameMode`.
+
+Solo redirige la llamada de condición en `0x01D067AF` a un wrapper en `0x01C95100`:
+
+```text
+stock_isCoop() || gLocalCoopActive
+```
+
+Resultado:
+
+```text
+Campaign + local OFF -> slot 0 stock
+Coop stock           -> slot 1 stock
+Campaign + local ON  -> slot 1 sItemBoxCoop
+```
+
+Build:
+
+```text
+BioRevHD 30-Enero-2013 LOCAL COOP v10 CLEAN SPLIT COOP ITEMBOX.exe
+SHA-256 5060269e5115ef8df53aa0ad4e26c09b4b273d4cfeb6628a7a4f902c606bb4e6
+```
+
+Diff vs v9:
+
+```text
+23 bytes
+2 ranges
+same size
+```
+
+Al revertir únicamente esos cambios, el SHA vuelve exactamente a v9:
+
+```text
+5dc7a7a413ce5916c2758be43b3107d5adf00beee93533b4acf5d83cec97c4be
+```
+
+Estado: **STATICALLY VERIFIED ONLY**.
+
+Pendiente: separar input de GUI/inventario/pausa para Pad 2.
