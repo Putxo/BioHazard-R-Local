@@ -2997,3 +2997,29 @@ Coop     1.5
 y el metadata interno lo etiqueta `入手弾数倍率` (multiplicador de cantidad de munición obtenida).
 
 Por tanto v12 ya resuelve la entrega principal de pickups; queda pendiente replicar esta regla secundaria de reparto de munición Coop mediante un hook local específico, sin cambiar `mGameMode` global.
+
+
+---
+
+# 46. El pickup local stock rechaza np
+
+La ruta de recogida común:
+
+```text
+0x01C639B6 -> 0x024646F0
+```
+
+valida al actor que recoge exclusivamente con el predicate `pl`:
+
+```text
+0x01C8C9A1 -> 0x01D77EB0
+normalize(id) == 0x80010000
+```
+
+Si el actor no es categoría `pl`, la función sale.
+
+No existe en esa entrada el fallback `pl -> np` que sí aparece en las acciones de inventario/equipamiento PcsSub ya verificadas.
+
+Como Sub0 local sigue siendo categoría `np`, **v10 todavía no tiene demostrado el pickup local de P2**.
+
+Se inicia la reconstrucción de `sItem::cNetSyncData::cPickupItemSyncData` para comparar con la ruta cooperativa online antes de decidir el parche.
