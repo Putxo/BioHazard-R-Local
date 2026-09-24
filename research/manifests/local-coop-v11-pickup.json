@@ -1,30 +1,31 @@
 {
   "base": "BioRevHD 30-Enero-2013 LOCAL COOP v10 CLEAN SPLIT COOP ITEMBOX.exe",
   "base_sha256": "5060269e5115ef8df53aa0ad4e26c09b4b273d4cfeb6628a7a4f902c606bb4e6",
-  "output": "BioRevHD 30-Enero-2013 LOCAL COOP v11 PICKUP.exe",
-  "output_sha256": "ef0217bf823edfc81f157ea29045417b56011b7c8b446b7e572e341a80245a71",
+  "output": "BioRevHD 30-Enero-2013 LOCAL COOP v11 SUB0 PICKUP.exe",
+  "output_sha256": "b45de9e4c1aff6aea44251efb863d0a90614856e6e3e4f9d234c5b6883ea6976",
   "status": "STATICALLY VERIFIED ONLY - gameplay not executed in this environment",
-  "design": {
-    "candidate": "stock Main candidate plus exact gSub0Npc when local coop is active; nearest by squared 3D distance, tie keeps Main",
-    "processing_guard": "accept stock pl OR exact gSub0Npc while gLocalCoopActive==1",
-    "helper_guard": "same exact exception inside 0x024646F0; no global category predicate modified",
-    "arbitrary_npc": "never accepted"
-  },
-  "symbols": {
-    "pickup_find_candidate": "0x1c95120",
-    "pickup_accept_f48": "0x1c951f4",
-    "pickup_accept_arg": "0x1c95227"
-  },
-  "helper_size": 304,
+  "change": "Only the two local-pickup isPl gates are widened to stock isPl OR exact tracked Sub0 while gLocalCoopActive=1.",
+  "wrapper_va": "0x1c95120",
+  "wrapper_bytes": 55,
+  "callsites": [
+    "0x2460664",
+    "0x2464726"
+  ],
+  "stock_is_pl_thunk": "0x1c8c9a1",
   "diff_vs_v10": {
-    "different_bytes": 313,
-    "ranges": 4,
+    "different_bytes": 61,
+    "ranges": 3,
     "same_file_size": true
   },
-  "lineage_check": "Reverting only the v11 helper block and three redirected calls reproduces v10 SHA-256 exactly.",
+  "lineage_check": "Reverting only the v11 helper and two redirected calls reproduces v10 SHA-256 exactly.",
+  "behavior": {
+    "P1_pl": "stock true, unchanged",
+    "local_Sub0_np": "true only when gLocalCoopActive=1 and ID matches tracked gSub0Npc",
+    "other_NPC": "false, unchanged",
+    "online_local_off": "stock behavior"
+  },
   "limitations": [
     "Runtime validation required.",
-    "uItem has one candidate pointer, so when both players are eligible v11 selects the nearer actor; ties keep Main.",
-    "Other interaction types/QTEs remain separate follow-up work."
+    "Other interaction/QTE gates may have their own pl-only assumptions and are investigated separately."
   ]
 }
