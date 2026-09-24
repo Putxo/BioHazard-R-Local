@@ -2,28 +2,35 @@
   "base": "BioRevHD 30-Enero-2013 LOCAL COOP v10 CLEAN SPLIT COOP ITEMBOX.exe",
   "base_sha256": "5060269e5115ef8df53aa0ad4e26c09b4b273d4cfeb6628a7a4f902c606bb4e6",
   "output": "BioRevHD 30-Enero-2013 LOCAL COOP v11 SUB0 PICKUP.exe",
-  "output_sha256": "66b8a6ac440a2b676ce687860073a500617ff86de71d588464eeedc38532b415",
+  "output_sha256": "2c69c5f16626dc7478a6221c2bac98ed19f5b37dcf7991fc78f744f35f192d69",
   "status": "STATICALLY VERIFIED ONLY - gameplay not executed in this environment",
-  "change": "When stock uItem pickup rejects a non-pl actor, allow only exact tracked local Sub0 while gLocalCoopActive is non-zero.",
-  "hook": {
-    "stock_false_branch_va": "0x2464733",
-    "helper_va": "0x1c95120",
-    "stock_accept_va": "0x2464739",
-    "stock_exit_va": "0x24649ae"
+  "canonical_lineage": true,
+  "builder": "patches/build_v11_sub0_pickup.py",
+  "assembly": "research/patches/pickup_sub0_v11.S",
+  "design": {
+    "candidate": "Keep stock P1 lookup and compare exact tracked Sub0 by squared 3D distance to the same uItem transform. The nearer actor is stored in stock uItem+0xF48.",
+    "gate1": "Stock pl actors are unchanged. A non-pl target is accepted only when gLocalCoopActive=1 and uItem target == gSub0Npc.",
+    "gate2": "Stock pl actors are unchanged. A non-pl pickup actor is accepted only when gLocalCoopActive=1 and actor == gSub0Npc.",
+    "network": "sNetworkManage global pl-only lookup remains untouched.",
+    "npc_scope": "No generic np/NPC actor is enabled."
   },
-  "globals": {
-    "gSub0Npc": "0x57d9184",
-    "gLocalCoopActive": "0x57d9188"
+  "helper": {
+    "base_va": "0x01C95120",
+    "size": 248,
+    "choose": "0x01C95120",
+    "gate1": "0x01C951D0",
+    "gate2": "0x01C951F7"
   },
   "diff_vs_v10": {
     "same_file_size": true,
-    "different_bytes": 36,
-    "ranges": 2
+    "different_bytes": 262,
+    "ranges": 5
   },
-  "lineage_check": "Restoring only the v11 JZ and 32-byte helper cave reproduces v10 SHA-256 exactly.",
-  "safety_scope": "General np/NPC pickup remains rejected. Only exact uPcsPlayerSub0 live actor is admitted, and only while local co-op flag is active.",
+  "lineage_note": "This is the canonical v11 consumed by v12. v12 builder expects this exact SHA-256. Other historical v11 experiments are preserved under separate filenames.",
   "limitations": [
-    "Runtime validation required.",
-    "Need validate item-capacity/full-inventory edge cases and world-state sync for every item subtype in gameplay."
+    "Runtime validation is required.",
+    "uItem has one local pickup target; v11 chooses the nearer of P1/Sub0 rather than duplicating per-player target state.",
+    "If the nearer actor is temporarily invalid while the farther actor is valid, stock validation may reject that frame; eligibility-aware arbitration may be needed.",
+    "Interaction prompt/HUD duplication is not addressed by this patch."
   ]
 }
