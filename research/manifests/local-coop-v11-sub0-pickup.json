@@ -1,0 +1,31 @@
+{
+  "base": "BioRevHD 30-Enero-2013 LOCAL COOP v10 CLEAN SPLIT COOP ITEMBOX.exe",
+  "base_sha256": "5060269e5115ef8df53aa0ad4e26c09b4b273d4cfeb6628a7a4f902c606bb4e6",
+  "output": "BioRevHD 30-Enero-2013 LOCAL COOP v11 SUB0 PICKUP.exe",
+  "output_sha256": "2c69c5f16626dc7478a6221c2bac98ed19f5b37dcf7991fc78f744f35f192d69",
+  "status": "STATICALLY VERIFIED ONLY - gameplay not executed in this environment",
+  "design": {
+    "candidate": "Keep stock P1 lookup and compare exact tracked Sub0 by squared 3D distance to the same uItem transform. The nearer actor is stored in the stock uItem+0xF48 target.",
+    "gate1": "Stock pl actors are unchanged. A non-pl target is accepted only when gLocalCoopActive=1 and target==gSub0Npc.",
+    "gate2": "The item-delivery routine uses the same exact-Sub0 fallback; generic np actors remain rejected.",
+    "network": "sNetworkManage and its global pl-only actor lookup are untouched."
+  },
+  "helper": {
+    "base_va": "0x1c95120",
+    "size": 248,
+    "choose": "0x1c95120",
+    "gate1": "0x1c951d0",
+    "gate2": "0x1c951f7"
+  },
+  "diff_vs_v10": {
+    "same_file_size": true,
+    "different_bytes": 262,
+    "ranges": 5
+  },
+  "lineage_check": "Restoring only the 248-byte helper cave and the three patched code sites reproduces v10 byte-for-byte and SHA-256 5060269e5115ef8df53aa0ad4e26c09b4b273d4cfeb6628a7a4f902c606bb4e6.",
+  "limitations": [
+    "Runtime validation is required.",
+    "uItem has one local pickup target; v11 arbitrates P1/Sub0 rather than duplicating target state.",
+    "Prompt/HUD duplication is not yet addressed."
+  ]
+}
