@@ -2,94 +2,165 @@
 
 Investigación para añadir cooperativo local a **Resident Evil Revelations / BioHazard Revelations (PC, MT Framework)**.
 
-## Alcance de esta rama
+> ## Nuevo chat: empieza aquí
+>
+> **[START_HERE_NEW_CHAT.md](START_HERE_NEW_CHAT.md)**
+>
+> Ese archivo contiene el estado canónico, la base actual, lo confirmado/descartado y el punto exacto desde el que continuar.
 
-Esta documentación contiene **únicamente el trabajo realizado en esta conversación** sobre los cuatro ejecutables aportados aquí:
+## Alcance
 
-- `BioRevHD 23-Feb-2013 prototipo(2).exe`
-- `BioRevHD 30-Enero-2013.exe`
-- `rerev Feb 7, 2024 retail.exe`
-- `rerev May 17, 2013 prototipo.exe`
+Este repositorio documenta **únicamente la investigación realizada en este chat** sobre las cuatro builds aportadas aquí.
 
-No se incorporan archivos, experimentos ni resultados procedentes de otros chats o trabajos anteriores.
+No se incorporan resultados de otros chats.
 
 ## Objetivo
 
-Conseguir, en una sola instancia del juego:
+Conseguir, en una sola instancia:
 
-- dos jugadores locales reales;
-- P1 y P2 con entrada independiente;
-- segundo mando asignado a P2;
-- dos cámaras independientes;
-- pantalla partida;
-- reutilizar al máximo la infraestructura ya presente en las builds de desarrollo.
+- P1 y P2 locales reales;
+- dos mandos físicos independientes;
+- Sub0/partner controlado localmente;
+- dos cámaras y pantalla partida;
+- inventario/equipamiento/pickups correctos;
+- HUD, pausa, interacciones, QTE, transiciones y cutscenes compatibles;
+- preservar comportamiento stock/online cuando el modo local no está activo.
+
+## Base de ingeniería inversa
+
+Build principal:
+
+`BioRevHD 30-Enero-2013.exe`
+
+SHA-256:
+
+`9124bb92d6c54a047ade47dacc8429221b18f9910b504f0e87718d5151013f69`
+
+Es `FullDebugWin32` y conserva RTTI, menús internos y lógica eliminada después.
+
+La build 23-Feb-2013 se usa como comparación: conserva parte de la interfaz debug, pero algunas rutas como `CreateRaidPlayer` terminan en stubs.
+
+## Base experimental canónica actual
+
+**v10**
+
+`BioRevHD 30-Enero-2013 LOCAL COOP v10 CLEAN SPLIT COOP ITEMBOX.exe`
+
+SHA-256:
+
+`5060269e5115ef8df53aa0ad4e26c09b4b273d4cfeb6628a7a4f902c606bb4e6`
+
+Estado:
+
+**STATICALLY VERIFIED ONLY — todavía no validado dentro del juego.**
+
+Builder:
+
+`patches/build_v10_itembox_from_v9.py`
+
+Manifest:
+
+`research/manifests/local-coop-v10-itembox.json`
+
+v10 = v9 exacto + 23 bytes efectivos de selección de `sItemBoxCoop`.
+
+## Qué contiene v10
+
+- exacto `uPcsPlayerSub0` rastreado hasta su `uNpc`;
+- transición canónica `ThinkMode::Cpu(2) -> Pad(1)`;
+- `ThinkMode::Network(3)` intacto;
+- segundo pad real mediante `PadData[1]`;
+- restauración de selector en la capa PC `sGamePad`;
+- Partner target = exacto Sub0;
+- Self -> VIEW_0 TOP;
+- Partner -> VIEW_1 BOTTOM;
+- split persistente solo cuando `gLocalCoopActive=1`;
+- comportamiento cámara stock cuando el flag local está apagado;
+- selección de `sItemBoxCoop` cuando el local co-op está activo sin cambiar globalmente `mGameMode`.
+
+## Punto exacto actual
+
+La investigación está ahora en la ruta de **pickup/item/ammo/herb del partner**.
+
+Tipo clave:
+
+`sItem::cNetSyncData::cPickupItemSyncData`
+
+Receiver prioritario:
+
+`0x02459C20`
+
+Punto adicional interrumpido por timeout:
+
+`0x049A8023`
+
+Detalle completo:
+
+**[docs/12-pickup-sync-wip.md](docs/12-pickup-sync-wip.md)**
+
+## Documentación principal
+
+1. [START_HERE_NEW_CHAT.md](START_HERE_NEW_CHAT.md) — handoff autocontenido.
+2. [docs/02-investigation-log.md](docs/02-investigation-log.md) — cronología exhaustiva.
+3. [docs/03-hypotheses-and-discarded-paths.md](docs/03-hypotheses-and-discarded-paths.md) — hipótesis, errores y descartes.
+4. [docs/13-version-lineage.md](docs/13-version-lineage.md) — v1→v10 y qué está superseded.
+5. [docs/10-physical-pad-binding.md](docs/10-physical-pad-binding.md) — dos pads físicos DirectInput.
+6. [docs/11-sub-inventory-fsm-ui.md](docs/11-sub-inventory-fsm-ui.md) — PcsSub/inventario/equipamiento.
+7. [docs/12-pickup-sync-wip.md](docs/12-pickup-sync-wip.md) — trabajo exacto pendiente.
+8. [docs/09-inventory-coop.md](docs/09-inventory-coop.md) — `sItemBoxCoop`, bags pl/np y GameMode.
+9. [docs/08-player-pad-sync.md](docs/08-player-pad-sync.md) — `cPlayerPadSyncData`.
+10. [docs/05-sgamepad-spcsmanager.md](docs/05-sgamepad-spcsmanager.md) — `sGamePad` / `sPcsManager`.
+
+## Historial técnico
+
+También se conservan todos los experimentos y errores intermedios.
+
+Entre otros:
+
+- v1/v2: selector de pad insuficiente;
+- v3: primera restauración de selector PC;
+- v4: split nativo;
+- v5: filtro exacto Sub0 manteniendo Cpu;
+- v6: Sub0 Cpu→Pad nativo;
+- v7: FULLPAD;
+- v8: persistent split con herencia de cámara incondicional — **superseded**;
+- v9: clean persistent split;
+- v10: ItemBox Coop condicional.
+
+No borrar las versiones históricas: forman parte de la trazabilidad solicitada.
 
 ## Política del repositorio
 
-No se suben ejecutables, DLL, PDB, assets ni otros archivos propietarios del juego. Solo se documentan:
+No se suben:
 
-- hashes y metadatos;
-- offsets/RVA/VA;
-- nombres de clases, campos y funciones;
-- desensamblado mínimo necesario como evidencia;
-- hipótesis y caminos descartados;
-- scripts de análisis reproducibles.
+- ejecutables del juego;
+- DLL/PDB propietarios;
+- assets;
+- dumps propietarios.
 
-## Base de investigación actual
+Sí se suben:
 
-La candidata principal es **BioRevHD 30-Enero-2013.exe** porque es una build `FullDebugWin32` mucho más rica en RTTI, strings, menús de depuración y lógica eliminada posteriormente.
+- hashes;
+- offsets;
+- desensamblado mínimo como evidencia;
+- documentación;
+- builders/patchers reproducibles;
+- manifests;
+- hipótesis descartadas;
+- rectificaciones.
 
-La build **23-Feb-2013 prototipo** se usa como comparación para detectar qué funciones fueron anuladas entre enero y febrero.
+## Estado de archivos locales
 
-## Estado actual
+Tras un reinicio del entorno, los EXE derivados v5–v10 pueden no seguir presentes localmente.
 
-La investigación está separada en tres problemas:
+Los cuatro EXE fuente originales sí son la referencia.
 
-1. **Entidad P2** — localizar/reutilizar la infraestructura Main/Sub ya presente.
-2. **Input P2** — enlazar un segundo jugador con un pad lógico independiente.
-3. **Cámara/viewport P2** — asignar una cámara independiente y renderizarla en un segundo viewport.
+Los derivados deben reconstruirse mediante los builders versionados; no asumir que siguen montados.
 
-Hallazgo más reciente: la build de enero contiene RTTI/clases diferenciadas para **`uPcsPlayerMain`**, **`uPcsPlayerSub0`** y **`uPcsPlayerSub1`**, además de un `sPcsManager` que maneja tres slots Main/Sub0/Sub1.
+## Regla para continuar
 
-## Documentación
+No crear una nueva versión por cada hallazgo.
 
-- [Alcance exacto de esta conversación](docs/00-scope-this-chat.md)
+**v10 sigue siendo la base hasta que se demuestre un cambio de código necesario.**
 
-- [Inventario de las cuatro builds](docs/01-build-inventory.md)
-- [Diario completo de esta conversación](docs/02-investigation-log.md)
-- [Hipótesis y caminos descartados](docs/03-hypotheses-and-discarded-paths.md)
-- [Mapa técnico actual](docs/04-current-architecture-map.md)
-- [sGamePad, sPcsManager y clases Main/Sub](docs/05-sgamepad-spcsmanager.md)
-- [Asociación física Pad 0/Pad 1 con DirectInput](docs/10-physical-pad-binding.md)
-- [PcsSub, inventario cooperativo y SubEquipWin](docs/11-sub-inventory-fsm-ui.md)
-- [SubPlayer0: actor exacto y PadMode v6](docs/09-subplayer0-local-filter.md)
-- [Persistent Partner camera v8](docs/11-persistent-camera-v8.md)
-- [Experimentos estáticos y sus limitaciones](docs/06-experiments.md)
-- [RTTI/vtables y matriz nativa Main/Sub](docs/07-pcs-role-vtables-and-mapping.md)
-- [ThinkMode y ruta nativa de pads](docs/08-input-thinkmode-and-pad-routing.md)
-- [Roles Main/Sub y ruta real de pad](docs/07-player-roles-and-pad-routing.md)
-- [ThinkMode y control local](docs/08-thinkmode-local-input.md)
-- [Mapa de strings/direcciones](research/key-string-addresses.md)
-- [Manifest P2 input](research/manifests/p2-input-experimental.json)
-- [Manifest split-screen v2](research/manifests/splitscreen-v2-experimental.json)
-- [Native input v3 manifest](research/manifests/native-input-v3-experimental.json)
-- [Patcher reproducible de Native input v3](scripts/apply_native_input_v3.py)
-- [Scripts reproducibles](scripts/)
-
-## Criterio documental
-
-También se conservan los errores de interpretación hechos **durante este chat**. Si una pista parecía útil y después se demostró que pertenecía a otro subsistema, queda registrada con la razón del descarte.
-
-
-## Artefactos reproducibles actuales
-
-- `patches/build_v3_input_patch.py` — experimento histórico v3.
-- `patches/camera_split_v4.S` + `patches/build_camera_split_v4.py` — split Self/Partner nativo.
-- `patches/build_v5_sub0_local.py` — filtro exacto Sub0 manteniendo Cpu.
-- `patches/build_v6_sub0_padmode.py` — transición nativa Sub0 Cpu→Pad.
-- `patches/build_v7_fullpad.py` — amplía la separación a todas las cargas de input localizadas.
-- `patches/build_v8_persistent_split.py` — candidato actual: FULLPAD + cámara Partner persistente.
-- `research/manifests/p2-sub0-input-v5.json`
-- `research/manifests/p2-sub0-padmode-v6.json`
-
-El candidato estático principal actual es **v8 FULLPAD + Persistent Split**. Mantiene la identidad exacta de Sub0, lo cambia por la ruta canónica a ThinkMode::Pad, separa el conjunto de controles localizado hacia PadData[1] y mantiene Self/Partner CameraManage activos en VIEW_0/VIEW_1. Sigue pendiente de validación dentro del juego.
+Siguiente trabajo: cerrar `cPickupItemSyncData` y comprobar si los pickups de Sub0 ya llegan a su `cBioItemPack / bag np` o si necesitan un hook local mínimo.
