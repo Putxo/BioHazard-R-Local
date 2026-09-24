@@ -1208,3 +1208,221 @@ usado por el cooperativo online. Se está reconstruyendo su productor/receptor p
 2. conviene reutilizar la ruta de `cPickupItemSyncData`.
 
 Hasta cerrar esa comparación no se crea una nueva versión del EXE.
+
+
+---
+
+## 15. cGetItemSyncData y PickUpState: la ruta coop usa el mismo pickup común
+
+La investigación de sincronización de objetos distinguió dos mensajes diferentes.
+
+### cPickupItemSyncData
+
+Tipo:
+
+```text
+sItem::cNetSyncData::cPickupItemSyncData
+```
+
+Este mensaje sincroniza principalmente estado del objeto recogido en el mundo. No es por sí solo la operación que entrega el ítem al inventario.
+
+### cGetItemSyncData
+
+Tipo:
+
+```text
+uItem::cNetSyncData::cGetItemSyncData
+```
+
+Datos confirmados:
+
+```text
+string/RTTI: 0x04D30850
+DTI global:  0x05579564
+size:        0x08
+vtable:      0x04D2FEB0
+```
+
+Su dispatcher recibe el mensaje alrededor de:
+
+```text
+0x0245FB90
+```
+
+Callback:
+
+```text
+0x01C4FBC8 -> 0x02464AD0
+```
+
+`0x02464AD0` obtiene el owner `uItem` desde el `cNetSyncData`, resuelve el actor remoto y termina llamando al mismo handler común:
+
+```text
+0x01C639B6 -> 0x024646F0
+```
+
+Por tanto el cooperativo online no tiene un segundo algoritmo de inventario para recoger objetos: reutiliza el mismo `uItem::pickup(actor)`.
+
+## 16. Punto exacto del turno cortado: 0x049A8023 = DTI de uItem
+
+El análisis que quedó cortado por el timeout de la interfaz estaba desmontando la inicialización global alrededor de:
+
+```text
+0x049A8023
+```
+
+La inicialización completa identifica el DTI:
+
+```text
+global 0x05579584
+string "uItem" @ 0x04D30838
+size 0x10F0
+```
+
+Por tanto `FsmPickupItem` valida realmente un objeto `uItem`; ese punto no era una clase de jugador pendiente de identificar.
+
+## 17. PickUpState trabaja explícitamente con uNpc
+
+RTTI/clases:
+
+```text
+player::PickUpStateBase
+player::PickUpState
+player::PickUpStateWaterSurface
+player::PickUpStateUnderWater
+```
+
+Vtables:
+
+```text
+PickUpStateBase         0x04D95560
+PickUpState             0x04D955A0
+PickUpStateWaterSurface 0x04D955E0
+PickUpStateUnderWater   0x04D95620
+```
+
+El constructor de `PickUpState` instala la vtable en:
+
+```text
+0x026FE340..0x026FE378
+```
+
+El método virtual relevante:
+
+```text
+0x0270AC70
+```
+
+recibe un actor y llama:
+
+```text
+0x01B9D60D -> 0x0208FCB0
+```
+
+para convertir/validar ese actor como `uNpc`.
+
+Después pasa el actor resultante a:
+
+```text
+0x01BBE8F8 -> 0x0270AD00
+```
+
+y `0x0270AD00` termina invocando:
+
+```text
+uItem::pickup(actor)
+0x01C639B6 -> 0x024646F0
+```
+
+con el actor `uNpc` explícito.
+
+### Consecuencia
+
+La propia arquitectura de `PickUpState` está preparada para trabajar con un `uNpc`. Por tanto el filtro inicial `pl-only` de `0x024646F0` es una regla de admisión, no una incompatibilidad estructural del resto del handler con `uNpc`.
+
+## 18. v11: excepción mínima solo para el Sub0 local exacto
+
+Se construyó v11 sobre v10.
+
+Archivo:
+
+```text
+BioRevHD 30-Enero-2013 LOCAL COOP v11 SUB0 PICKUP.exe
+```
+
+SHA-256:
+
+```text
+66b8a6ac440a2b676ce687860073a500617ff86de71d588464eeedc38532b415
+```
+
+El test stock:
+
+```text
+0x02464733
+if (!is_pl(actor)) exit;
+```
+
+se conserva para todos los casos normales.
+
+Solo cuando `is_pl(actor)` falla, v11 comprueba:
+
+```text
+gLocalCoopActive != 0
+AND
+actor == gSub0Npc
+```
+
+Si ambas condiciones son ciertas, vuelve a la continuación stock:
+
+```text
+0x02464739
+```
+
+En cualquier otro caso conserva el exit original:
+
+```text
+0x024649AE
+```
+
+Helper:
+
+```text
+0x01C95120
+```
+
+### Verificación
+
+v11 se reconstruyó desde el EXE original reproduciendo antes exactamente los SHA publicados de:
+
+```text
+v6  83554753d1d6a86bf256627830f509a313871a847c87338b61da0e3c0a2c0914
+v7  25cb559a183156bbb8de312688da86bec300bd78e66f0d6c6f7d776a3cc88af7
+v9  5dc7a7a413ce5916c2758be43b3107d5adf00beee93533b4acf5d83cec97c4be
+v10 5060269e5115ef8df53aa0ad4e26c09b4b273d4cfeb6628a7a4f902c606bb4e6
+```
+
+Después del cambio v11:
+
+```text
+same file size: yes
+36 bytes diferentes vs v10
+2 rangos
+```
+
+Revirtiendo únicamente el branch de 6 bytes y el helper de 32 bytes se reproduce exactamente el SHA de v10.
+
+### Alcance de seguridad
+
+v11 **no** permite pickup a todos los NPC.
+
+```text
+NPC genérico -> sigue rechazado
+Sub0 sin local-coop -> sigue rechazado
+Sub0 exacto + local-coop activo -> permitido
+```
+
+Builder y manifest:
+
+- `patches/build_v11_sub0_pickup_from_v10.py`
+- `research/manifests/local-coop-v11-sub0-pickup.json`
