@@ -1,137 +1,63 @@
-# 12 — Pickup cooperativo y cPickupItemSyncData
+# 12 — Pickup cooperativo: cPickupItemSyncData y bloqueo local de Sub0
 
 Build principal: **BioRevHD 30-Enero-2013.exe**.
 
-Este documento continúa la línea canónica vigente: **v10 = v9 + selección local de sItemBoxCoop**.
+Base experimental vigente al iniciar este bloque: **v10 CLEAN SPLIT COOP ITEMBOX**.
 
-## 1. Corrección del punto donde se cortó el turno
+## 1. cPickupItemSyncData
 
-Durante el turno que la interfaz interrumpió se estaba desmontando la inicialización global alrededor de:
-
-```text
-0x049A8023
-```
-
-La revisión completa corrige la atribución:
-
-- alrededor de `0x049A8022/0x049A8027` se registra/inicializa el DTI global asociado a la string literal **`"uItem"`**;
-- el DTI de **`sItem::cNetSyncData::cPickupItemSyncData`** se inicializa en otra rutina global alrededor de **`0x049A5300`**.
-
-La dirección del turno interrumpido era por tanto una pista cercana de `uItem`, no el registro exacto de `cPickupItemSyncData`.
-
-## 2. Tipo de sincronización de pickup
-
-String:
+RTTI/string interna:
 
 ```text
 sItem::cNetSyncData::cPickupItemSyncData
-VA 0x04D2FC5C
+VA string ~0x04D2FC5C
 ```
 
-RTTI decorado:
+Registro global alrededor de `0x049A5300`:
 
 ```text
-.?AUcPickupItemSyncData@cNetSyncData@sItem@chara@game@app@@
-```
-
-DTI global observado:
-
-```text
-0x05578DF0
-```
-
-Tamaño del objeto:
-
-```text
-0x1C bytes
+size = 0x1C
+DTI global = 0x05578DF0
 ```
 
 Constructor real:
 
 ```text
-0x0245A120
+0x01C89A3A -> 0x0245A120
+vtable = 0x04D2F344
 ```
 
-Factoría/DTI:
-
-```text
-0x02443DA0
- -> thunk 0x01C89A3A
- -> 0x0245A120
-```
-
-Vtable del objeto:
-
-```text
-0x04D2F344
-```
-
-## 3. Layout observado
-
-El constructor inicializa:
+Inicialización observada:
 
 ```text
 +0x08 = 0x80000000
 +0x0C = 0x80000000
-+0x10 = 0xFFFFFFFF
++0x10 = -1
 +0x14 = 0x80000000
 +0x18 = 0
 ```
 
-Getters:
+Setters de payload:
 
 ```text
-0x02459E20 -> +0x08
-0x02459E60 -> +0x0C
-0x02459EA0 -> +0x10
-0x02459EE0 -> +0x14
-0x02459F20 -> +0x18 byte
+0x01C672D7 -> 0x0244D0F0 -> +0x08 DWORD
+0x01C3072D -> 0x0244D140 -> +0x0C DWORD
+0x01B879ED -> 0x0244D190 -> +0x10 DWORD
+0x01C0D8B8 -> 0x0244D1E0 -> +0x14 DWORD
+0x01C2CDA3 -> 0x0244D230 -> +0x18 byte
 ```
 
-Setters usados por el emisor:
+## 2. Sender nativo
+
+Sender:
 
 ```text
-0x0244D0F0 -> +0x08
-0x0244D140 -> +0x0C
-0x0244D190 -> +0x10
-0x0244D1E0 -> +0x14
-0x0244D230 -> +0x18 byte
+0x01BD0B93 -> 0x0244CF30
 ```
 
-Thunks:
+Construye el paquete y lo envía mediante el net-sync de Item.
 
-```text
-0x01C672D7 -> 0x0244D0F0
-0x01C3072D -> 0x0244D140
-0x01B879ED -> 0x0244D190
-0x01C0D8B8 -> 0x0244D1E0
-0x01C2CDA3 -> 0x0244D230
-```
-
-## 4. Emisor nativo
-
-Rutina:
-
-```text
-0x0244CF30
-thunk 0x01BD0B93
-```
-
-Construye un `cPickupItemSyncData` temporal y escribe sus cinco campos desde cinco argumentos.
-
-Después lo envía por:
-
-```text
-0x01BC43D4
-```
-
-con el canal/mensaje:
-
-```text
-0x10
-```
-
-Callsites localizados:
+Callers observados:
 
 ```text
 0x02434322
@@ -139,212 +65,240 @@ Callsites localizados:
 0x02460B3E
 ```
 
-### Callsite 0x02460890
-
-Los cinco argumentos se extraen del actor actual:
+En la ruta de pickup alrededor de `0x02460854..0x02460890`, los cinco valores se obtienen del actor/item actual:
 
 ```text
-arg1:
+packet +0x08:
   0x01C53859 -> 0x027F1200
-  ID del actor/player, con override uPlayer+0xE38 o ID derivado
+  ID lógico/playerID/chara-style ID del actor
 
-arg2:
+packet +0x0C:
   0x01BEDBB7 -> 0x01CB7610
-  [actor+0xE3C]
+  devuelve [object+0xE3C]
 
-arg3:
+packet +0x10:
   0x01C69771 -> 0x02437330
-  [actor+0xF28]
+  devuelve [object+0xF28]
 
-arg4:
+packet +0x14:
   0x01C1729B -> 0x02437530
-  [actor+0xF40]
+  devuelve [object+0xF40]
 
-arg5:
+packet +0x18:
   0x01C1A1D0 -> 0x024374F0
-  byte [actor+0xF3D]
+  devuelve byte [object+0xF3D]
 ```
 
-En el mismo bloque aparecen strings locales:
+No se asignan nombres semánticos a `+0xF28/+0xF40/+0xF3D` hasta encontrar metadata adicional.
+
+## 3. Receptor nativo
+
+Dispatcher de red alrededor de:
 
 ```text
-dropVal
-dropID
-param
+0x02449820
 ```
 
-Se conservan como pista para nombrar los otros campos, pero todavía no se les asigna semántica exacta sin cerrar el flujo.
-
-## 5. Dispatcher de recepción
-
-El dispatcher de `sItem::cNetSyncData` compara el DTI entrante con:
+compara el DTI entrante con:
 
 ```text
-0x05578DF0
+cPickupItemSyncData DTI 0x05578DF0
 ```
 
-alrededor de:
-
-```text
-0x024499AF
-```
-
-Cuando es `cPickupItemSyncData`, crea el delegate:
+y deriva al handler:
 
 ```text
 0x01B9F142 -> 0x02459C20
 ```
 
-## 6. Handler de pickup remoto 0x02459C20
-
-El handler lee los cinco campos mediante los getters del paquete.
-
-El dato decisivo es `+0x08`.
-
-El sender llena `+0x08` con:
+Getters del paquete usados por el receptor:
 
 ```text
-0x027F1200
+0x02459E20 -> +0x08
+0x02459E60 -> +0x0C
+0x02459EA0 -> +0x10
+0x02459EE0 -> +0x14
+0x02459F20 -> +0x18
 ```
 
-que es el mismo getter de ID de actor/player ya identificado en la investigación de ItemBox.
+## 4. El pickup remoto termina en el inventario del actor correcto
 
-El receptor vuelve a obtener ese campo mediante:
+Dentro del receptor, después de localizar el actor objetivo, la ruta usa:
 
 ```text
-0x01C008CA -> 0x02459E20
+0x01BCC327 -> 0x01D336A0
 ```
 
-y lo usa para resolver un objeto/actor.
-
-En la rama válida:
+que ya estaba demostrada como acceso:
 
 ```text
-packet +0x08
- -> lookup/resolución de actor
- -> actor resuelto
- -> 0x01BCC327
- -> 0x01D336A0
- -> actor/uNpc + 0x1524
- -> cBioItemPack
+uNpc + 0x1524 -> cBioItemPack
 ```
 
-Por tanto la recepción cooperativa de un pickup **no aplica el objeto indiscriminadamente al inventario global/P1**: identifica un actor mediante el ID serializado y llega al pack asociado a ese actor.
-
-Esto encaja con el diseño local actual:
+Después llama a:
 
 ```text
-Sub0 sigue siendo un actor uNpc
- -> posee su cBioItemPack
- -> ItemBoxCoop tiene rama/bag np
- -> las acciones PcsSub ya aceptan np
- -> el pickup sincronizado también resuelve actor antes de tocar el pack
+0x01B8695D -> 0x0243D100
 ```
 
-## 7. Otros campos todavía en investigación
+para aplicar el item al pack.
 
-En `0x02459C20`:
+Por tanto el pipeline remoto queda:
 
 ```text
-+0x0C -> getter 0x02459E60
-+0x10 -> getter 0x02459EA0
-+0x14 -> getter 0x02459EE0
-+0x18 -> getter 0x02459F20
+cPickupItemSyncData
+ -> resolver actor
+ -> uNpc+0x1524
+ -> cBioItemPack del actor
+ -> aplicar item
+ -> actualizar/eliminar world item
 ```
 
-Se usan para resolver el item/drop, parámetros auxiliares y condiciones de aplicación.
+**CONFIRMADO:** el pickup remoto del partner no escribe el inventario de P1; aplica el objeto al pack del actor remoto/partner.
 
-Todavía no se renombran hasta cerrar sus consumidores uno por uno.
+## 5. En local, la aplicación ocurre antes de la replicación de red
 
-## Estado
-
-**CONFIRMADO estáticamente:**
-
-- existe un paquete específico de pickup cooperativo;
-- contiene el ID del actor en +0x08;
-- el receptor resuelve ese actor;
-- la ruta termina en el `cBioItemPack` del actor resuelto.
-
-**PENDIENTE:**
-
-1. nombrar con precisión +0x0C/+0x10/+0x14/+0x18;
-2. demostrar si la interacción local de Sub0 genera directamente la misma ruta sin necesitar transporte de red;
-3. comprobar munición/hierbas/objetos especiales por los mismos caminos;
-4. determinar si v10 necesita un hook adicional o si las rutas actor-local ya bastan.
-
-
----
-
-## 8. cFsmAction::cPickupItemParameter — campos recuperados
-
-Metadata de propiedades en `0x02997020`:
+La función de pickup local alrededor de:
 
 ```text
-+0x04 mIsDrawMessage
-+0x05 mIsAddMainPlayer
-+0x08 mListNo
-+0x0C mDataNo
-+0x10 mArrange
+0x02460610
 ```
 
-Esto corrige cualquier lectura provisional de `+0x08/+0x0C` como IDs directos: son `mListNo` y `mDataNo`.
+ejecuta primero la lógica local del item y solo después consulta el estado Coop/Network y, si corresponde, llama al sender `0x0244CF30`.
 
-## 9. FsmPickupItem selecciona Main o Partner de forma nativa
-
-Implementación común:
+Ejemplos:
 
 ```text
-FsmPickupItem
-0x029971C0
+0x024607CB / 0x024607D9 / 0x02460A87
+ -> 0x01C639B6
+ -> 0x024646F0        ; aplicación local
+
+después:
+0x024607E1...
+ -> condición de sincronización
+ -> 0x02460890        ; sender
+
+segunda rama:
+0x02460A8F...
+ -> condición
+ -> 0x02460B3E        ; sender
 ```
 
-### mIsAddMainPlayer != 0
+Esto demuestra que la red es una capa de replicación posterior; no es necesaria para aplicar el pickup local.
 
-Selector:
+## 6. Bloqueo real para Sub0 local
+
+Hay **dos gates explícitos de categoría player** en la ruta local.
+
+### Gate exterior
+
+En `0x02460610`:
+
+```asm
+mov ecx,[this+0xF48]       ; actor asociado
+call 0x01C53859            ; obtiene ID
+push eax
+call 0x01C8C9A1            ; is category "pl"
+...
+je exit
+```
+
+Call exacto al predicado:
 
 ```text
-0x01C2C7F4 -> 0x01CB7400
-predicate 0x01BB3192 -> 0x01CB7560
+0x02460664 -> 0x01C8C9A1
 ```
 
-El predicate obtiene el ID local actual y lo compara con `candidate+0xE3C`. Solo acepta el candidato cuyo ID coincide con el ID local, además de una condición de validez.
+### Gate interior
 
-Por tanto esta rama selecciona **Main/Self**.
-
-### mIsAddMainPlayer == 0
-
-Selector:
+La aplicación real:
 
 ```text
-0x01BCA0C2 -> 0x01D115B0
-predicate 0x01C8731B -> 0x01D116C0
+0x01C639B6 -> 0x024646F0
 ```
 
-El predicate vuelve a obtener el ID local, pero **rechaza** el candidato si `candidate+0xE3C` coincide con él. Para el candidato no-Self exige además dos condiciones de validez.
+empieza con:
 
-Por tanto esta rama selecciona **el partner/non-Self**.
+```asm
+if (!actor) exit
+actorID = actor->getID()
+if (!isPl(actorID)) exit
+```
 
-### Aplicación al inventario
-
-Ambas ramas convergen en:
+Call exacto:
 
 ```text
-selected actor
- -> 0x01BCC327
- -> 0x01D336A0
- -> actor+0x1524
- -> cBioItemPack
+0x02464726 -> 0x01C8C9A1
 ```
 
-Después ejecutan el mismo virtual del pack en `vtable+0x18`.
+## 7. Por qué esto funciona online y falla en local
 
-**CONFIRMADO estáticamente:**
+Online:
 
 ```text
-mIsAddMainPlayer = 1 -> Main/Self cBioItemPack
-mIsAddMainPlayer = 0 -> Partner/non-Self cBioItemPack
+PC A:
+jugador local = pl
+ -> pickup local permitido
+ -> sender
+
+PC B:
+partner remoto = np
+ -> cPickupItemSyncData receiver
+ -> aplica al cBioItemPack del partner
 ```
 
-No hace falta sustituir el pickup local por una ruta de red para P2. La acción común ya contiene la selección Main/Partner.
+Local co-op en una sola instancia:
 
-Pendiente: localizar quién construye `cPickupItemParameter` en las interacciones de Sub0 y verificar que la ruta partner usa `mIsAddMainPlayer=0`.
+```text
+P1 = pl
+Sub0/P2 = np + ThinkMode::Pad
+```
+
+Aunque v10 ya proporciona:
+
+- PadData[1];
+- Sub0 en ThinkMode::Pad;
+- sItemBoxCoop;
+- cBioItemPack propio del partner;
+
+Sub0 sigue fallando en estos dos gates porque su categoría continúa siendo `np`.
+
+## 8. Parche mínimo previsto
+
+No se debe convertir globalmente `np` en `pl` ni permitir pickups a todos los NPC.
+
+El wrapper previsto para esos **dos callsites concretos** será:
+
+```text
+isPickupPlayer(id):
+    if stock_isPl(id):
+        return true
+
+    if !gLocalCoopActive:
+        return false
+
+    if !gSub0Npc:
+        return false
+
+    return gSub0Npc->getID() == id
+```
+
+Se reutilizan:
+
+```text
+gSub0Npc          = 0x057D9184
+gLocalCoopActive  = 0x057D9188
+getID thunk       = 0x01C53859 -> 0x027F1200
+stock isPl thunk  = 0x01C8C9A1 -> 0x01D77EB0
+```
+
+Solo se redirigirán:
+
+```text
+0x02460664
+0x02464726
+```
+
+a ese wrapper.
+
+Así P1 conserva el comportamiento stock, online conserva el comportamiento stock y únicamente el Sub0 exacto puede atravesar los gates `pl` cuando el cooperativo local está activo.
