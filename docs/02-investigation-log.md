@@ -3266,3 +3266,18 @@ stock pl
 Nunca se permitirá un NPC arbitrario ni se tocarán los predicados globales de categorías.
 
 Detalle: `docs/12-pickup-coop.md`.
+
+
+---
+
+# 49. uDoor2pBase ya almacena estado 0/1 por actor
+
+Se identificó infraestructura nativa de puertas 2P con `mReadyFlag[0/1]`, `mLocalFlag[0/1]` y `mGuestStatusFlag[0/1]`.
+
+El setter `0x02588D20` recibe un actor, deriva su índice 0/1 y escribe el slot correspondiente sin filtrar categorías `pl/np`.
+
+La lógica de puerta consume ambos slots, aunque algunas rutas siguen consultando el índice local global del proceso.
+
+No se crea parche todavía: primero se rastrean los dos callsites del setter y se separa gameplay de sincronización online.
+
+Detalle: `docs/13-door-2p.md`.
