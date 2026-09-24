@@ -239,3 +239,94 @@ Antes de construir una nueva versión hay que confirmar que el resto de `0x02460
 2. demostrar qué actor/contexto se usa para añadir el objeto;
 3. comprobar que la ruta acepta el cBioItemPack/ItemBox del Sub0;
 4. solo entonces crear un parche exact-Sub0 para el gate.
+
+
+---
+
+## 10. Tercer bloqueo: el selector solo obtiene el jugador local pl
+
+La rutina que calcula el actor cercano:
+
+```text
+0x02461FF0
+```
+
+obtiene un identificador del jugador local y llama a:
+
+```text
+0x01C07341 -> 0x02DA3840
+```
+
+`0x02DA3840` recorre actores pero filtra expresamente por:
+
+```text
+0x01C8C9A1 -> categoría pl
+```
+
+antes de comparar el identificador. Por tanto el actor que llega a la lógica de distancia de `0x02461FF0` es deliberadamente el jugador local `pl`.
+
+Si supera distancia/altura/estado, se guarda en:
+
+```text
+uItem+0xF48
+```
+
+**Consecuencia:** parchear solo la finalización no basta; Sub0 nunca llegaría a ser el candidato de pickup.
+
+## 11. Segundo gate pl en la entrega real
+
+La función:
+
+```text
+0x01C639B6 -> 0x024646F0
+```
+
+recibe el actor que recoge y vuelve a exigir categoría `pl`:
+
+```text
+0x02464720 get charaID
+0x02464726 call is-pl
+0x02464733 JE exit
+```
+
+Después de ese gate usa:
+
+```text
+0x01BCC327 -> actor/uNpc+0x1524 -> cBioItemPack
+```
+
+en varias ramas. Esto es compatible estructuralmente con Sub0, que ya está demostrado como `uNpc` con su propio `cBioItemPack`.
+
+## 12. Diseño candidato exact-Sub0
+
+No se modificará `sNetworkManage` globalmente.
+
+En la ruta de `uItem` se conservará un único candidato local, pero podrá ser:
+
+```text
+P1 stock
+o
+gSub0Npc
+```
+
+seleccionando el más cercano al objeto.
+
+Los dos gates posteriores conservarán el comportamiento stock y añadirán únicamente:
+
+```text
+stock_is_pl(actor)
+OR
+(
+  gLocalCoopActive == 1
+  AND actor == gSub0Npc
+)
+```
+
+Globals existentes:
+
+```text
+gSub0Npc         0x057D9184
+gLocalCoopActive 0x057D9188
+```
+
+No se habilitará pickup para NPCs genéricos.
