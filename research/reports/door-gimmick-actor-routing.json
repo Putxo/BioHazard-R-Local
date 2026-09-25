@@ -1,0 +1,36 @@
+{
+  "status": "PASS_STATIC_AUDIT",
+  "source_sha256": "9124bb92d6c54a047ade47dacc8429221b18f9910b504f0e87718d5151013f69",
+  "v13_sha256": "3df0e1020b58b3ccc7e31a9046a2a3ce9e5230e1764869b517943b4a808838aa",
+  "checks_per_image": 46,
+  "images_checked": 2,
+  "static_assertions_total": 92,
+  "negative_controls_passed": 6,
+  "cli_safety_checks": [
+    {
+      "name": "reject report-over-input",
+      "exit": 2,
+      "reason": "Report cannot overwrite an input executable"
+    },
+    {
+      "name": "reject original labelled v13",
+      "exit": 2,
+      "reason": "v13: SHA-256 mismatch: 9124bb92d6c54a047ade47dacc8429221b18f9910b504f0e87718d5151013f69"
+    }
+  ],
+  "input_files_unchanged": true,
+  "gameplay_executed": false,
+  "machine_code_executed": false,
+  "patch_generated": false,
+  "auditor_sha256": "2522d01f720313319d89dc32fdaff52cdfa08d57cbc6aa3a807d51599fcc02ff",
+  "full_report_sha256": "f8dd17beab300bd856108440e0c9c40e4dd163e86c15453737d4f9c76caadfb9",
+  "findings": [
+    "0x02591121 belongs to door_gimmick::MoveState, not PlayerDoorGimmickWaitState",
+    "0x02590040 belongs to door_gimmick::WaitState, not uDoorAutoBase",
+    "WaitState uses Self and stores process-local serial for interaction transition",
+    "WaitState collision path filters pl then requires candidate==Self",
+    "MoveState update and four related callsites use the pl-only serial finder",
+    "Direct gameplay input in MoveState still passes pad selector 0"
+  ],
+  "next_step": "Trace shared uGimmick/cActionCommand actor ownership around 0x026D7050, 0x026D75D0 and 0x026D7870 before adding exact-Sub0 candidate arbitration."
+}
