@@ -1,0 +1,15 @@
+{
+  "code_commit": "2affdb8d5c9bc4022c69fad87eb0d20c31cd27d6",
+  "run_id": 36127918860,
+  "run_url": "https://github.com/Putxo/BioHazard-R-Local/actions/runs/36127918860",
+  "status": "completed",
+  "conclusion": "success",
+  "jobs": [
+    {"name": "portable-bytecode", "id": 108048218466, "conclusion": "success", "private_image_tests_skipped": 3},
+    {"name": "native-i386", "id": 108048218769, "conclusion": "success", "game_code_linked": false}
+  ],
+  "native_windows_game_executed": false,
+  "native_i386_helper_executed": true,
+  "engine_executed": false,
+  "guard_combinations": 2592
+}

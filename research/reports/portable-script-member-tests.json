@@ -1,0 +1,27 @@
+{
+  "success": true,
+  "checks": 17,
+  "cases": [
+    "original -> exact candidate",
+    "candidate -> byte-exact original",
+    "wrong base",
+    "wrong reverse",
+    "truncated base",
+    "overlap",
+    "out of bounds",
+    "wrong original bytes",
+    "wrong append",
+    "CLI forward:0",
+    "CLI reverse:0",
+    "CLI input overwrite rejected:2",
+    "CLI existing output rejected:2",
+    "CLI original intact",
+    "CLI forward intact",
+    "CLI reverse intact",
+    "payload hash guard"
+  ],
+  "source_sha256": "9124bb92d6c54a047ade47dacc8429221b18f9910b504f0e87718d5151013f69",
+  "output_sha256": "71f5e70dc19c334d303ee29a686d65a72cd18b0c87b98472170bff961cb048f4",
+  "gameplay_executed": false,
+  "note": "Temporary CLI filenames were normalized in this published copy; the checks and result are unchanged."
+}

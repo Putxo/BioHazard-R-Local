@@ -1,58 +1,45 @@
-# Estado actual — 25 de septiembre de 2026
+# Estado actual — script serial experimental
 
-## Resultado real
+Fecha: 25 de septiembre de 2026. **Implementación parcial; no es una versión cooperativa completa ni validada jugando.**
 
-Hay un candidato nuevo construido y comprobado por componentes. **El cooperativo completo pedido por el usuario todavía no está terminado ni validado dentro del juego.** La siguiente tarea no debe empezar otra vez en el DTI de uItem, ni confundir pruebas de lógica con una partida de campaña.
+## Candidato reproducido
 
-```text
+```
 Original enero: 9124bb92d6c54a047ade47dacc8429221b18f9910b504f0e87718d5151013f69
-Base owner-fix: e3c5c188782309a1683d27ade0ce9e38cf1c40219de9fb5d684b3d6fda2e285a
-Último candidato: 0c019d43b92c0092fa458abcf7e2990f8783895eb2bd8181f6e9f130b697d378
-Tamaño: 60.755.456 bytes
+Base LOCAL ROUTING: 0c019d43b92c0092fa458abcf7e2990f8783895eb2bd8181f6e9f130b697d378
+SCRIPT SERIAL: 71f5e70dc19c334d303ee29a686d65a72cd18b0c87b98472170bff961cb048f4
+Tamaño final: 60.755.456 bytes
 ```
 
-Constructor: `patches/build_local_routing.py`. Módulo: `patches/local_routing/{core.cpp,hooks.S,link.ld}`. Informe: `docs/20-local-routing-built-and-tested.md`.
+La base fue reconstruida exactamente desde las fuentes publicadas de `5bcf15ad...`. Se conservan sus correcciones de pickup, puertas, ayuda y reenlace; las secciones `.lcfix/.lcdata` son idénticas a las de esa base.
 
-## Implementación añadida y alcance
+La nueva salida coincide byte por byte con el candidato paralelo de `research/script-member-serial-validation` en `ec64e21a...`. **Son recetas alternativas para el mismo cambio, no dos parches para apilar.** La primera construcción `a7abf154...` de esta rama queda histórica: se adelantó la comparación de contexto para evitar leer el actor cuando no corresponde.
 
-| Sistema | Estado del candidato |
-|---|---|
-| Reenlace de Sub0 | Conserva la sesión solo al reencontrar el mismo actor previamente local; conversión Cpu→Pad nativa; Network excluido |
-| Door gimmick | Une sensor elegible, serial de WaitState, cinco lookups y callback de miembro; requiere probar orden/lifetime real del motor |
-| Pickup | Callback real de uItem `0x024605D0`; no confundirlo con uObjModel `0x026D7AD0`; arbitraje de elegibilidad de ambos jugadores aún limitado |
-| Ayuda | Disponibilidad, mando e inventario usan el mismo actor contrario en la ruta auditada; no es una revisión completa de muerte/game-over |
-| ActionCommand | Cuatro montajes con actor identificado adaptados; se preservan los demás delegates |
-| Cámaras/pantalla partida | Se heredan los hooks anteriores; no se ha demostrado render correcto en toda la campaña |
-| HUD/menús por jugador | No implementados de forma completa |
-| Checkpoints, cutscenes y escenas sin partner | No resueltos de forma completa; no se crea un P2 donde no existe un partner |
+Constructor incremental: `patches/build_script_member.py`. Instalador acumulativo desde el original: `patches/portable_script_member/apply.py`, con payload reproducible mediante `make_payload.py`. Documentación: `docs/script-member-validation.md`.
 
-## Pruebas reales, no simulación de resultados
+## Cambio añadido
 
-La lógica C++ pasó 204 aserciones por ejecución con funciones del motor simuladas. Se ejecutó en host local, con ASan/UBSan, en Linux i386 y en Windows x86.
+`cFsmAction::0x02976C30` y `cFsmActionPcs::0x029FF600` comparten una función nueva en `0x01C95340`. Devuelve Pad 2 solo para un owner exactamente `cFsmActionPcsSub`, una sesión local activa, contexto `+0x1078` igual al tracker, actor en Pad y serial `+0x1074` coincidente y no negativo. Se conserva cero para Main/globales, otras clases, Cpu, Network y contextos inválidos.
 
-Los nuevos puentes x86 pasaron 23 escenarios en un intérprete limitado a sus instrucciones: 312 aserciones desde el PE, 311 sin la comprobación inicial del hash del PE. Las llamadas al motor y al C++ están simuladas en ese intérprete; no es emulación del juego.
+Son 92 bytes efectivos sobre LOCAL ROUTING y se revierte exactamente a esa base. No se cambia `uPcsInput::0x02DEE8D0` ni se fuerza globalmente Self, GameMode o el serial de red.
 
-La integridad del archivo pasó 153 aserciones y siete casos negativos de CLI. La recompilación local reproduce los mismos bytes; revertir las modificaciones y quitar las dos secciones nuevas reconstruye exactamente la base owner-fix.
+## Verificaciones realizadas
 
-CI ampliada verificada: `342c3485115178a5278af15c0ee994236306633e`, run `36122601817`, cuatro jobs correctos. Windows pasó además las 12 pruebas del probe, incluida una lectura real mediante kernel32 del propio proceso de pruebas. **No se ejecutó Resident Evil Revelations en esos jobs.**
+- 16 tests locales con original/base/candidato reales, incluida una matriz de 2.592 combinaciones y comprobaciones del PE, reversión y rechazos de CLI.
+- CI del código `2affdb8d5c9bc4022c69fad87eb0d20c31cd27d6`: run `36127918860`, dos jobs correctos. El job nativo ejecuta la función ensamblada en un proceso Linux i386 de pruebas, sin enlazar el motor. El job portable omite tres tests que necesitan las imágenes privadas.
+- 17 comprobaciones del instalador acumulativo, incluidas original→candidato→original mediante CLI y protección de los archivos existentes.
+- 29 comprobaciones estáticas adicionales de RTTI y llamadas de interfaz/scheduler.
 
-El JSON histórico del test C++ conserva `win32_abi_executed:false`: no certifica la ABI del motor real. El log de Windows acredita el binario de pruebas x86 con mocks, no el EXE del juego.
+**Ninguna de esas pruebas ejecuta Resident Evil Revelations.** Los resultados de componentes de LOCAL ROUTING se conservan en el estado histórico y en `docs/20-local-routing-built-and-tested.md`.
 
-## Continuación exacta
+## Continuación exacta: interfaz y comandos compartidos
 
-Tres selectores de miembro cero adicionales están en capas genéricas: `cFsmAction::0x02976C30`, `cFsmActionPcs::0x029FF600` y `uPcsInput::0x02DEE8D0`. Primero determinar el actor/ownership del comando de guion; no sustituir todos los ceros por P2 ni aceptar ambos mandos indiscriminadamente.
+`uPcsInput+0x30` remite a un **uScheduler**, DTI `0x0579963C`, no a un actor demostrado. Su callback cero permanece intacto; no sustituirlo a ciegas por Pad 2.
 
-Faltan también ownership del HUD y pausa/inventario, flujo completo de muerte y checkpoint, cámaras forzadas y escenas sin partner. La mera presencia de clases/strings de esos sistemas no es una implementación.
+La interfaz sigue consultando Self en `0x02B404C6` (mira), `0x02B3B6C8` (armas), `0x02B61F3C` (mapa/hierbas) y `0x02C30A06` (estado de pausa). Se identificó `uCockpitManagerMain`, constructor `0x02B477A0`, creación de widgets `0x02B48510` y slot de mira `+0x90`.
 
-Para validación dentro de la build se necesita una instalación que ya arranque con los datos compatibles de enero. Los EXE aportados no contienen los escenarios, personajes, interfaces y demás datos de una instalación completa. El [probe](docs/runtime-probe.md) sirve para registrar actor/mandos/cámaras sin modificar memoria; todavía no existen resultados de una partida con ese probe.
+Seguir `0x02B492D0 / 0x02B49A60 / 0x02B49DA0` y la asociación instancia→actor→viewport. No cambiar el finder Self global ni interpretar MainEquipWin/SubEquipWin como P1/P2. Detalle y auditor reproducible: `docs/gui-and-scheduler-ownership.md` y `scripts/audit_gui_ownership.py`.
 
-## Rectificaciones que no deben perderse
+Siguen abiertos HUD/menús por jugador, comandos compartidos de uPcsInput, flujo completo de muerte/checkpoint, cámaras forzadas/cutscenes y escenas sin partner. No se ha implementado aquí la creación de un P2 donde no existe compañero. Tampoco se han probado orden/lifetime reales del motor ni una partida con dos mandos.
 
-- v12 alteró inicialmente el callback de uObjModel, no el de uItem. La rectificación está en documentos 17/18 y en el candidato owner-fix.
-- v14 corrigió el botón final de door_gimmick, pero no bastaba para resolver selección/serial; esta continuación añade esa cadena.
-- MainEquipWin/SubEquipWin no identifican P1/P2: son equipo principal/secundario.
-- El experimento histórico DOOR WAIT PAD2 no es la v14 canónica de la cadena anterior.
-- No activar control local de un actor Network; no cambiar globalmente GameMode, Self o el serial de red.
-- Un hash correcto acredita identidad/reconstrucción, no jugabilidad.
-
-Los anteriores handoffs se conservan byte por byte en `docs/history`. Leer este estado antes de seguir indicaciones históricas.
+No volver al DTI de uItem ni a rehacer las correcciones anteriores. Los estados previos completos se conservan en `docs/history/*before-71f5-script-serial*`. Los binarios del juego permanecen fuera de GitHub.

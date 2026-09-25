@@ -1,0 +1,12 @@
+{
+  "tests": 16,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 0,
+  "success": true,
+  "guard_combinations": 2592,
+  "instructions_under_test": 72,
+  "candidate_bytes_used": true,
+  "gameplay_executed": false,
+  "limited_interpreter_not_full_cpu": true
+}
