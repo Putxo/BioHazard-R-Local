@@ -1,5 +1,19 @@
 # BioHazard-R-Local
 
+> ## Progreso actual — código en GitHub, sin nuevos ejecutables
+>
+> **[PROGRESS.md — fuentes, commits, pruebas y punto exacto de continuación](PROGRESS.md)**
+>
+> El progreso consolidado está en [research/script-member-serial-validation](https://github.com/Putxo/BioHazard-R-Local/tree/research/script-member-serial-validation), con el [PR #5 fusionado](https://github.com/Putxo/BioHazard-R-Local/pull/5). Consultar su [CURRENT_STATUS.md](https://github.com/Putxo/BioHazard-R-Local/blob/research/script-member-serial-validation/CURRENT_STATUS.md) y la [instrucción de trabajo y entrega](https://github.com/Putxo/BioHazard-R-Local/blob/research/script-member-serial-validation/AGENTS.md).
+>
+> **Por petición del propietario, continuar el desarrollo y subir el progreso a GitHub. No generar ni entregar EXE, instaladores o paquetes binarios hasta que los solicite expresamente.**
+>
+> El cooperativo completo sigue pendiente. Este enlace al progreso no fusiona la implementación experimental en main ni declara una release jugable. La referencia v13 que se conserva debajo es histórica; no es el estado actual de desarrollo.
+
+---
+
+## Referencia histórica conservada: línea v13
+
 Investigación para añadir cooperativo local a **Resident Evil Revelations / BioHazard Revelations (PC, MT Framework)**.
 
 > ## Nuevo chat: empieza aquí
