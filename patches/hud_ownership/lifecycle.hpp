@@ -57,6 +57,16 @@ public:
     // Frame is a positive monotonically increasing driver stamp. Draw only P2
     // view 1; original P1 phases remain exclusively owned by the native manager.
     bool dispatch(u32 ticket, const Session& current, u32 frame, u32 phase, u32 view, u32 context);
+    // Native entry points must dispatch only the family whose manager reached
+    // its ordinary loop. A global phase stamp must not suppress the other one.
+    bool dispatch_manager(u32 ticket, const Session&, u32 frame, ManagerKind,
+                          u32 parent, u32 phase, u32 view, u32 context);
+    bool live_ticket(u32 ticket) const {
+        return state_ == LifeState::Live && ticket && ticket == ticket_;
+    }
+    u32 parent(ManagerKind k) const {
+        const u32 i = static_cast<u32>(k); return i < 2 ? parents_[i] : 0;
+    }
     LifeState state() const { return state_; }
     LifeError error() const { return error_; }
     u32 unit(u32 index) const { return index < 3 ? units_[index] : 0; }
@@ -71,6 +81,8 @@ private:
     bool quarantine_[3]{};
     Token managers_[2]{}, widgets_[3]{};
     GuiTree trees_[3]{}, stocks_[3]{};
+    bool dispatch_scope(u32 ticket, const Session&, u32 frame, u32 phase,
+                        u32 view, u32 context, u32 manager_mask);
     bool valid_backend() const;
     bool live_routes() const;
     bool verify_graphs();
