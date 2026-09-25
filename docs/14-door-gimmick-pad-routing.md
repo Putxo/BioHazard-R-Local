@@ -205,3 +205,197 @@ Seguir:
 que registra/crea `MoveState` mediante DTI `0x05581DF4`, y localizar quién le pasa los argumentos que terminan en `MoveState::slot5`.
 
 También reconstruir el contexto de la transición a estado 6 sin inventar un nombre de enum.
+
+
+## 9. El predicado previo al input no es un filtro Self — CONFIRMADO
+
+Antes del `push 0` de `MoveState::slot8`, el código llama:
+
+```text
+0x01C8FE62 -> 0x025916D0
+```
+
+La implementación devuelve únicamente:
+
+```asm
+mov al,[this+0x11B0]
+ret
+```
+
+El byte `uDoorGimmick+0x11B0` se inicializa a `1` en la construcción del gimmick.
+
+Existe además un setter:
+
+```text
+0x01C1DF60 -> 0x02599AD0
+```
+
+y una variante `door_gimmick\valve_rust\uvalvehandlerust.cpp` puede escribir 0.
+
+Por tanto este predicado es una propiedad/configuración general del gimmick. No comprueba si el actor objetivo es Self/P1.
+
+**DESCARTADO:** interpretar el `push 0` como seguro porque el bloque solo se ejecutaría para Self.
+
+## 10. DoorGimmick_NetParam::mUsePlayer es estado sincronizado real — CONFIRMADO
+
+Tipo:
+
+```text
+DoorGimmick_NetParam
+DTI  0x05581E54
+size 0x08
+```
+
+Constructor:
+
+```text
+0x0258F860
+```
+
+inicializa:
+
+```text
+[this+0x04] = 0xFF
+```
+
+La metadata en `0x02591980` registra literalmente:
+
+```text
+mUsePlayer
+```
+
+sobre:
+
+```text
+DoorGimmick_NetParam + 0x04
+```
+
+Así:
+
+```text
+DoorGimmick_NetParam+0x04 = mUsePlayer
+```
+
+Las funciones:
+
+```text
+0x01BB7337 -> 0x02591A20
+0x01C7BE6C -> 0x02591A80
+```
+
+son los virtuales de serialización/deserialización del NetParam.
+
+`0x02591A20` lee `[this+4]` y lo pasa al writer de un byte:
+
+```text
+0x01B7E5C3 -> 0x01EABE50
+```
+
+`0x02591A80` lee un byte del stream mediante:
+
+```text
+0x01C1EA78 -> 0x01EABFE0
+```
+
+y lo vuelve a guardar en `[this+4]`.
+
+Por tanto `mUsePlayer` forma parte efectiva del estado de red del gimmick y no es metadata/debug muerta.
+
+No se fuerza todavía una equivalencia directa `mUsePlayer == MoveState+0x10`: esa conexión atraviesa infraestructura virtual/genérica y no aparece como una asignación simple demostrable.
+
+## 11. Selector canónico de actor en v13
+
+El selector usado por gameplay:
+
+```text
+0x01C6C746 -> 0x027A27B0
+```
+
+está parcheado en la línea v7+ para terminar en:
+
+```text
+0x027A1340
+```
+
+Semántica real:
+
+```asm
+mov ecx,[this]
+xor eax,eax
+cmp ecx,[gSub0Npc]
+sete al
+movzx eax,al
+```
+
+Resultado:
+
+```text
+P1/otros -> 0
+exact Sub0 -> 1
+```
+
+Pero este selector por sí solo no debe reutilizarse indiscriminadamente en rutas online: el tracker `gSub0Npc` puede existir aunque el actor no haya sido convertido a local Pad.
+
+Por eso cualquier corrección nueva de `MoveState` debe estar protegida además por:
+
+```text
+gLocalCoopActive = 0x057D9188
+```
+
+Ese flag se pone a 1 solo después de la transición local canónica del Sub0 a `ThinkMode::Pad`, y se limpia al perder su binding.
+
+## 12. Diseño mínimo y stock-preserving del candidato v14
+
+Callsite stock/v13:
+
+```asm
+0x02591118  push 0
+0x0259111A  call get_sGamePad
+0x0259111F  mov ecx,eax
+0x02591121  call sGamePad_0x02DB0CF0
+```
+
+Son 14 bytes.
+
+La corrección propuesta reemplaza ese bloque por una llamada a helper y NOPs.
+
+Helper:
+
+```text
+if gLocalCoopActive == 0:
+    selector = 0
+else:
+    selector = actorSelector([caller ebp-0x20])
+
+push selector
+get sGamePad
+call 0x02DB0CF0
+return AL
+```
+
+Propiedades:
+
+- stock/online con `gLocalCoopActive=0` -> selector 0 idéntico al original;
+- local P1 -> selector 0;
+- local exact Sub0 -> selector 1;
+- NPC/actor distinto -> selector 0;
+- no toca `ThinkMode::Network`;
+- no cambia `mStartPadNo`;
+- reutiliza la API `0x02DB0CF0` ya restaurada por v7 para respetar su argumento.
+
+Code cave verificada libre en v13:
+
+```text
+0x01C95300..0x01C953FF = CC
+```
+
+El helper anterior de v13 termina antes de esa zona.
+
+Antes de declarar v14 canónica se exige:
+
+1. construir sobre SHA v13 exacto;
+2. comprobar bytes originales del callsite y cave;
+3. mantener tamaño PE;
+4. comprobar reversibilidad exacta a v13;
+5. documentar diff/rangos y SHA;
+6. dejar claro que sigue pendiente runtime.
