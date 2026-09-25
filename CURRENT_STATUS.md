@@ -1,39 +1,35 @@
-# Estado actual — HUD por instancia, continuación de solo fuentes
+# Estado actual — recursos y ciclo de vida del HUD adicional
 
-25 de septiembre de 2026. **No se ha generado un nuevo EXE del juego, instalador ni ZIP.** La entrega vigente es código, pruebas y evidencia en GitHub según AGENTS.md.
+25 de septiembre de 2026. Entrega de fuentes, tests y evidencia en GitHub. No se ha generado un EXE del juego, instalador ni ZIP en esta continuación. La implementación completa del cooperativo sigue abierta.
 
-## Avance actual
+## Avance nuevo sobre PR #6
 
-Sobre la base consolidada `5118850441bf70ad8d6da2bd7d7c6505ab7bd234` se ha implementado `patches/hud_ownership/`: asociación explícita de cada widget a su clase, manager, actor vivo, serial/lifetime, miembro y vista; invalidación persistente al perder su vínculo; tokens generacionales para no confundir instancias reutilizadas; cálculo acotado de mDrawView preservando los demás bits.
+Se implementó `patches/hud_ownership/lifecycle.hpp/.cpp`: preparación de tres widgets independientes, comprobación de sus árboles de recursos, publicación por ticket vigente, dispatch de fases y retirada diferida con invalidación. Usa el registro y las clases del PR #6 sin cambiarlos. No altera los parches previos de input, pickup, puertas, ayuda o guiones.
 
-Hay tres puentes i386 para las consultas Self de mira, equipo y mapa/hierbas. Conservan el frame, ECX y el argumento original del finder; en P2 inválido devuelven nulo en vez de adoptar P1. Son **fuentes no instaladas**. No se ha creado ni mostrado una segunda instancia dentro del juego.
+El controlador preserva los originales P1 y no amplía sus listas/arrays nativos. Una preparación incompleta no se publica. Desactiva el conjunto si cambia el actor o sesión, no destruye en mitad de callbacks y rechaza solicitudes de generaciones antiguas antes de tocar la sesión nueva. Las estructuras de propiedad dudosa quedan en cuarentena en vez de invocar destructores que podrían afectar a P1.
 
-La evidencia nueva está en [docs/24-hud-lifetime-and-view-filter.md](docs/24-hud-lifetime-and-view-filter.md) y [docs/25-hud-ownership-source-component.md](docs/25-hud-ownership-source-component.md). Contrato y precondiciones: [patches/hud_ownership/README.md](patches/hud_ownership/README.md).
+**Este controlador está escrito y probado como código fuente, pero su backend nativo no está implementado/conectado. No se ha creado ni dibujado el segundo HUD dentro del juego.**
 
-## Hechos nuevos que no deben perderse
+## Evidencia nueva del original
 
-El cockpit reconstruye una lista fija de 21 slots y libera widgets por slots explícitos. No basta añadir clones a su enlace final. La mira obtiene Self en slot9, no en slot8.
+Reticle, MainEquipWin y MapBaseAndHerb enlazan una plantilla de recurso a una raíz y tabla de nodos propias de cada instancia. El owner de los nodos se escribe en +6C. Los inicializadores retornan void: hay que comprobar sus postcondiciones, no EAX como booleano.
 
-Mapa/hierbas pertenece a uMiniMapManager y NO hereda uBioCockpitGUI. Su pointer +40 es alias del primer elemento del array +30; no es otro objeto a liberar. Sus campos +290/+294 no tienen el layout de next/ForceSkip del cockpit.
+La constante 0x69 de Reticle configura prioridad y capa, comprobado por consumidores y diagnósticos literales; no se interpreta como un ID de jugador. Esto no resuelve todavía todos los registros globales de GUI.
 
-Ambos gestores usan el filtro nativo mDrawView, diez bits en cUnit+0C. Se ha demostrado por metadata, getter, setter y consumidores. Esto no prueba transformación, escalado ni clipping correctos de las dos mitades.
+Detalles: [docs/26-hud-resource-initialization.md](docs/26-hud-resource-initialization.md) y [docs/27-hud-transactional-lifecycle.md](docs/27-hud-transactional-lifecycle.md).
 
-## Pruebas
+## Verificación
 
-El componente pasó nueve grupos C++ y UBSan; la mayoría de las aserciones cubren exhaustivamente las 1.024 máscaras de vista, no escenas de campaña. La auditoría de solo lectura pasó 94 comprobaciones del original y cinco tests locales. El original sigue intacto.
+34 escenarios / 828 aserciones del controlador con registro real y motor simulado, tanto normal como con ASan/UBSan. Seis tests Python locales sin omisiones y 52 comprobaciones estáticas del original exacto, que conserva su hash. Sintaxis freestanding i386 verificada sin crear una imagen del juego.
 
-Los tres bridges se ejecutaron con el registro real en 16 escenarios i386 en GitHub Actions, usando un finder del motor simulado. Run `36176901629`, commit `0dc413931f21b192fb9f1fe37d5630e693824d53`: registry y bridges-i386 correctos. No se ejecutaron funciones del motor ni gameplay. La prueba privada de imagen no se sube a CI.
+CI del código `5bdc9526b80cd59924f6db073b176b0de2754c0b`: run `36180203408`, dos jobs correctos (normal y sanitizado). La prueba privada del original no se ejecuta en CI. Informe `research/reports/hud-lifecycle-validation.json`.
 
-## Continuación exacta
+## Punto pendiente exacto
 
-Seguir la inicialización de recursos `0x02B402F0` (mira), `0x02B3B280` (equipo), `0x02B61A70` (mapa/hierbas) y el registro por grupos. Resolver identificadores compartidos y callbacks antes de crear/publicar las instancias de P2. Después conectar lifecycle y dispatch, aplicar/restaurar el filtro por vista y verificar las transformaciones de GUI. No reemplazar Self globalmente ni introducir mapa/hierbas en una lista que usa otro layout.
+Implementar el backend nativo tras seguir la inscripción de unidades GUI en grupos y los consumidores de prioridad/capa. Debe garantizar objetos nuevos desvinculados de listas nativas para no ejecutarlos dos veces. Conectar un driver real de Session/lifetime/epoch, notificaciones de destrucción y puntos seguros de render; luego enlazar bridges, fases, visibilidad y transformaciones/clipping para P1/P2.
 
-El adaptador que suministra Session/Actor todavía debe implementarse: valida vida real y serial, incrementa lifetime/epoch en transiciones y mantiene las llamadas en el hilo del juego. El registro no puede convertir por sí solo un puntero liberado en seguro.
+El controlador no puede garantizar vida de punteros sin ese driver. Su cap de 256 nodos es conservador y la cuarentena puede retener memoria. No se presenta como un HUD 2P integrado ni como una campaña comprobada.
 
-## Trabajo anterior preservado
+Pausa/inventario por jugador, comandos compartidos de scheduler, muerte/checkpoints/cutscenes y escenas sin compañero siguen pendientes. El último EXE histórico sigue siendo 71f5e70d...; no se ha construido otro ni aplicado este componente a aquella imagen.
 
-No se han cambiado los parches previos de input, re-enlace, pickup, puertas, ayuda ni guiones. El último hash de imagen construido anteriormente sigue siendo `71f5e70dc19c334d303ee29a686d65a72cd18b0c87b98472170bff961cb048f4`; **esta continuación no genera otra imagen ni instala este módulo sobre ella**.
-
-El estado anterior se conserva íntegro en [docs/history/CURRENT_STATUS-before-hud-ownership.md](docs/history/CURRENT_STATUS-before-hud-ownership.md). `research/current_state.json` conserva los datos de esa implementación previa; para el nuevo componente consultar `research/hud_ownership_state.json`.
-
-El HUD/menú completo por jugador, scheduler compartido, muerte/checkpoints/cutscenes, escenas sin compañero y la validación conjunta en campaña siguen abiertos. No falta únicamente probar; quedan esas integraciones e implementaciones.
+Se preserva el estado anterior íntegro en [docs/history/CURRENT_STATUS-before-hud-lifecycle.md](docs/history/CURRENT_STATUS-before-hud-lifecycle.md). `research/hud_lifecycle_state.json` describe esta continuación; los estados y recetas previos permanecen históricos y no se ejecutan para entregar binarios.

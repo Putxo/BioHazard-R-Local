@@ -1,0 +1,33 @@
+name: HUD lifecycle source components
+on:
+  push:
+    branches: [research/hud-resource-lifecycle]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  lifecycle:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        variant: [native, sanitized]
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Run actual controller and registry with synthetic engine memory
+        shell: bash
+        run: |
+          flags="-O2"
+          if [ "${{ matrix.variant }}" = "sanitized" ]; then
+            flags="-O1 -g -fsanitize=address,undefined -fno-omit-frame-pointer"
+          fi
+          g++ -std=c++17 $flags -Wall -Wextra -Werror -Ipatches/hud_ownership \
+            patches/hud_ownership/ownership.cpp patches/hud_ownership/lifecycle.cpp \
+            tests/hud_ownership/lifecycle_tests.cpp -o "$RUNNER_TEMP/hud-lifecycle-test"
+          "$RUNNER_TEMP/hud-lifecycle-test"
+      - name: Read-only audit refusal tests (private image test explicitly skipped)
+        run: python tests/hud_ownership/test_resources.py
+      - name: Check freestanding i386 sources without linking any game image
+        run: |
+          g++ -m32 -std=c++17 -Wall -Wextra -Werror -ffreestanding -fno-exceptions -fno-rtti \
+            -Ipatches/hud_ownership -fsyntax-only patches/hud_ownership/lifecycle.cpp
