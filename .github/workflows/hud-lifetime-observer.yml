@@ -21,13 +21,15 @@ jobs:
           if [ "${{ matrix.mode }}" = sanitized ]; then FLAGS="$FLAGS -fsanitize=address,undefined -fno-omit-frame-pointer"; fi
           g++ $FLAGS -Ipatches/hud_ownership patches/hud_ownership/{ownership,lifetime_source}.cpp tests/hud_ownership/lifetime_source_tests.cpp -o "$RUNNER_TEMP/lifetime-test"
           "$RUNNER_TEMP/lifetime-test"
+      - name: Source-map and refusal tests; private original deliberately absent
+        run: python tests/hud_ownership/test_lifetime_audit.py
       - name: Freestanding i386 source syntax
         run: g++ -m32 -std=c++17 -Wall -Wextra -Werror -ffreestanding -fno-exceptions -fno-rtti -fsyntax-only patches/hud_ownership/lifetime_source.cpp
   gateways:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-      - name: Actual 11 gateways with synthetic receiver and continuations
+      - name: Actual 11 gateways, including both begin-byte values
         run: |
           as --32 patches/hud_ownership/lifetime_gateways.S -o "$RUNNER_TEMP/life-gates.o"
           as --32 tests/hud_ownership/lifetime_gateway_abi.S -o "$RUNNER_TEMP/life-harness.o"
