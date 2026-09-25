@@ -1,0 +1,16 @@
+{
+  "status": "PASS_COMPONENTS_NOT_GAMEPLAY",
+  "source_commit": "0dc413931f21b192fb9f1fe37d5630e693824d53",
+  "original_sha256": "9124bb92d6c54a047ade47dacc8429221b18f9910b504f0e87718d5151013f69",
+  "read_only_binary_checks": 94,
+  "audit_unittests_local": {"tests": 5, "skipped": 0, "failures": 0},
+  "registry": {"test_groups": 9, "assertions": 61709, "undefined_behavior_sanitizer": "PASS", "note": "Most assertions exhaustively exercise the ten-bit view mask; not equivalent to game scenarios."},
+  "ci": {"run_id": 36176901629, "jobs": {"registry": "success", "bridges-i386": "success"}, "bridge_job_id": 108209599618},
+  "bridges": {"native_i386": true, "scenarios": 16, "actual_registry_executed": true, "stock_self_finder_mocked": true, "checks": ["returned actor", "ECX and opaque argument to stock", "nonvolatile registers", "caller EBP", "exact ret4 stack cleanup", "no stock call for hidden P2"]},
+  "local_i386_execution": "Host kernel rejected ELF32 with Exec format error; actual execution passed in the GitHub Ubuntu runner, not this container.",
+  "gameplay_executed": false,
+  "engine_code_executed": false,
+  "new_game_exe_generated": false,
+  "hud_hooks_installed": false,
+  "duplicate_hud_created": false
+}
