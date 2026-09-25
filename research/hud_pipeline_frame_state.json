@@ -1,0 +1,16 @@
+{
+  "base_commit":"7bd05d2018739dfa47641b21b793df8b75d81662",
+  "code_commit":"77f28384b5b64e06cbeed0c9b15214dcaf37537a",
+  "status":"SOURCE_COMPONENTS_CONNECTED_NOT_INSTALLED",
+  "clock":{"outer_function":"0x02F50680","begin":"0x02F506A0","begin_continue":"0x02F506A6","end":"0x02F50F4B","end_continue":"0x02F50F54","per_manager_increment":false,"simulation_counter_used":false,"successful_present_count":false,"counter_wrap_allowed":false},
+  "provider":"PipelineFrameProvider implements ManagerHost::sample using the open PipelineClock interval and LifetimeSource snapshot; revalidates the interval after capture.",
+  "restore_failure":"latched scope_failed callback now stops ManagerDriver immediately, without destruction inside a phase",
+  "preserved":"previous input/pickup/door/help/script, Registry, LifetimeSource, Lifecycle, JanuaryBackend and manager gateways",
+  "source_documents":["docs/35-native-pipeline-frame-boundary.md","docs/36-pipeline-frame-provider.md","docs/37-gui-common-draw-context.md"],
+  "validation_report":"research/reports/hud-pipeline-frame-validation.json",
+  "gameplay_executed":false,
+  "game_image_generated":false,
+  "hooks_installed":false,
+  "native_render_scopes_implemented":false,
+  "next_step":"Follow producers of draw context+0xBC through 0x02B02F00 and consumers 0x035E1280/0x035E1790; implement native view/projection/clipping scopes and P1 masking without duplicating an existing GUI transform. Prove admission/lifetime/fence and install verified hooks before world construction."
+}

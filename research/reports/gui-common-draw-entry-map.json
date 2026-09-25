@@ -1,0 +1,30 @@
+{
+  "status": "READ_ONLY_ENTRY_MAP",
+  "checks": 20,
+  "original_sha256": "9124bb92d6c54a047ade47dacc8429221b18f9910b504f0e87718d5151013f69",
+  "records": [
+    {"va":"0x1c6ef7d","target":"0x2b40740","expected":"e9be17ed00"},
+    {"va":"0x1c6445b","target":"0x2b3bba0","expected":"e94077ed00"},
+    {"va":"0x1c67381","target":"0x2b624e0","expected":"e95ab1ef00"},
+    {"va":"0x2b40800","target":"0x1c19ffa","expected":"e8f5970dff"},
+    {"va":"0x2b3bc11","target":"0x1c19ffa","expected":"e8e4e30dff"},
+    {"va":"0x2b62551","target":"0x1c19ffa","expected":"e8a47a0bff"},
+    {"va":"0x1c19ffa","target":"0x2cd28e0","expected":"e9e1880b01"},
+    {"va":"0x2cd2931","target":"0x1baa132","expected":"e8fc77edfe"},
+    {"va":"0x1baa132","target":"0x35dd4e0","expected":"e9a933a301"},
+    {"va":"0x35dd5f0","target":"0x1be516f","expected":"e87a7b60fe"},
+    {"va":"0x1be516f","target":"0x2b02f00","expected":"e98cddf100"},
+    {"va":"0x35dd622","target":"0x1c70cd8","expected":"e8b13669fe"},
+    {"va":"0x1c70cd8","target":"0x35e1280","expected":"e9a3059701"},
+    {"va":"0x35dd697","target":"0x1c62980","expected":"e8e45268fe"},
+    {"va":"0x1c62980","target":"0x35e1790","expected":"e90bee9701"},
+    {"va":"0x35dd6e9","target":"0x1c09484","expected":"e896bd62fe"},
+    {"va":"0x35dd7f6","target":"0x1c852eb","expected":"e8f07a6afe"},
+    {"va":"0x35dd5ed","expected":"8b4b08"},
+    {"va":"0x2b02f26","expected":"05bc000000"},
+    {"va":"0x35dd605","expected":"81c168010000"}
+  ],
+  "gameplay_executed": false,
+  "render_transform_implemented": false,
+  "limits": "Only call-chain and selected field access witnesses; no proof of final projection/scissor or asynchronous lifetime."
+}

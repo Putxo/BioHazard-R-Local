@@ -1,0 +1,21 @@
+{
+  "status": "PASS_COMPONENTS_ONLY",
+  "code_commit": "77f28384b5b64e06cbeed0c9b15214dcaf37537a",
+  "ci_run": 36196102073,
+  "ci_jobs_successful": 3,
+  "clock": {"scenarios":22,"assertions":1231,"local_native":true,"local_asan_ubsan":true,"ci_native":true,"ci_asan_ubsan":true},
+  "connected_provider": {"scenarios":20,"assertions":1266,"ci_native":true,"ci_asan_ubsan":true,"local_full_chain_execution_claimed":false,"components":"Registry, LifetimeSource, PipelineClock, PipelineFrameProvider, ManagerDriver, Lifecycle, JanuaryBackend","engine_calls_mocked":true,"render_scope_services_mocked":true},
+  "gateways": {"count":2,"invocations":3,"native_i386_executed_in":"GitHub Actions","job":108272171238,"receiver_and_continuations_mocked":true,"local_host_elf32_supported":false},
+  "readonly_auditor": {"original_checks":31,"local_tests":8,"local_skipped":0,"ci_tests":8,"ci_skipped":1,"ci_skip_reason":"private original deliberately absent","source_maps_checked":true},
+  "original_size":60748800,
+  "original_sha256_before_and_after":"9124bb92d6c54a047ade47dacc8429221b18f9910b504f0e87718d5151013f69",
+  "outer_body":{"va":"0x02F50680","size":2271,"sha256":"a2c8f20788ce3a48cb01f468bb92241fca65eb82e723b26131266e670f88d894"},
+  "auditor_verified_blob":"65c31ddb04661bd05e21e48766a6399ce98e07e8",
+  "provider_verified_blob":"a4ea45aee104d655bf0341b63ffc2bb17aafa83c",
+  "inherited_local_routing_run":36196102080,
+  "gameplay_executed":false,
+  "game_image_generated":false,
+  "hooks_installed":false,
+  "render_fence_proved":false,
+  "clock_semantics":"one CPU update/draw pipeline invocation; not a count of successful Present operations"
+}
