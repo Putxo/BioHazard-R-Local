@@ -1,0 +1,32 @@
+name: HUD ownership source components
+on:
+  push:
+    branches: [research/hud-instance-ownership]
+  pull_request:
+    paths:
+      - 'patches/hud_ownership/**'
+      - 'tests/hud_ownership/**'
+      - '.github/workflows/hud-ownership.yml'
+permissions:
+  contents: read
+jobs:
+  registry:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and execute isolated registry tests
+        run: |
+          g++ -std=c++17 -O2 -Wall -Wextra -Werror -pedantic -fsanitize=undefined -fno-sanitize-recover=all -Ipatches/hud_ownership patches/hud_ownership/ownership.cpp tests/hud_ownership/registry_tests.cpp -o "$RUNNER_TEMP/hud-registry"
+          "$RUNNER_TEMP/hud-registry"
+  bridges-i386:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and execute our i386 bridges with actual registry and mocked engine finder
+        run: |
+          g++ -m32 -std=c++17 -O2 -Wall -Wextra -Werror -ffreestanding -fno-exceptions -fno-rtti -fno-stack-protector -fno-pie -Ipatches/hud_ownership -c patches/hud_ownership/ownership.cpp -o "$RUNNER_TEMP/hud-core.o"
+          g++ -m32 -std=c++17 -O2 -Wall -Wextra -Werror -ffreestanding -fno-exceptions -fno-rtti -fno-stack-protector -fno-pie -Ipatches/hud_ownership -c tests/hud_ownership/bridge_test.cpp -o "$RUNNER_TEMP/hud-tests.o"
+          as --32 patches/hud_ownership/self_bridges.S -o "$RUNNER_TEMP/hud-bridges.o"
+          as --32 tests/hud_ownership/bridge_test.S -o "$RUNNER_TEMP/hud-harness.o"
+          ld -m elf_i386 -o "$RUNNER_TEMP/hud-abi" "$RUNNER_TEMP/hud-harness.o" "$RUNNER_TEMP/hud-tests.o" "$RUNNER_TEMP/hud-bridges.o" "$RUNNER_TEMP/hud-core.o"
+          "$RUNNER_TEMP/hud-abi"

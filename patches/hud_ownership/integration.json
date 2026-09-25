@@ -1,0 +1,17 @@
+{
+  "status": "SOURCE_ONLY_NOT_INSTALLED",
+  "original_sha256": "9124bb92d6c54a047ade47dacc8429221b18f9910b504f0e87718d5151013f69",
+  "stock_self_thunk": "0x01C2C7F4",
+  "stock_self_implementation": "0x01CB7400",
+  "bridges": [
+    {"kind": "Reticle", "vtable": "0x04DE52C4", "phase": 9, "callsite": "0x02B404C6", "owner_frame": "ebp-8", "bridge": "rev_hud_reticle_self"},
+    {"kind": "MainEquipment", "vtable": "0x04DE4C3C", "phase": 8, "callsite": "0x02B3B6C8", "owner_frame": "ebp-8", "bridge": "rev_hud_equipment_self"},
+    {"kind": "MapHerb", "vtable": "0x04DE810C", "phase": 8, "callsite": "0x02B61F3C", "owner_frame": "ebp-8", "bridge": "rev_hud_herb_self"}
+  ],
+  "draw_view": {"field": "cUnit+0x0C", "mask": "0x03FF0000", "shift": 16, "setter": "0x01EB6130", "getter": "0x0279D1A0"},
+  "lifecycle_adapter_installed": false,
+  "duplicate_widgets_created": false,
+  "coordinate_transform_implemented": false,
+  "gameplay_executed": false,
+  "next": "Install verified lifecycle, resource creation and scoped view transforms for independently owned widgets; do not append foreign types to the cockpit list."
+}
