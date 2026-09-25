@@ -1,0 +1,28 @@
+name: Script member leaf tests
+on:
+  push:
+    branches: ['research/script-member-guarded-routing']
+  pull_request:
+    paths:
+      - 'patches/build_script_member.py'
+      - 'patches/test_script_member.py'
+      - 'patches/script_member/**'
+      - '.github/workflows/script-member-tests.yml'
+permissions:
+  contents: read
+jobs:
+  portable-bytecode:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Exact helper guard tests without game files
+        run: python patches/test_script_member.py
+  native-i386:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Execute original helper in a freestanding i386 test process
+        run: bash patches/script_member/run_native_test.sh

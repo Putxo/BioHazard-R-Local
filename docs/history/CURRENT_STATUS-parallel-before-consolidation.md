@@ -40,18 +40,4 @@ Continuar por creación/lifetime y enlace actor/viewport de las instancias HUD; 
 
 v12 había modificado el callback de uObjModel en vez del de uItem; documentos 17/18 lo corrigen. v14 solo corregía una consulta final de puerta; el módulo posterior añade selección/serial. MainEquipWin/SubEquipWin significan equipo principal/secundario, no P1/P2. No alterar Network ni el serial/Self/GameMode global.
 
-El estado anterior se conserva íntegro en `docs/history/CURRENT_STATUS_before_script_serial.md`.
-
-## Consolidación de las dos continuaciones, sin aplicar dos veces el parche
-
-Se han reunido los cambios de `fc8211a20ac570dadff57ed304a3dec9b6a88ce5` y la continuación independiente `0e4be9db4c2fa4362dfa627918f029adbaaa5dab`. Ambos constructores actuales generan exactamente el mismo candidato `71f5e70d...`. **`build_script_member.py` y `build_script_serial_guard.py` son alternativas, no pasos consecutivos.** La primera salida independiente `a7abf154...` queda histórica y no se distribuye como actual.
-
-La continuación independiente añade 16 tests locales con imágenes, 2.592 combinaciones de guards, pruebas de ABI ejecutadas en Linux i386 y un instalador acumulativo reversible. CI de su código: commit `2affdb8d5c9bc4022c69fad87eb0d20c31cd27d6`, run `36127918860`, dos jobs correctos. Esas cifras no se suman a las de la otra suite para fingir cobertura de gameplay. Evidencia en [docs/script-member-validation.md](docs/script-member-validation.md).
-
-También añade 29 comprobaciones de RTTI/llamadas en [docs/gui-and-scheduler-ownership.md](docs/gui-and-scheduler-ownership.md): uPcsInput tiene padre `uScheduler` (DTI `0x0579963C`), no un jugador demostrado. Mira, equipo, mapa/hierbas y pausa contienen búsquedas de Self. Se identificó `uCockpitManagerMain::0x02B48510`, creación y slot de mira `+0x90`; continuar por `0x02B492D0 / 0x02B49A60 / 0x02B49DA0` y asociación de cada widget a actor y viewport.
-
-`research/current_state.json` está actualizado con esta continuidad, conservando los datos de la implementación previa. Las versiones íntegras de los dos estados antes de consolidarlos quedan en `docs/history/CURRENT_STATUS-independent-before-consolidation.md` y `CURRENT_STATUS-parallel-before-consolidation.md`.
-
-El paquete local de `patches/portable_script_member/apply.py` contiene el payload de SHA `deef32213898d607995c41b2986e5de4b864da4401c8763a6361fd68513d528d`; su generador está en el repositorio. Es una segunda receta reversible desde el original y no debe mezclarse con el formato de `tools/portable_script_patch.py`.
-
-**No se ha ejecutado Resident Evil Revelations. Siguen abiertas implementaciones de interfaz, transiciones completas y escenas sin compañero; no falta únicamente probar el juego.**
+El estado anterior se conserva íntegro en `docs/history/CURRENT_STATUS_before_script_serial.md`. `research/current_state.json` y los handoffs anteriores describen la base previa; para esta continuación prevalecen este archivo y docs/22–23.

@@ -1,0 +1,27 @@
+{
+  "status": "EXPERIMENTAL_SCRIPT_MEMBER_PATCH",
+  "base_sha256": "0c019d43b92c0092fa458abcf7e2990f8783895eb2bd8181f6e9f130b697d378",
+  "output_sha256": "71f5e70dc19c334d303ee29a686d65a72cd18b0c87b98472170bff961cb048f4",
+  "output_size": 60755456,
+  "helper_va": "0x1c95340",
+  "helper_size": 72,
+  "helper_sha256": "500a82d8071f5c40ece76397fee1bac97888768a3e9029d52222d4d933eb7896",
+  "changed_bytes": 92,
+  "patches": [
+    {"label":"guarded script member helper","va":29971264,"offset":1165120,"old":"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc","new":"31c085c9743f833d88917d0500743681391cf4dc04752e8b1584917d0585d27424399178100000751c83ba400e00000175138b923c0e000085d278093991741000000f94c0c20400"},
+    {"label":"FSM member entry","va":43478064,"offset":14671920,"old":"558bec81eccc000000","new":"e90be731ff90909090"},
+    {"label":"FSM member entry","va":44037632,"offset":15231488,"old":"558bec81eccc000000","new":"e93b5d29ff90909090"},
+    {"label":"PE checksum","va":null,"offset":376,"old":"dcd79f03","new":"3c3a9f03"}
+  ],
+  "exact_reversal": true,
+  "scope": "Two FSM callbacks, only for exact cFsmActionPcsSub owned by the live local Sub0.",
+  "unmodified_callback": "uPcsInput 0x02DEE8D0",
+  "gameplay_executed": false,
+  "runtime_validated": false,
+  "limitations": [
+    "No game execution.",
+    "No claim that all scripted inputs or QTEs are fixed.",
+    "uPcsInput ownership remains separate; shared/global commands retain zero.",
+    "HUD, menus, full death/checkpoint/cutscene flow and partnerless scenes are not implemented by this patch."
+  ]
+}

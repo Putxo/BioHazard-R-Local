@@ -1,0 +1,53 @@
+{
+  "status": "STATIC_GUI_AND_PARENT_EVIDENCE",
+  "source_sha256": "9124bb92d6c54a047ade47dacc8429221b18f9910b504f0e87718d5151013f69",
+  "assertions": 29,
+  "checks": [
+    "RTTI .?AVuCockpitManagerMain@gui@game@app@@",
+    "RTTI .?AVuBioCockpitGUI@gui@game@app@@",
+    "RTTI .?AVuGUI_Reticle@gui@game@app@@",
+    "RTTI .?AVuGUI_MainEquipWin@gui@game@app@@",
+    "RTTI .?AVuGUI_MapBaseAndHerb@gui@game@app@@",
+    "RTTI .?AVuGUI_PauseHD@gui@game@app@@",
+    "GUI Self finder 0x2b404c6",
+    "GUI Self finder 0x2b3b6c8",
+    "GUI Self finder 0x2b61f3c",
+    "GUI Self finder 0x2c30a06",
+    "Self finder thunk",
+    "finder invokes Self predicate",
+    "Self predicate thunk",
+    "Self predicate reads actor serial",
+    "Self predicate requires serial equality",
+    "reticle uses selected actor pack",
+    "equipment uses selected actor pack",
+    "herb UI uses selected actor pack",
+    "reticle calls cockpit base constructor",
+    "equipment calls cockpit base constructor",
+    "cockpit constructor thunk",
+    "cockpit constructor vtable",
+    "manager creates reticle",
+    "manager stores reticle at +90",
+    "manager constructor vtable",
+    "uPcs parent checked cast uses scheduler DTI",
+    "scheduler DTI registration target",
+    "scheduler DTI name pointer",
+    "parent DTI literal name"
+  ],
+  "classes": [
+    {"vtable":"0x4de5c14","col":"0x537c8e8","type_descriptor":"0x54cefa4","name":".?AVuCockpitManagerMain@gui@game@app@@"},
+    {"vtable":"0x4de98b4","col":"0x537d7d0","type_descriptor":"0x54cdc90","name":".?AVuBioCockpitGUI@gui@game@app@@"},
+    {"vtable":"0x4de52c4","col":"0x537c5a8","type_descriptor":"0x54ceb48","name":".?AVuGUI_Reticle@gui@game@app@@"},
+    {"vtable":"0x4de4c3c","col":"0x537c408","type_descriptor":"0x54ce908","name":".?AVuGUI_MainEquipWin@gui@game@app@@"},
+    {"vtable":"0x4de810c","col":"0x537d144","type_descriptor":"0x54d09e0","name":".?AVuGUI_MapBaseAndHerb@gui@game@app@@"},
+    {"vtable":"0x4df5e5c","col":"0x5380550","type_descriptor":"0x54d4a48","name":".?AVuGUI_PauseHD@gui@game@app@@"}
+  ],
+  "gui_self_calls": ["0x02B404C6","0x02B3B6C8","0x02B61F3C","0x02C30A06"],
+  "scheduler_dti": "0x0579963C",
+  "gameplay_executed": false,
+  "hud_patch_created": false,
+  "limits": [
+    "This audit does not duplicate HUD, route menu ownership or validate rendering.",
+    "The manager reticle slot is per instance; this does not prove a global instance count.",
+    "A uScheduler parent is not sufficient evidence for a unique player owner."
+  ]
+}
