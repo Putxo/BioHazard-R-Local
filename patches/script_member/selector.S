@@ -20,9 +20,9 @@ script_sub0_member:
     mov edx,dword ptr [TRACKED_SUB0]
     test edx,edx
     jz .done
-    cmp dword ptr [edx+0xE40],1
-    jne .done
     cmp dword ptr [ecx+0x1078],edx
+    jne .done
+    cmp dword ptr [edx+0xE40],1
     jne .done
     mov edx,dword ptr [edx+0xE3C]
     test edx,edx

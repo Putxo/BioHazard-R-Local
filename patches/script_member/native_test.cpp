@@ -36,6 +36,7 @@ extern "C" int run_script_tests() {
     fixture_active=1;owner[0]=0x04E15EF4;
     check(query()==0); // unknown owner class must not dereference tracker=1
     owner[0]=sub_vt;fixture_sub=0;check(query()==0);
+    fixture_sub=1;owner[0x1078/4]=0;check(query()==0); // context mismatch: tracker=1 must not be read
     fixture_sub=ptr;actor[0xE40/4]=1;actor[0xE3C/4]=1;
     owner[0x1078/4]=1;owner[0x1074/4]=1;check(query()==0);
     owner[0x1078/4]=ptr;

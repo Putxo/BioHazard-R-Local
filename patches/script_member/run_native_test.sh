@@ -5,7 +5,7 @@ work="$(mktemp -d)"
 trap 'rm -rf "$work"' EXIT
 as --32 "$here/selector.S" -o "$work/selector.o"
 objcopy -O binary -j .text "$work/selector.o" "$work/selector.bin"
-echo '5fa7f66b5524bd35bb297745bbd32854db8a43f48d17d52b12de2d2b54531433  '"$work/selector.bin" | sha256sum -c -
+echo '500a82d8071f5c40ece76397fee1bac97888768a3e9029d52222d4d933eb7896  '"$work/selector.bin" | sha256sum -c -
 g++ -m32 -std=c++17 -Os -ffreestanding -fno-exceptions -fno-rtti -fno-pie -fno-pic \
     -fno-stack-protector -fno-asynchronous-unwind-tables -fno-unwind-tables \
     -fno-builtin -mno-sse -mno-mmx -mpreferred-stack-boundary=2 \

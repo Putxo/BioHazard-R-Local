@@ -145,10 +145,15 @@ class Tests(unittest.TestCase):
         value,m=self.execute(OWNER,{ACTIVE:1,OWNER:SUB_VT,TRACKER:0})
         self.assertEqual(value,0)
         self.assertNotIn(OWNER+0x1078,m.reads)
-    def test_network_reads_no_extended_context(self):
-        value,m=self.execute(OWNER,{ACTIVE:1,OWNER:SUB_VT,TRACKER:ACTOR,ACTOR+0xE40:3})
+    def test_network_does_not_read_serial(self):
+        value,m=self.execute(OWNER,{ACTIVE:1,OWNER:SUB_VT,TRACKER:ACTOR,OWNER+0x1078:ACTOR,ACTOR+0xE40:3})
         self.assertEqual(value,0)
-        self.assertNotIn(OWNER+0x1078,m.reads)
+        self.assertNotIn(ACTOR+0xE3C,m.reads)
+        self.assertNotIn(OWNER+0x1074,m.reads)
+    def test_mismatched_context_avoids_invalid_tracker(self):
+        value,m=self.execute(OWNER,{ACTIVE:1,OWNER:SUB_VT,TRACKER:1,OWNER+0x1078:ACTOR})
+        self.assertEqual(value,0)
+        self.assertNotIn(1+0xE40,m.reads)
     def test_context_pointer_is_not_dereferenced(self):
         memory=fixture(context=1)
         value,m=self.execute(OWNER,memory)
