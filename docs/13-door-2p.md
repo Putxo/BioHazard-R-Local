@@ -196,3 +196,272 @@ Antes de crear cualquier v12:
 5. parchear únicamente si se demuestra un bloqueo concreto.
 
 No se modificará globalmente el índice de jugador local.
+
+
+## 8. Owner exacto de 0x02571710 — CONFIRMADO
+
+La función que contiene los dos callsites prioritarios es:
+
+```text
+0x02571710
+```
+
+La vtable de `cDoor2pBaseClosedState` empieza en:
+
+```text
+0x04D5B02C
+```
+
+y su slot virtual 10 (offset `+0x28`) contiene:
+
+```text
+0x01C054A1 -> 0x02571710
+```
+
+El constructor:
+
+```text
+0x02570880
+```
+
+instala literalmente esa vtable.
+
+El DTI global:
+
+```text
+0x055816B0
+```
+
+se registra con la string:
+
+```text
+cDoor2pBaseClosedState
+```
+
+Por tanto `0x02571710` es comportamiento real del estado cerrado 2P, no una rutina genérica sin owner demostrado.
+
+La especialización `cTwoOpenDoorClosedState` también reutiliza ese mismo virtual:
+
+```text
+constructor 0x0257A1E0
+vtable      0x04D5B9EC
+DTI         0x055818BC
+string      cTwoOpenDoorClosedState
+```
+
+Así que la ruta analizada llega a una puerta 2P concreta usada por el juego.
+
+## 9. El objeto de puerta en 0x02571710 es uDoor2pBase — CONFIRMADO
+
+Al entrar en `0x02571710`, el argumento del estado se convierte mediante:
+
+```text
+0x01C649C9 -> 0x02575680
+```
+
+contra el DTI:
+
+```text
+0x05581BC0 = uDoor2pBase
+```
+
+El resultado se conserva en:
+
+```text
+[ebp-0x14]
+```
+
+y ese mismo puntero se usa como `this` en:
+
+```text
+0x0257185D -> 0x01C9217B -> 0x02588D20
+0x0257198A -> 0x01C9217B -> 0x02588D20
+```
+
+## 10. Actor del primer callsite: pPl / Self local — CONFIRMADO
+
+La primera ruta obtiene el actor mediante:
+
+```text
+0x01C16468 -> 0x026D7EF0
+```
+
+`0x026D7EF0`:
+
+1. obtiene `sNetworkManage`;
+2. consulta el índice/identidad local mediante `0x01C85962`;
+3. resuelve el actor correspondiente;
+4. devuelve ese actor.
+
+Después:
+
+```text
+0x01C78451 -> checked cast a uPlayer
+```
+
+El actor resultante se pasa como primer argumento a `0x02588D20` en `0x0257185D`.
+
+Los asserts de `cdoor2pbasestate.cpp` conservan además el nombre fuente:
+
+```text
+pPl
+```
+
+para la ruta del jugador.
+
+Conclusión: el primer callsite actualiza el slot correspondiente al Self/P1 local.
+
+## 11. Actor del segundo callsite: pPt / participant no-Self — CONFIRMADO
+
+La segunda ruta usa:
+
+```text
+0x01C4C9C3 -> 0x026D7F60
+```
+
+`0x026D7F60` recorre actors i:
+
+- obté l'índex local;
+- llegeix `actor+0xE3C` via `0x01BEDBB7`;
+- descarta el candidat que coincideix amb l'índex local;
+- retorna el participant no-Self.
+
+Després el resultat passa pel mateix checked cast a `uPlayer`.
+
+Just abans de continuar, els asserts literals del mateix fitxer font validen:
+
+```text
+(pPt) != NULL && TO_PTR(pPt) != 0xcdcdcdcd
+pPt is invalid pointer(%p)
+```
+
+Per tant el segon callsite de `0x0257198A` és explícitament la ruta del partner/participant no-Self.
+
+El setter `0x02588D20` no comprova `pl/np`; deriva el slot només de:
+
+```text
+actor+0xE3C
+```
+
+i accepta índex 0 o 1.
+
+Això és compatible estructuralment amb el Sub0 exacte que la línia local-coop ja rastreja i converteix de Cpu a Pad.
+
+## 12. El predicat de xarxa separa la gestió online i offline — CONFIRMAT estructuralment
+
+Els dos punts:
+
+```text
+0x02571765
+0x02571877
+```
+
+consulten:
+
+```text
+sNetworkManage
+ -> 0x01BFEF16
+ -> 0x02DA2820
+```
+
+No s'assigna encara un nom C++ inventat a aquest mètode, però el seu ús és inequívocament el d'un predicat de sessió/xarxa.
+
+A `0x02571877`:
+
+```text
+predicate != 0 -> salta el bloc pPt local
+predicate == 0 -> resol pPt i executa la ruta del segon participant
+```
+
+Això separa la gestió remota online de la gestió directa del partner en la mateixa instància.
+
+## 13. Els usos de l'índex local global pertanyen a la branca de sync online — CONFIRMAT
+
+La funció de sincronització de `uDoor2pBase` al voltant de:
+
+```text
+0x025871C0...
+```
+
+torna a consultar el mateix predicat de xarxa.
+
+### Quan el predicat és cert
+
+Usa:
+
+```text
+0x01C85962 -> local member/index
+```
+
+a:
+
+```text
+0x02587278
+0x02587320
+```
+
+per seleccionar només l'estat del participant local i construir/enviar el paquet de sincronització.
+
+### Quan el predicat és fals
+
+La funció salta a:
+
+```text
+0x025873FC
+```
+
+i aplica directament els dos participants amb:
+
+```text
+push 0
+call 0x01C6DC90 -> 0x02589040
+
+push 1
+call 0x01C6DC90 -> 0x02589040
+```
+
+És a dir, fora de la ruta online no depèn d'un únic índex local: aplica explícitament els slots 0 i 1.
+
+Això descarta, de moment, el temor que `0x01C85962` sigui un bloqueig global per al cooperatiu local de portes.
+
+## 14. La lògica de ready consumeix ambdós slots també offline — CONFIRMAT
+
+`0x02589100` comprova directament:
+
+```text
+mReadyFlag[0] @ +0x1010
+mReadyFlag[1] @ +0x1011
+```
+
+i després compara l'estat paral·lel dels dos participants.
+
+Quan el predicat de xarxa és fals, també torna a resoldre `pPt` mitjançant:
+
+```text
+0x01C4C9C3
+```
+
+abans de decidir si l'estat 2P està complet.
+
+Per tant la decisió de gameplay de la porta no està estructuralment reduïda al membre local de xarxa.
+
+## 15. Conclusió actual de portes
+
+Amb l'evidència actual:
+
+- `cDoor2pBaseClosedState` processa Self i partner per separat;
+- el partner té una ruta offline explícita (`pPt`);
+- `0x02588D20` selecciona slot per actor, no per categoria `pl/np`;
+- la sincronització offline aplica slots 0 i 1 explícitament;
+- les lectures basades en l'índex local global observades fins ara són de la branca online.
+
+**No hi ha encara un bloqueig demostrat que justifiqui v14.**
+
+El següent punt és auditar l'entrada/interacció dels estats:
+
+```text
+cDoor2pBaseWaitState_PL
+cDoor2pBaseCancelState_PL
+```
+
+i comprovar si l'ActionCommand/input del partner respecta el selector Pad 1 restaurat per v7 o si queda ancorat al pad principal.
