@@ -117,4 +117,47 @@ hook_bind_actor:
  call 0x01C9504C
 .bind_done:
  jmp 0x02DF5022
+# cVitalControl eligibility/member callbacks use the opposite local actor.
+.global hook_rescue_control,hook_rescue_partner,hook_rescue_self,hook_charge_group
+hook_rescue_control:
+ push dword ptr [esp+4]
+ call 0x01C2C7F4
+ push eax
+ push dword ptr [ebp-8]
+ call lc_rescue_control
+ add esp,8
+ ret 4
+hook_rescue_partner:
+ push dword ptr [esp+4]
+ call 0x01BCA0C2
+ push eax
+ push dword ptr [ebp-8]
+ call lc_rescue_other
+ add esp,8
+ ret 4
+hook_rescue_self:
+ push dword ptr [esp+4]
+ call 0x01C2C7F4
+ push eax
+ push dword ptr [ebp-8]
+ call lc_rescue_other
+ add esp,8
+ ret 4
+# In these two audited aligned entry frames, -0x14 is the cast player actor.
+hook_charge_group:
+ push dword ptr [ebp-0x14]
+ push dword ptr [esp+8]
+ push ecx
+ call lc_install_actor_group
+ add esp,12
+ ret 4
+# Component initializers receive their owning player as argument 1.
+.global hook_component_group
+hook_component_group:
+ push dword ptr [ebp+8]
+ push dword ptr [esp+8]
+ push ecx
+ call lc_install_component_group
+ add esp,12
+ ret 4
 .section .note.GNU-stack,"",@progbits

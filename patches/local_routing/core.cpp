@@ -157,3 +157,76 @@ U32 TC lc_model_member(void* owner,U32) {
     return 0;
 }
 }
+
+// Focused action/rescue continuation. No global Self lookup is replaced.
+struct ActionDelegate {
+    void* context;
+    U32 (*invoke)(void* const*,U32);
+    bool (*manage)(void**,void**,U32);
+};
+struct ActionGroup { ActionDelegate callbacks[5]; };
+#if defined(__i386__)
+static_assert(sizeof(ActionDelegate)==12 && sizeof(ActionGroup)==60,"January delegate ABI");
+#endif
+extern "C" {
+void* TC api_set_group(void*,const ActionGroup*);
+U32 api_static_invoke(void* const*,U32);
+bool api_static_manage(void**,void**,U32);
+extern U8 api_charge_zero,api_quint_zero,api_ac_charge_zero,api_foot_zero;
+// Success changes the victim but consumes inventory from the OTHER actor.
+// Both eligibility and member selection must use that same opposite actor.
+void* lc_rescue_other(void* victim,void* stock) {
+    void* sub=valid_sub();
+    if(!victim || !sub) return stock;
+    void* self=api_self();
+    if(!self || self==sub || field(self,0xE40)!=1 || !valid_serial(self) ||
+       !valid_serial(sub) || field(self,0xE3C)==field(sub,0xE3C)) return stock;
+    if(victim==self) return sub;
+    if(victim==sub) return self;
+    return stock;
+}
+void* lc_rescue_control(void* control,void* stock) {
+    if(!control || !lc_active) return stock;
+    void* victim;
+    __builtin_memcpy(&victim,static_cast<U8*>(control)+0x0C,sizeof(victim));
+    return lc_rescue_other(victim,stock);
+}
+// Same cdecl (pointer-to-context, event argument) ABI as the audited static
+// invoker. The context is a non-owning actor pointer, never a new allocation.
+U32 lc_delegate_pad(void* const* context,U32) {
+    return context ? lc_actor_pad(*context) : 0;
+}
+void* lc_install_actor_group(void* command,const ActionGroup* group,void* actor) {
+    if(!command || !group) return nullptr;
+    const auto& first=group->callbacks[0];
+    if(lc_actor_pad(actor)!=1 || first.invoke!=api_static_invoke ||
+       first.manage!=api_static_manage ||
+       (first.context!=&api_charge_zero && first.context!=&api_quint_zero))
+        return api_set_group(command,group);
+    // POD snapshot: retain the other four callbacks and let the native setter
+    // perform their native copies. Neither mutate nor destroy the caller group.
+    ActionGroup selected=*group;
+    selected.callbacks[0].context=actor;
+    selected.callbacks[0].invoke=lc_delegate_pad;
+    // The original static manager only copies/clears/compares the pointer;
+    // it does not free its pointee. Keep that audited lifetime policy.
+    return api_set_group(command,&selected);
+}
+}
+
+extern "C" {
+// These two components are initialized before PCS may convert the actor to Pad.
+// Capture the verified actor argument now; decide local membership at invocation.
+// With local mode off the replacement still returns the original constant zero.
+void* lc_install_component_group(void* command,const ActionGroup* group,void* actor) {
+    if(!command || !group) return nullptr;
+    const auto& first=group->callbacks[0];
+    if(!actor || first.invoke!=api_static_invoke || first.manage!=api_static_manage ||
+       (first.context!=&api_ac_charge_zero && first.context!=&api_foot_zero))
+        return api_set_group(command,group);
+    ActionGroup selected=*group;
+    selected.callbacks[0].context=actor;
+    selected.callbacks[0].invoke=lc_delegate_pad;
+    return api_set_group(command,&selected);
+}
+}
