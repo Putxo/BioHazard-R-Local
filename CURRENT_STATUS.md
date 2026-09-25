@@ -1,37 +1,33 @@
-# Estado actual — adaptador nativo del HUD de enero, solo fuentes
+# Estado actual — fases del HUD separadas por gestor
 
-25 de septiembre de 2026. Se continúa desde PR #7 sin generar ni modificar un EXE del juego. Fuentes, pruebas y evidencia se guardan en GitHub; el cooperativo completo no está terminado ni probado en campaña.
+25 de septiembre de 2026. Progreso solo en fuentes, tests y evidencia. No se ha generado/modificado un EXE del juego ni instalado hooks. El cooperativo completo continúa sin estar terminado ni probado en campaña.
 
-## Avance de esta continuación
+## Avance sobre PR #8
 
-Se ha implementado `patches/hud_ownership/january_backend.hpp/.cpp` y la tabla/puentes i386 `january_calls.cpp/.S`. Conectan las operaciones específicas de enero al controlador Lifecycle del PR #7: asignadores y constructores por clase, inicialización void con postcondiciones, comprobación real de pertenencia a sUnit, firmas correctas de las fases y destructor escalar.
+Se corrigió un defecto de integración de Lifecycle: su dispatch agrupaba tres widgets y una sola marca de fase. Cockpit y MiniMap necesitan recorridos y contextos separados. La nueva dispatch_manager comprueba familia/dirección/clase, ejecuta solo sus widgets y cuenta cada fase por gestor. No se rehacen Registry, JanuaryBackend ni los parches de input, pickup, puertas, ayuda o guiones.
 
-La construcción no añade objetos a las listas nativas. Se comprueban tanto moveline/enlaces como pertenencia real: un único elemento registrado puede tener enlaces nulos. Se preservan P1, los layouts separados de Cockpit/MiniMap y todos los parches anteriores. Las direcciones y slots son explícitos y se verifican antes de llamar.
+ManagerDriver conecta los eventos de seis entradas ordinarias comprobadas a ese despacho. Comprueba ticket Live, hilo, frame, generaciones de gestores y contexto. Los eventos antiguos no sustituyen el estado nuevo; los cambios de vida solicitan stop sin ejecutar destructores dentro del evento.
 
-Los slots 8/9 reciben cero argumentos; el slot 11 recibe contexto. Se mantienen gates Active/ForceSkip según la clase, filtro de vista 1 y propagación del valor temporal del gestor. No se trata el contador de hierbas como ForceSkip. El driver deberá proporcionar la rama correcta de visibilidad y la transformación/clipping.
+Hay seis gateways i386 fuente que preservan registros, flags, pila y estado x87/MMX/XMM/MXCSR, y reproducen sus dos instrucciones desplazadas. El minimapa engancha su entrada después de la condición de omisión, no el epílogo común que también recibe el camino oculto. La tabla de continuaciones no es un constructor de EXE.
 
-Se añadieron callbacks checked a Lifecycle. Un rechazo de destrucción conserva el objeto y sus tokens en cuarentena, en vez de contabilizarlo como liberado; un fallo de inicialización/fase bloquea la publicación/continuación. La ruta void anterior se conserva y pasa su suite de regresión.
+## Pruebas de esta continuación
 
-## Integración que aún no está activada
+Código 78dcc277d7cc1b21bcfa28983abf6bc1348922b6: 35 escenarios / 1.362 aserciones con motor simulado, normales y ASan/UBSan; cinco tests Python locales sin omisiones, con 31 witnesses del original exacto leído sin modificar.
 
-El adaptador tiene llamadas nativas concretas, pero NO está instalado en el proceso del juego. Necesita un driver real que compruebe identidad del PE cargado, vida y exclusividad de asignaciones, hilo, fase, Session/lifetime/epoch y exclusión de trabajo de render. Los permisos no se suplen por constantes true. El componente no convierte un puntero desconocido en seguro ni captura errores internos del motor.
+Run 36187871978: los tres jobs del componente correctos. El job 108245604011 ejecutó los seis gateways i386 reales contra receptor/continuaciones sintéticos y verificó conservación de estado. La prueba privada del original se omite expresamente en CI. No se ha ejecutado el motor del juego.
 
-Siguen pendientes la instalación selectiva de bridges de actor, driver/safe points, inscripción transitiva de callbacks, máscara P1 y transformación/clipping de las dos mitades. No se ha creado o dibujado un segundo HUD durante una partida. La cuarentena puede retener memoria y requiere diagnóstico, no una liberación a ciegas.
+## Qué sigue sin estar activado
 
-## Pruebas verificadas
+Los gateways NO están instalados. ManagerHost todavía requiere un proveedor nativo fiable de frame/Session y generaciones de actores/gestores, y scopes reales de entrada/salida de render. phase_scope aporta solo permiso de rama: no concede Structural/Destroy ni certifica render drenado. No se han reemplazado esas precondiciones por true.
 
-Código `6e9f326ae26d07d25c076eb104bbc36b310de7de`: 43 escenarios / 2.516 aserciones de backend/controlador/registro con funciones de motor simuladas, normal y ASan/UBSan. La regresión anterior conserva 34 escenarios / 828 aserciones.
+El sink tiene binding previo único y vida de proceso; no implementa hot-unload ni concurrencia arbitraria. Los objetos de P1 siguen bajo sus managers originales. Enmascarado de P1, transformación/clipping y el HUD completo dibujado siguen abiertos.
 
-69 comprobaciones del original exacto y seis tests Python locales sin omisiones; original intacto con SHA `9124bb92d6c54a047ade47dacc8429221b18f9910b504f0e87718d5151013f69`. En CI el único test privado se omite explícitamente.
+## Continuación exacta
 
-Run `36183979550`: tres jobs correctos. El job `108232822485` ejecutó 30 llamadas de los puentes/tabla i386 reales contra callees sintéticos. El host local no ejecuta ELF32; la ejecución se hizo en el runner. No se ejecutó código del motor ni gameplay. Detalles en `research/reports/hud-january-native-validation.json`.
+Seguir el binder 0x02DF4F30 y las notificaciones de vida de actores/gestores para producir ManagerFrame/Session fiables; determinar frame y exclusión real del render. Mantener separadas ambas familias y no volver a conectar la antigua dispatch agrupada a los hooks del motor. Después conectar scopes y activar selectivamente los gateways sin generar un EXE mientras no se solicite.
 
-## Punto exacto de continuación
+Documentación nueva: docs/30-hud-manager-phase-boundaries.md y docs/31-hud-manager-phase-driver.md. Estado estructurado: research/hud_manager_phase_state.json. Las precondiciones y código anteriores siguen en docs/29 y JanuaryBackend.
 
-Implementar el driver de admisión/scheduling alrededor de las fases, creación y destrucción comprobadas de uCockpitManagerMain/uMiniMapManager. Derivar snapshots de Session/Actor del binder con lifetime/epoch, impedir doble scheduling y llamadas mientras haya render/callbacks en vuelo. Después conectar scopes de render y máscara P1 sin sustituir Self globalmente.
+Estado anterior conservado íntegro en docs/history/CURRENT_STATUS-before-manager-phase-driver.md. Los estados JSON anteriores y la última imagen histórica 71f5e70d... no se renumeran ni se consideran un HUD integrado.
 
-Documentación actual: [docs/28-hud-native-registration-and-abi.md](docs/28-hud-native-registration-and-abi.md), [docs/29-january-hud-native-adapter.md](docs/29-january-hud-native-adapter.md) y `research/hud_native_ops_state.json`.
-
-El estado anterior permanece íntegro en [docs/history/CURRENT_STATUS-before-january-native-ops.md](docs/history/CURRENT_STATUS-before-january-native-ops.md). Los módulos de ownership y sus archivos históricos no se rehacen ni se presentan como perdidos. Las recetas de EXE anteriores no se ejecutan.
-
-Pausa/inventario por jugador, scheduler compartido, muerte/checkpoints/cutscenes, escenas sin compañero y validación conjunta siguen abiertos. Este estado distingue implementación del adaptador, pruebas de componentes y activación real en el juego.
+Pausa/inventario por jugador, comandos compartidos de scheduler, muerte/checkpoints/cutscenes, escenas sin compañero y validación conjunta siguen pendientes. Esta actualización distingue fuentes conectadas entre sí, pruebas aisladas y activación efectiva dentro del juego.

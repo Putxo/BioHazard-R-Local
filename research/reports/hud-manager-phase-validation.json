@@ -1,0 +1,29 @@
+{
+  "status": "PASS_COMPONENTS_ONLY",
+  "code_commit": "78dcc277d7cc1b21bcfa28983abf6bc1348922b6",
+  "source_sha256_before_and_after": "9124bb92d6c54a047ade47dacc8429221b18f9910b504f0e87718d5151013f69",
+  "driver_tests": {"scenarios": 35, "assertions": 1362, "normal_pass": true, "asan_ubsan_pass": true, "actual_registry_lifecycle_driver": true, "engine_mocked": true},
+  "read_only_audit": {"witnesses": 31, "local_tests": 5, "local_skipped": 0, "private_image_test_skipped_in_ci": 1},
+  "ci": {"run": 36187871978, "successful_jobs": 3, "gateway_job": 108245604011},
+  "gateway_result": {"status": "PASS", "gateways": 6, "gpr_flags_stack_fx_verified": true, "native_i386": true, "receiver_and_continuations_synthetic": true, "executed_on_github_runner": true},
+  "local_i386_execution": "unavailable: Exec format error; not counted as a passed native run",
+  "gameplay_executed": false,
+  "engine_code_executed": false,
+  "hooks_installed": false,
+  "game_exe_generated": false,
+  "published_blobs_match_tested_copies": true,
+  "blobs": {
+    "patches/hud_ownership/lifecycle.cpp": "8da4d537e8b59b1bbf756842c5015259565561ac",
+    "patches/hud_ownership/lifecycle.hpp": "9931c9a14747a8dd35d6c6454968e5842337fe5c",
+    "patches/hud_ownership/manager_driver.cpp": "c6daa27c5a91aa69d56b6bcfce01359a25988827",
+    "patches/hud_ownership/manager_driver.hpp": "c26564a760310edbd22b9c55c617b106aa9bc398",
+    "patches/hud_ownership/manager_gateways.S": "6ca715ee97ffe526cf10ea24e56585d82d021c5d",
+    "patches/hud_ownership/manager_continuations.ld": "50470de81727d02067c29e5fe067cb0d2c4ec47b",
+    "tests/hud_ownership/manager_driver_tests.cpp": "065c4b25642b89413beb9a2783254e5806b034a3",
+    "tests/hud_ownership/manager_gateway_abi.S": "898adccece99a7e72228a631e962b691b3220ba2",
+    "tests/hud_ownership/manager_gateway_abi.cpp": "8fd5e3010ad7c948a862618fb12f626c96fae2bd",
+    "scripts/audit_hud_manager_phases.py": "720968d968d9f03b9d8006c89fcb8bb2f187c9b5",
+    "tests/hud_ownership/test_manager_phase_audit.py": "f658aaed69de8f740bf3465bf21442fbadd5ed92",
+    ".github/workflows/hud-manager-phase.yml": "3772bd81f36fe858043b7c4ce0d05e113318298d"
+  }
+}

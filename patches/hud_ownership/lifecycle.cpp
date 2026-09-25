@@ -215,6 +215,25 @@ bool Lifecycle::collect() {
     return true;
 }
 bool Lifecycle::dispatch(u32 ticket, const Session& current, u32 frame, u32 phase, u32 view, u32 context) {
+    // Compatibility entry for historical component tests, NOT a native hook.
+    return dispatch_scope(ticket, current, frame, phase, view, context, 3);
+}
+bool Lifecycle::dispatch_manager(u32 ticket, const Session& current, u32 frame,
+                                 ManagerKind manager, u32 parent_address,
+                                 u32 phase, u32 view, u32 context) {
+    const u32 index = static_cast<u32>(manager);
+    if (busy_ || !live_ticket(ticket) || index >= 2 || !parent_address ||
+        parents_[index] != parent_address || !frame || frame < frame_) return false;
+    // Parent lifetime must already be pinned by the driver. A class read is a
+    // consistency check, not a substitute for that pin or an ABA detector.
+    u32 vt = 0;
+    if (!field(backend_.memory, parent_address, 0, vt) || vt != manager_vtable(manager)) {
+        fail(LifeError::Stale); return false;
+    }
+    return dispatch_scope(ticket, current, frame, phase, view, context, u32(1) << index);
+}
+bool Lifecycle::dispatch_scope(u32 ticket, const Session& current, u32 frame,
+                               u32 phase, u32 view, u32 context, u32 manager_mask) {
     // A stale dispatch must not replace the current session or revoke a new
     // generation. Explicit observe() is reserved for the trusted lifecycle driver.
     if (busy_ || state_ != LifeState::Live || !ticket || ticket != ticket_ || !frame || frame < frame_) return false;
@@ -223,11 +242,15 @@ bool Lifecycle::dispatch(u32 ticket, const Session& current, u32 frame, u32 phas
     if (phase != 8 && phase != 9 && phase != 11) { error_ = LifeError::UnsupportedPhase; return false; }
     if (phase == 11 && view != 1) return false;
     if (frame != frame_) { frame_ = frame; phases_ = 0; }
-    const u32 bit = phase == 8 ? 1 : phase == 9 ? 2 : 4;
+    const u32 phase_bit = phase == 8 ? 1 : phase == 9 ? 2 : 4;
+    const u32 bit = ((manager_mask & 1) ? phase_bit : 0) |
+                    ((manager_mask & 2) ? (phase_bit << 3) : 0);
     if (phases_ & bit) return false;
     if (!live_routes()) { fail(LifeError::Stale); return false; }
     busy_ = true; phases_ |= bit;
     for (u32 i = 0; i < 3 && state_ == LifeState::Live; ++i) {
+        const u32 owner_bit = kind_info(kind(i))->manager == ManagerKind::Cockpit ? 1 : 2;
+        if (!(manager_mask & owner_bit)) continue;
         u32 old = 0, scoped = 0, now = 0;
         if (!field(backend_.memory, units_[i], 0xC, old)) { fail(LifeError::Memory); break; }
         scoped = registry_.flags_for(units_[i], kind(i), old);

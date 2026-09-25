@@ -1,0 +1,42 @@
+name: HUD manager phase source components
+on:
+  push:
+    branches: [research/hud-manager-phase-driver]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  driver:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        mode: [native, sanitized]
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Execute actual registry, lifecycle and phase driver with synthetic engine
+        shell: bash
+        run: |
+          FLAGS="-std=c++17 -O1 -g -Wall -Wextra -Werror"
+          if [ "${{ matrix.mode }}" = sanitized ]; then FLAGS="$FLAGS -fsanitize=address,undefined -fno-omit-frame-pointer"; fi
+          g++ $FLAGS -Ipatches/hud_ownership patches/hud_ownership/{ownership,lifecycle,manager_driver}.cpp tests/hud_ownership/manager_driver_tests.cpp -o "$RUNNER_TEMP/manager-tests"
+          "$RUNNER_TEMP/manager-tests"
+          g++ $FLAGS -Ipatches/hud_ownership patches/hud_ownership/{ownership,lifecycle}.cpp tests/hud_ownership/lifecycle_tests.cpp -o "$RUNNER_TEMP/lifecycle-regression"
+          "$RUNNER_TEMP/lifecycle-regression"
+      - name: Read-only auditor and source-map tests, private image explicitly optional
+        run: python tests/hud_ownership/test_manager_phase_audit.py
+      - name: Check i386 source ABI without building a game image
+        run: |
+          g++ -m32 -std=c++17 -Wall -Wextra -Werror -ffreestanding -fno-exceptions -fno-rtti -fsyntax-only patches/hud_ownership/{ownership,lifecycle,manager_driver}.cpp
+  gateways:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Execute six actual i386 gateways, synthetic receiver and continuations
+        shell: bash
+        run: |
+          FLAGS="-m32 -std=c++17 -O2 -Wall -Wextra -Werror -ffreestanding -fno-exceptions -fno-rtti -fno-stack-protector -fno-pie"
+          g++ $FLAGS -c tests/hud_ownership/manager_gateway_abi.cpp -o "$RUNNER_TEMP/gate-test.o"
+          as --32 patches/hud_ownership/manager_gateways.S -o "$RUNNER_TEMP/gateways.o"
+          as --32 tests/hud_ownership/manager_gateway_abi.S -o "$RUNNER_TEMP/gate-harness.o"
+          ld -m elf_i386 "$RUNNER_TEMP/gateways.o" "$RUNNER_TEMP/gate-test.o" "$RUNNER_TEMP/gate-harness.o" -o "$RUNNER_TEMP/gateway-abi"
+          "$RUNNER_TEMP/gateway-abi"
