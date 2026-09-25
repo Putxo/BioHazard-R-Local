@@ -1,0 +1,61 @@
+{
+  "base": "BioRevHD 30-Enero-2013 LOCAL COOP v13 SYMMETRIC AMMO RELIEF.exe",
+  "base_sha256": "3df0e1020b58b3ccc7e31a9046a2a3ce9e5230e1764869b517943b4a808838aa",
+  "output": "BioRevHD 30-Enero-2013 LOCAL COOP v14 DOOR GIMMICK PAD2.exe",
+  "output_sha256": "73fe1255697c47a624025ba40b33bab8df5812e76021bdc2d9acdeec3daf56ea",
+  "status": "STATICALLY VERIFIED ONLY - gameplay not executed in this environment",
+  "purpose": "Let door_gimmick::MoveState query the pad belonging to its resolved actor during canonical local co-op, while preserving stock selector 0 otherwise.",
+  "helper": {
+    "va": "0x01C95300",
+    "size": 35,
+    "sha256": "0c83033764b4760949441b145486edf44807acfbf6af352f1f31198bc2301ac3",
+    "local_flag": "0x057D9188",
+    "actor_selector_thunk": "0x01C6C746",
+    "gamepad_singleton_thunk": "0x01C8B7F4",
+    "pad_query_thunk": "0x01B94F53"
+  },
+  "callsite": {
+    "va": "0x02591118",
+    "old": "6a00e8d5a66fff8bc8e82d3e60ff",
+    "new": "e8e34170ff909090909090909090",
+    "context": "door_gimmick::MoveState slot8 (0x02590F60)"
+  },
+  "behavior": {
+    "stock_or_online": "gLocalCoopActive=0 -> selector 0, preserving stock semantics",
+    "local_p1": "resolved actor selector -> 0 -> PadData[0]",
+    "local_sub0": "exact tracked Sub0 selector -> 1 -> PadData[1]",
+    "other_actor": "selector -> 0",
+    "network_preservation": "ThinkMode::Network is not modified; local flag gate preserves stock selector 0 outside local co-op"
+  },
+  "evidence": {
+    "move_state_target": "MoveState+0x10 can resolve an explicit actor or pPt/partner",
+    "hardcoded_stock_selector": "0x02591118 pushes 0 before the sGamePad query",
+    "state_effect": "successful query sets MoveState+0x1D, which can transition internal state 2 -> 6",
+    "net_param": "DoorGimmick_NetParam+0x04 is metadata-named mUsePlayer and is serialized as one byte",
+    "pre_input_gate": "uDoorGimmick+0x11B0 is a general gimmick flag, not a Self/P1 identity check"
+  },
+  "diff_vs_v13": {
+    "same_file_size": true,
+    "different_bytes": 49,
+    "ranges": 2,
+    "range_list": [
+      {
+        "start": "0x11c700",
+        "end": "0x11c723",
+        "bytes": 35
+      },
+      {
+        "start": "0xa18518",
+        "end": "0xa18526",
+        "bytes": 14
+      }
+    ]
+  },
+  "lineage_check": "Restoring only the helper cave and 14-byte callsite reproduces v13 byte-for-byte with SHA-256 3df0e1020b58b3ccc7e31a9046a2a3ce9e5230e1764869b517943b4a808838aa.",
+  "limitations": [
+    "Runtime validation is required.",
+    "The exact semantic name of MoveState internal state 6 is not proven; it is terminal/no-op in the audited update.",
+    "This patch addresses only the demonstrated hardcoded Pad 0 query in door_gimmick::MoveState.",
+    "Other interaction families, QTEs, forced cameras, menus and cutscenes remain separate audits."
+  ]
+}
