@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "status": "source implementation tested; live driver and game activation not installed",
+  "base_commit": "b50210223326eceef637a817fd6ddd129c59d6d8",
+  "code_commit": "6e9f326ae26d07d25c076eb104bbc36b310de7de",
+  "source_only": true,
+  "game_executable_generated": false,
+  "gameplay_executed": false,
+  "source_build_sha256": "9124bb92d6c54a047ade47dacc8429221b18f9910b504f0e87718d5151013f69",
+  "implementation": {
+    "backend": "patches/hud_ownership/january_backend.cpp",
+    "native_invocation": ["patches/hud_ownership/january_calls.cpp", "patches/hud_ownership/january_calls.S"],
+    "controller": "patches/hud_ownership/lifecycle.cpp",
+    "widgets": ["Reticle", "MainEquipWin", "MapBaseAndHerb"],
+    "native_membership_function": "0x0326AA90",
+    "sunit_singleton": "0x01C8C27B",
+    "phase_signatures": {"8": "thiscall void with no stack argument", "9": "thiscall void with no stack argument", "11": "thiscall void with draw context argument"},
+    "failure_propagation": "checked init/phase/destructor callbacks; no assumed destruction after refusal"
+  },
+  "validation": {
+    "backend_scenarios": 43, "backend_assertions": 2516,
+    "regression_scenarios": 34, "regression_assertions": 828,
+    "static_witnesses": 69, "local_python_tests": 6, "local_python_skipped": 0,
+    "ci_private_image_test_skipped": true,
+    "ci_run": 36183979550, "ci_jobs_passed": 3,
+    "native_i386_invocations": 30, "native_i386_job": 108232822485,
+    "native_callees": "synthetic, not the game engine",
+    "host_elf32_execution": "not available; runner performed ABI execution"
+  },
+  "required_driver_inputs_not_yet_connected": ["loaded PE identity", "allocation lifetime and exclusive ownership", "game-thread safe points", "render work exclusion", "Session/lifetime/epoch", "manager branch visibility", "actor bridges", "viewport transforms and clipping"],
+  "next_step": "Implement driver admission/scheduling around verified Cockpit/MiniMap phases, construction and teardown; preserve native lists and P1, refuse absent safety evidence.",
+  "documents": ["docs/28-hud-native-registration-and-abi.md", "docs/29-january-hud-native-adapter.md"]
+}

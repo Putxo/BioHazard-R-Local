@@ -1,0 +1,30 @@
+{
+  "status": "PASS_COMPONENT_AND_STATIC_EVIDENCE_ONLY",
+  "code_commit": "6e9f326ae26d07d25c076eb104bbc36b310de7de",
+  "original_sha256_before_and_after": "9124bb92d6c54a047ade47dacc8429221b18f9910b504f0e87718d5151013f69",
+  "backend_tests": {"scenarios": 43, "assertions": 2516, "native_host": "PASS", "asan_ubsan": "PASS", "engine_calls_mocked": true},
+  "previous_lifecycle_regression": {"scenarios": 34, "assertions": 828, "ci_native_and_sanitized": "PASS"},
+  "static_audit": {"witnesses": 69, "local_python_tests": 6, "local_skipped": 0, "ci_skipped": 1, "skip_reason": "private original intentionally not supplied to CI"},
+  "ci": {"run": 36183979550, "jobs_passed": 3, "native_abi_job": 108232822485, "sanitized_backend_job": 108232822870, "previous_routing_run": 36183979372},
+  "abi": {"invocations": 30, "actual_invoker_table": true, "actual_i386_bridges": true, "callees": "synthetic", "engine_code_executed": false, "execution_location": "GitHub Actions Linux i386", "local_host_result": "ELF32 Exec format error; not counted as passed locally"},
+  "gameplay_executed": false,
+  "game_image_generated": false,
+  "production_source_blobs": {
+    "patches/hud_ownership/january_backend.hpp": "bd8358f704b699d41b73da8afa8d3dd8650db3a6",
+    "patches/hud_ownership/january_backend.cpp": "566a8a64e9d1a52d1dbe8635ed46aa843cff3df0",
+    "patches/hud_ownership/january_calls.cpp": "152a8ea453b351b0ac041895de9a4ff8ad208877",
+    "patches/hud_ownership/january_calls.S": "87898e3715cfaff7e0233c90fddf1614def65462",
+    "patches/hud_ownership/lifecycle.hpp": "45ccd1ec0fcbaa2ed3f5208f505f6a90cca4b1ad",
+    "patches/hud_ownership/lifecycle.cpp": "ff0cac46310981988c7db7d502ba43d24b0768f1"
+  },
+  "test_and_audit_blobs": {
+    "tests/hud_ownership/january_fixture.hpp": "dedb9b2000e9deeddf24dbd0581f33d58d794dc0",
+    "tests/hud_ownership/january_tests.cpp": "ac947ffc00329b47d15304718b970c025e9384bf",
+    "tests/hud_ownership/january_abi.cpp": "079952b7da1bcfd5903e734ae83ca958e0044199",
+    "tests/hud_ownership/january_abi.S": "2c2e82dc1ee728e9b06ed4d8f7268fd29d106d6a",
+    "tests/hud_ownership/test_native_audit.py": "bb2f594fff5a635d9511948768633e7e3f9d5373",
+    "scripts/audit_hud_native_ops.py": "8883781c5361822d11165c4297aae4cc59eb4857",
+    ".github/workflows/hud-january-native.yml": "514b4ba322bf006f9459bdebde7c8de4abb51d1d"
+  },
+  "limits": ["Native fixed-address services were not called in the game", "Live admission driver is not implemented", "No installed HUD hooks, full view transforms or clipping", "Quarantined allocations may be retained, not automatically recovered"]
+}
