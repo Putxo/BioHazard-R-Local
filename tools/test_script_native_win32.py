@@ -18,23 +18,22 @@ sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'patches'))
 from build_script_serial_guard import HELPER, HELPER_SHA, HELPER_VA
 from build_local_routing import sha
 
-CODE=0x01C95000; GLOBALS=0x057D9000; OWNER=0x10000000
-ACTOR=0x20000000; RESULT=0x30000000
+GLOBALS=0x057D9000
 ACTIVE=0x057D9188; TRACKER=0x057D9184; VT=0x04DCF41C
 SEEDS={'ebx':0x11223344,'esi':0x55667788,'edi':0x1234FEDC,'ebp':0x76543210}
 
-def bridge():
+def bridge(code_va, helper_va, result_va):
     d=bytearray(b'\x53\x56\x57\x55') # preserve Python's nonvolatiles
     d+=b'\x8B\x4C\x24\x14' # original owner argument -> ECX
     for opcode,name in ((0xBB,'ebx'),(0xBE,'esi'),(0xBF,'edi'),(0xBD,'ebp')):
         d+=bytes([opcode])+struct.pack('<I',SEEDS[name])
-    d+=b'\x89\x25'+struct.pack('<I',RESULT+32) # save exact pre-argument ESP
+    d+=b'\x89\x25'+struct.pack('<I',result_va+32) # save exact pre-argument ESP
     d+=b'\x6A\x00'
-    d+=b'\xE8'+struct.pack('<i',HELPER_VA-(CODE+len(d)+5))
+    d+=b'\xE8'+struct.pack('<i',helper_va-(code_va+len(d)+5))
     # Capture EAX, ECX, EDX and each nonvolatile before restoring anything.
     for reg,off in ((0,0),(1,4),(2,8),(3,12),(6,16),(7,20),(5,24),(4,28)):
-        d+=b'\x89'+bytes([(reg<<3)|5])+struct.pack('<I',RESULT+off)
-    d+=b'\x8B\x25'+struct.pack('<I',RESULT+32)
+        d+=b'\x89'+bytes([(reg<<3)|5])+struct.pack('<I',result_va+off)
+    d+=b'\x8B\x25'+struct.pack('<I',result_va+32)
     d+=b'\x5D\x5F\x5E\x5B\xC2\x04\x00'
     return bytes(d)
 
@@ -57,12 +56,22 @@ def run():
         if not ok:raise RuntimeError(message+f'; WinError={C.get_last_error()}')
     def put(address,value):C.c_uint32.from_address(address).value=value&0xFFFFFFFF
     scenarios=0
+    def allocate(size,address=None):
+        got=k.VirtualAlloc(address,size,0x3000,0x04) # RW; never RWX
+        require(bool(got) and (address is None or got==address),
+                'could not allocate synthetic region '+str(address))
+        regions.append(got)
+        return got
     try:
-        for address,size in ((CODE & ~0xFFFF,0x10000),(GLOBALS & ~0xFFFF,0x10000),(OWNER,0x2000),(ACTOR,0x2000),(RESULT,0x1000)):
-            got=k.VirtualAlloc(address,size,0x3000,0x04) # committed RW, never RWX
-            require(got==address,'could not allocate fixed synthetic region')
-            regions.append(address)
-        body=bridge();C.memmove(CODE,body,len(body));C.memmove(HELPER_VA,HELPER,len(HELPER))
+        # Only the two absolute data references must keep their original address.
+        # Code has only internal relative jumps. Actor/owner pointers are runtime
+        # values. Dynamic allocations avoid Python DLL/heap address collisions.
+        allocate(0x10000,GLOBALS & ~0xFFFF)
+        CODE=allocate(0x1000); OWNER=allocate(0x2000)
+        ACTOR=allocate(0x2000); RESULT=allocate(0x1000)
+        helper_address=CODE+0x340
+        body=bridge(CODE,helper_address,RESULT)
+        C.memmove(CODE,body,len(body));C.memmove(helper_address,HELPER,len(HELPER))
         old=C.c_uint32()
         require(k.VirtualProtect(CODE,0x1000,0x20,C.byref(old)),'protect test code RX')
         require(k.FlushInstructionCache(k.GetCurrentProcess(),CODE,0x1000),'flush test code')
@@ -93,6 +102,8 @@ def run():
         return dict(status='PASS',native_win32_executed=True,gameplay_executed=False,
             engine_code_executed=False,selector_scenarios=scenarios,helper_sha256=HELPER_SHA,
             bridge_sha256=sha(body),python_pointer_bits=32,
+            exact_helper_bytes=True,helper_execution_va=hex(helper_address),
+            globals_at_original_addresses=True,
             checks=['actual EAX','actual ECX','actual EBX/ESI/EDI/EBP','actual ESP cleanup'],
             method='ctypes invokes original test bridge and original leaf selector in synthetic Win32 memory')
     finally:
