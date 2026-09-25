@@ -16,6 +16,7 @@ class T(unittest.TestCase):
   g=(root/'patches/hud_ownership/manager_gateways.S').read_text()
   for x in ('0x02B49DE3','0x02B49E5C','0x02B68724','0x02B687F0','0x5C','0x90','0x30','0x40'):
    self.assertIn(x,s)
-  for x in ('rev_hud_p1_mask_begin','rev_hud_p1_mask_end','rev_hud_mask_exit_cockpit11','rev_hud_mask_exit_minimap11'):
+  for x in ('rev_hud_p1_mask_begin','rev_hud_p1_mask_end','.global rev_hud_mask_exit_\\name',
+            'p1_mask_exit cockpit11, 0x02B49E5C, 0','p1_mask_exit minimap11, 0x02B687F0, 1'):
    self.assertIn(x,g)
 if __name__=='__main__':unittest.main(verbosity=2)
