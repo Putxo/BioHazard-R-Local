@@ -1,0 +1,15 @@
+{
+  "status": "PASS",
+  "native_win32_executed": true,
+  "gameplay_executed": false,
+  "engine_code_executed": false,
+  "selector_scenarios": 596,
+  "helper_sha256": "500a82d8071f5c40ece76397fee1bac97888768a3e9029d52222d4d933eb7896",
+  "bridge_sha256": "e109b67450ad02fe1a0b6174804639c4a9cb8b7ad61cda58f821b0667cd27747",
+  "python_pointer_bits": 32,
+  "exact_helper_bytes": true,
+  "helper_execution_va": "0x34a0340",
+  "globals_at_original_addresses": true,
+  "checks": ["actual EAX", "actual ECX", "actual EBX/ESI/EDI/EBP", "actual ESP cleanup"],
+  "method": "ctypes invokes original test bridge and original leaf selector in synthetic Win32 memory"
+}

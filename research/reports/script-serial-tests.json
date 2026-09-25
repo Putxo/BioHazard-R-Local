@@ -1,0 +1,13 @@
+{
+  "status": "PASS",
+  "tests_run": 9,
+  "skipped": 0,
+  "failures": 0,
+  "errors": 0,
+  "selector_scenarios": 1038,
+  "image_assertions": 36,
+  "helper_sha256": "500a82d8071f5c40ece76397fee1bac97888768a3e9029d52222d4d933eb7896",
+  "gameplay_executed": false,
+  "native_win32_executed": false,
+  "method": "bounded instruction interpreter of the embedded/extracted leaf; no engine calls executed"
+}

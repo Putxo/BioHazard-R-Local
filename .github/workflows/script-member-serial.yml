@@ -1,0 +1,37 @@
+name: Script member serial components
+on:
+  push:
+    branches: [research/script-member-serial-validation]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  selector:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            arch: x64
+          - os: windows-latest
+            arch: x86
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          architecture: ${{ matrix.arch }}
+      - name: Linux assembly and bounded bytecode tests, no game
+        if: runner.os == 'Linux'
+        run: python patches/test_script_serial_guard.py --report script-serial-ci.json
+      - name: Native Win32 selector and register/stack ABI, no game
+        if: runner.os == 'Windows'
+        run: python tools/test_script_native_win32.py --report script-serial-ci.json
+      - name: Windows filesystem safety
+        if: runner.os == 'Windows'
+        run: python -c "import sys,unittest; sys.path.insert(0,'patches'); from test_script_serial_guard import CliTests; r=unittest.TextTestRunner().run(unittest.defaultTestLoader.loadTestsFromTestCase(CliTests)); sys.exit(not r.wasSuccessful())"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: script-serial-${{ matrix.os }}
+          path: script-serial-ci.json
