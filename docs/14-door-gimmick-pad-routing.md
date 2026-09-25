@@ -399,3 +399,153 @@ Antes de declarar v14 canónica se exige:
 4. comprobar reversibilidad exacta a v13;
 5. documentar diff/rangos y SHA;
 6. dejar claro que sigue pendiente runtime.
+
+
+## 13. Construcción y verificación estática de v14
+
+Base exacta:
+
+```text
+v13 SYMMETRIC AMMO RELIEF
+SHA-256
+3df0e1020b58b3ccc7e31a9046a2a3ce9e5230e1764869b517943b4a808838aa
+```
+
+Output:
+
+```text
+BioRevHD 30-Enero-2013 LOCAL COOP v14 DOOR GIMMICK PAD2.exe
+SHA-256
+73fe1255697c47a624025ba40b33bab8df5812e76021bdc2d9acdeec3daf56ea
+```
+
+Helper:
+
+```text
+VA      0x01C95300
+size    35 bytes
+SHA-256 0c83033764b4760949441b145486edf44807acfbf6af352f1f31198bc2301ac3
+```
+
+Callsite:
+
+```text
+0x02591118
+```
+
+Original:
+
+```hex
+6a00 e8d5a66fff 8bc8 e82d3e60ff
+```
+
+v14:
+
+```hex
+e8e34170ff 909090909090909090
+```
+
+El helper implementa:
+
+```text
+gLocalCoopActive == 0
+    -> selector 0 stock
+
+gLocalCoopActive != 0
+    -> selector = actorSelector([MoveState::slot8 caller ebp-0x20])
+
+selector
+    -> get sGamePad
+    -> 0x02DB0CF0
+```
+
+### Verificación
+
+```text
+same PE size: yes
+file size: 60,748,800 bytes
+different bytes vs v13: 49
+diff ranges: 2
+```
+
+Rangos exactos:
+
+```text
+file 0x0011C700..0x0011C722  helper, 35 bytes
+file 0x00A18518..0x00A18525  callsite, 14 bytes
+```
+
+Una auditoría independiente del diff confirmó que no existe ningún otro byte modificado.
+
+Al restaurar solo:
+
+- los 35 bytes de cave a `CC`;
+- los 14 bytes originales del callsite;
+
+se recupera v13 **byte por byte** y vuelve a producir exactamente:
+
+```text
+3df0e1020b58b3ccc7e31a9046a2a3ce9e5230e1764869b517943b4a808838aa
+```
+
+PE sigue siendo válido:
+
+```text
+MZ
+PE\0\0
+PE32 i386
+```
+
+## 14. Auditoría global de input de door_gimmick
+
+Se resolvieron todas las llamadas del bloque `door_gimmick` hacia thunks que terminan en el subsistema `0x02DAxxxx..0x02DBxxxx`.
+
+Coincidencias:
+
+```text
+0x025900B4 -> 0x02DA3050   local/member index
+0x02590DD3 -> 0x02DA3840   actor lookup
+0x02590FA0 -> 0x02DA3840   actor lookup
+0x02591121 -> 0x02DB0CF0   sGamePad input
+0x0259681D -> 0x02DA3840   actor lookup
+0x02596C02 -> 0x02DA3840   actor lookup
+0x02596F3F -> 0x02DA3840   actor lookup
+```
+
+Solo:
+
+```text
+0x02591121
+```
+
+es una consulta real de input.
+
+Por tanto no existe una segunda lectura de mando oculta en esta familia que quede fuera del v14.
+
+## 15. Estado de v14
+
+**v14 pasa a ser la base canónica estática actual.**
+
+Cobertura añadida sobre v13:
+
+- mantiene `uDoor2pBase` sin parche porque su ruta nativa ya maneja Self/partner;
+- corrige el único Pad 0 hardcodeado demostrado en `door_gimmick::MoveState`;
+- preserva stock/online mediante `gLocalCoopActive`;
+- P1 conserva PadData[0];
+- exact Sub0 local usa PadData[1].
+
+Estado:
+
+```text
+STATICALLY VERIFIED ONLY — runtime pendiente
+```
+
+Archivos:
+
+```text
+patches/build_v14_door_gimmick_pad2.py
+research/patches/door_gimmick_pad_v14.S
+research/manifests/local-coop-v14-door-gimmick-pad2.json
+```
+
+Siguiente auditoría: otras interacciones/QTE que puedan contener selectores de input hardcodeados a miembro 0 o dependencias de un único jugador local.
