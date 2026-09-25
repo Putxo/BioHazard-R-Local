@@ -1,0 +1,33 @@
+{
+  "base": "BioRevHD 30-Enero-2013 LOCAL COOP v13 SYMMETRIC AMMO RELIEF.exe",
+  "base_sha256": "3df0e1020b58b3ccc7e31a9046a2a3ce9e5230e1764869b517943b4a808838aa",
+  "output": "BioRevHD 30-Enero-2013 LOCAL COOP v14 DOOR WAIT PAD2.exe",
+  "output_sha256": "5ae917d141aed577d0cb111e8c17eb2efe64d6940a52d7cc00ad1f3faff74e49",
+  "status": "STATICALLY VERIFIED ONLY - gameplay not executed in this environment",
+  "purpose": "Restore the existing player/pad selector in the one Door2p WaitState sGamePad boolean getter omitted by v7.",
+  "patches": [
+    {
+      "va": "0x02DB0DF5",
+      "old": "8b9170090000",
+      "new": "8b5508909090"
+    },
+    {
+      "va": "0x02DB0DFF",
+      "old": "8b8870090000",
+      "new": "8b4d08909090"
+    }
+  ],
+  "evidence": {
+    "wait_state": "cDoor2pBaseWaitState_PL uses selector 0x01C6C746 -> 0x027A27B0 and calls both 0x02DB0CF0 and 0x02DB0DC0",
+    "v7_coverage": "v7 already restores 0x02DB0D25/0x02DB0D2F inside 0x02DB0CF0 but did not include 0x02DB0DF5/0x02DB0DFF inside 0x02DB0DC0",
+    "v13_check": "v13 contains [ebp+8] at 0x02DB0D25/2F and still contains mStartPadNo at 0x02DB0DF5/DFF",
+    "caller_scope": "0x02DB0DC0 has one direct caller through thunk 0x01C0DC6E: 0x025747E2"
+  },
+  "diff_vs_v13": {
+    "same_file_size": true,
+    "different_bytes": 10,
+    "ranges": 2
+  },
+  "lineage_check": "Restoring only the two changed loads reproduces v13 SHA-256 exactly.",
+  "runtime_validated": false
+}
