@@ -2,9 +2,9 @@ name: Local routing source tests
 on:
   push:
     branches: [main, 'research/**']
-    paths: ['patches/local_routing/**', 'patches/build_local_routing.py', 'tests/**', '.github/workflows/local-routing-tests.yml']
+    paths: ['patches/local_routing/**', 'patches/build_local_routing.py', 'tests/**', 'tools/runtime_probe.py', '.github/workflows/local-routing-tests.yml']
   pull_request:
-    paths: ['patches/local_routing/**', 'patches/build_local_routing.py', 'tests/**', '.github/workflows/local-routing-tests.yml']
+    paths: ['patches/local_routing/**', 'patches/build_local_routing.py', 'tests/**', 'tools/runtime_probe.py', '.github/workflows/local-routing-tests.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -36,3 +36,23 @@ jobs:
             i386) python3 tests/run_without_game.py --i386-host ;;
             *) exit 2 ;;
           esac
+          python3 tests/test_runtime_probe.py
+  windows-source-tests:
+    name: windows-x86-mocks-and-readonly-probe
+    runs-on: windows-2022
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Run sampler and real kernel32 read of the test process only
+        run: python tests/test_runtime_probe.py
+      - name: Compile and run actor helper source as Windows x86 with engine mocks
+        shell: cmd
+        run: |
+          for /f "usebackq tokens=*" %%i in (`"C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe" -latest -property installationPath`) do set VS=%%i
+          call "%VS%\Common7\Tools\VsDevCmd.bat" -arch=x86 -host_arch=x64
+          if errorlevel 1 exit /b 1
+          clang-cl /nologo /std:c++17 /O2 /EHsc /clang:--target=i686-pc-windows-msvc tests\local_routing_host.cpp /Fe:host-tests.exe
+          if errorlevel 1 exit /b 1
+          host-tests.exe
