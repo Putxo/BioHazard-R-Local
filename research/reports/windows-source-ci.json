@@ -1,0 +1,15 @@
+{
+  "run_id": 36122601817,
+  "commit": "342c3485115178a5278af15c0ee994236306633e",
+  "status": "completed",
+  "conclusion": "success",
+  "successful_jobs": ["source-native", "source-sanitized", "source-i386", "windows-x86-mocks-and-readonly-probe"],
+  "windows_job_id": 108031353979,
+  "windows_compilation": "clang-cl /std:c++17 /O2 /EHsc /clang:--target=i686-pc-windows-msvc tests/local_routing_host.cpp",
+  "windows_host_assertions": 204,
+  "windows_probe_test_cases": 12,
+  "actual_windows_api_read": "buffer in the test process itself only",
+  "gameplay_executed": false,
+  "game_binary_uploaded": false,
+  "note": "The host test keeps the legacy output field win32_abi_executed:false; no engine ABI execution is certified. The job log independently shows Windows x86 source-test execution with mocked engine services."
+}

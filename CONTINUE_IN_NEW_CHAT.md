@@ -1,82 +1,13 @@
-# Prompt listo para pegar en un chat nuevo
+# Prompt de continuación
 
-Continúa la investigación de cooperativo local de **Resident Evil Revelations 1** desde el repositorio:
+Continúa exclusivamente Putxo/BioHazard-R-Local. Lee CURRENT_STATUS.md, docs/20-local-routing-built-and-tested.md y research/current_state.json; verifica main, ramas y PRs antes de escribir. No rehagas pickup desde v12 ni vuelvas a 0x049A8023.
 
-`Putxo/BioHazard-R-Local`
+El candidato LOCAL ROUTING EXPERIMENTAL construido es SHA-256 0c019d43b92c0092fa458abcf7e2990f8783895eb2bd8181f6e9f130b697d378, 60.755.456 bytes. Base inmediata owner-fix e3c5c188782309a1683d27ade0ce9e38cf1c40219de9fb5d684b3d6fda2e285a. El constructor y el módulo están en patches/build_local_routing.py y patches/local_routing/.
 
-Antes de hacer ningún cambio:
+Ya se implementaron reenlace del mismo Sub0 local, cadena sensor/actor/serial/callback de puertas gimmick, guards del selector, cuatro montajes de ActionCommand y selección recíproca en la ruta de ayuda. Hay pruebas locales de lógica, puentes e integridad, y CI de fuentes con mocks en Linux i386 y Windows x86. No se ejecutó el juego y no está implementado el cooperativo completo.
 
-1. lee completo `START_HERE_NEW_CHAT.md`;
-2. lee `research/current_state.json`;
-3. lee `docs/14-door-gimmick-pad-routing.md`;
-4. consulta `docs/13-door-2p.md`, `docs/02-investigation-log.md` y `docs/03-hypotheses-and-discarded-paths.md` para trazabilidad;
-5. no rehagas trabajo ya cerrado.
+Pendientes concretos: ownership de selectores de guion cFsmAction 0x02976C30, cFsmActionPcs 0x029FF600 y uPcsInput 0x02DEE8D0; HUD/pausa/inventarios por jugador; muerte/checkpoints/cutscenes; creación y persistencia de P2 en escenas sin partner; prueba de orden de callbacks y vida de bindings en el motor real. No cambiar a ciegas todos los ceros ni reemplazar Self o el serial global.
 
-La **base canónica actual es v14 DOOR GIMMICK PAD2**:
+El probe tools/runtime_probe.py es de solo lectura y está limitado por hash al candidato. No hay todavía observaciones de una partida real con él. No llamar a sus tests con fixtures una validación de gameplay.
 
-```text
-BioRevHD 30-Enero-2013 LOCAL COOP v14 DOOR GIMMICK PAD2.exe
-SHA-256:
-73fe1255697c47a624025ba40b33bab8df5812e76021bdc2d9acdeec3daf56ea
-```
-
-Base v13:
-
-```text
-3df0e1020b58b3ccc7e31a9046a2a3ce9e5230e1764869b517943b4a808838aa
-```
-
-Está **verificada estáticamente, no runtime**.
-
-No vuelvas a tratar como pendientes:
-
-- `0x049A8023`: DTI de `uItem`;
-- pickup básico de Sub0: v11/v12;
-- Pad 2 del ActionCommand de pickup: v12;
-- ammo relief Coop: v13;
-- auditoría base de `uDoor2pBase`: compatible estáticamente, sin parche;
-- `door_gimmick::MoveState` Pad 0 hardcodeado: corregido por v14 en `0x02591118`, helper `0x01C95300`.
-
-v14 preserva stock/online:
-
-```text
-gLocalCoopActive == 0 -> selector 0 original
-gLocalCoopActive != 0 -> selector del actor
-P1 -> 0
-exact Sub0 -> 1
-```
-
-Diff v14 vs v13:
-
-```text
-49 bytes
-2 rangos
-mismo tamaño PE
-reversible byte por byte
-```
-
-La siguiente investigación exacta es **otras interacciones/QTE**.
-
-Debes:
-
-- buscar selectores de pad/member `0` hardcodeados;
-- buscar APIs que reciban selector pero sigan usando `mStartPadNo`;
-- separar usos de `localIndex` de red/presentación de los que afecten gameplay;
-- buscar gates `pl` que excluyan al exact Sub0;
-- no tocar globalmente el índice local;
-- no secuestrar `ThinkMode::Network(3)`;
-- preservar stock/online cuando `gLocalCoopActive=0`;
-- crear v15 solo si se demuestra un bloqueo concreto;
-- persistir cada hallazgo/corrección en GitHub antes de avanzar demasiado.
-
-No confundas versiones históricas. La cadena canónica reciente es:
-
-```text
-v9 -> v10 -> v11 canonical -> v12 -> v13 -> v14
-```
-
-v11 canónica:
-
-`2c69c5f16626dc7478a6221c2bac98ed19f5b37dcf7991fc78f744f35f192d69`
-
-Toda la investigación procede únicamente del chat original documentado en el repositorio.
+Preserva Network y trabajo paralelo. Usa los EXE solo localmente, jamás los subas a GitHub. Publica código, tests, evidencia y rectificaciones; no prometas una versión completa basándote únicamente en hashes o CI.
