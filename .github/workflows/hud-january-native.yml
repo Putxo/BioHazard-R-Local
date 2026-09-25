@@ -1,0 +1,44 @@
+name: January HUD native operations (source only)
+on:
+  push:
+    branches: [research/hud-january-native-ops]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        mode: [native, sanitized]
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Controller and January adapter, synthetic engine calls
+        shell: bash
+        run: |
+          FLAGS="-std=c++17 -O1 -g -Wall -Wextra -Werror"
+          if [ "${{ matrix.mode }}" = sanitized ]; then FLAGS="$FLAGS -fsanitize=address,undefined -fno-omit-frame-pointer"; fi
+          g++ $FLAGS -Ipatches/hud_ownership patches/hud_ownership/{ownership,lifecycle,january_backend,january_calls}.cpp tests/hud_ownership/january_tests.cpp -o "$RUNNER_TEMP/january-tests"
+          "$RUNNER_TEMP/january-tests"
+          g++ $FLAGS -Ipatches/hud_ownership patches/hud_ownership/{ownership,lifecycle}.cpp tests/hud_ownership/lifecycle_tests.cpp -o "$RUNNER_TEMP/lifecycle-regression"
+          "$RUNNER_TEMP/lifecycle-regression"
+      - name: Read-only audit tests; private original test explicitly skipped
+        run: python tests/hud_ownership/test_native_audit.py
+      - name: Compile freestanding i386 backend sources without a game image
+        run: |
+          for f in patches/hud_ownership/{ownership,lifecycle,january_backend,january_calls}.cpp; do
+            g++ -m32 -std=c++17 -Wall -Wextra -Werror -ffreestanding -fno-exceptions -fno-rtti -fsyntax-only "$f"
+          done
+  native-call-abi:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Execute production invoker table and bridges against synthetic i386 callees
+        run: |
+          FLAGS="-m32 -std=c++17 -O2 -Wall -Wextra -Werror -ffreestanding -fno-exceptions -fno-rtti -fno-stack-protector -fno-pie"
+          g++ $FLAGS -Ipatches/hud_ownership -c patches/hud_ownership/january_calls.cpp -o "$RUNNER_TEMP/native-calls.o"
+          g++ $FLAGS -Ipatches/hud_ownership -c tests/hud_ownership/january_abi.cpp -o "$RUNNER_TEMP/native-cases.o"
+          gcc -m32 -c patches/hud_ownership/january_calls.S -o "$RUNNER_TEMP/native-bridges.o"
+          gcc -m32 -c tests/hud_ownership/january_abi.S -o "$RUNNER_TEMP/native-start.o"
+          ld -m elf_i386 "$RUNNER_TEMP/native-start.o" "$RUNNER_TEMP/native-cases.o" "$RUNNER_TEMP/native-calls.o" "$RUNNER_TEMP/native-bridges.o" -o "$RUNNER_TEMP/native-abi"
+          "$RUNNER_TEMP/native-abi"

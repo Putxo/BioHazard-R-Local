@@ -28,9 +28,15 @@ struct Backend {
     void (*initialize)(void*, u32, WidgetKind) noexcept;
     // One scalar destructor(flag=1); never individually free root or nodes.
     void (*destroy)(void*, u32, WidgetKind) noexcept;
-    // Forward exactly one native virtual phase: 8, 9 or 11, preserving context.
+    // Forward one phase: slots 8/9 have no stack args; slot 11 gets context.
     void (*phase)(void*, u32, WidgetKind, u32, u32) noexcept;
     bool (*write_word)(void*, u32, u32) noexcept;
+    // Optional checked operations take precedence over legacy void callbacks.
+    // These return adapter admission/postcondition success, NOT engine EAX.
+    // On refused destruction the object remains owned and quarantined.
+    bool (*checked_initialize)(void*, u32, WidgetKind) noexcept = nullptr;
+    bool (*checked_destroy)(void*, u32, WidgetKind) noexcept = nullptr;
+    bool (*checked_phase)(void*, u32, WidgetKind, u32, u32) noexcept = nullptr;
 };
 enum class LifeState : u32 { Empty, Preparing, Prepared, Live, Draining, Quarantined };
 enum class LifeError : u32 { None, Busy, UnsafePoint, BadInput, Construct,

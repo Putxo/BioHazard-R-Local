@@ -54,7 +54,9 @@ bool disjoint_trees(const GuiTree& a, const GuiTree& b) {
 }
 bool Lifecycle::valid_backend() const {
     return backend_.memory.word && backend_.safe_point && backend_.construct &&
-        backend_.initialize && backend_.destroy && backend_.phase && backend_.write_word;
+        (backend_.initialize || backend_.checked_initialize) &&
+        (backend_.destroy || backend_.checked_destroy) &&
+        (backend_.phase || backend_.checked_phase) && backend_.write_word;
 }
 bool Lifecycle::live_routes() const {
     for (u32 i = 0; i < 3; ++i) {
@@ -139,12 +141,15 @@ u32 Lifecycle::prepare(const Session& s, const u32 p[2], const u32 originals[3])
             observed_vtable != kind_info(kind(i))->vtable) {
             quarantine_[i] = true; fail(LifeError::BadInput); break;
         }
-        backend_.initialize(backend_.memory.context, unit, kind(i));
+        bool initialized = true;
+        if (backend_.checked_initialize)
+            initialized = backend_.checked_initialize(backend_.memory.context, unit, kind(i));
+        else backend_.initialize(backend_.memory.context, unit, kind(i));
         GuiTree g{};
         const bool captured = capture_tree(backend_.memory, unit, kind(i), &g);
         if (captured) trees_[i] = g;
         if (state_ != LifeState::Preparing) break;
-        if (!captured) { fail(LifeError::Resources); break; }
+        if (!initialized || !captured) { fail(LifeError::Resources); break; }
         widgets_[i] = registry_.bind_widget(managers_[i == 2 ? 1 : 0], unit,
                          kind_info(kind(i))->vtable, kind(i), 1, s.sub0, 1);
         if (!widgets_[i].valid()) { fail(LifeError::Registration); break; }
@@ -193,7 +198,14 @@ bool Lifecycle::collect() {
     for (u32 i = 3; i-- > 0;) {
         if (units_[i] && !can_destroy(i)) quarantine_[i] = true;
         if (quarantine_[i]) { quarantine = true; continue; }
-        if (units_[i]) { backend_.destroy(backend_.memory.context, units_[i], kind(i)); units_[i] = 0; }
+        if (units_[i]) {
+            bool destroyed = true;
+            if (backend_.checked_destroy)
+                destroyed = backend_.checked_destroy(backend_.memory.context, units_[i], kind(i));
+            else backend_.destroy(backend_.memory.context, units_[i], kind(i));
+            if (!destroyed) { quarantine_[i] = quarantine = true; continue; }
+            units_[i] = 0;
+        }
     }
     if (quarantine) { state_ = LifeState::Quarantined; busy_ = false; return false; }
     for (auto& t : widgets_) { if (t.valid()) registry_.retire_widget(t); t = {}; }
@@ -220,12 +232,16 @@ bool Lifecycle::dispatch(u32 ticket, const Session& current, u32 frame, u32 phas
         if (!field(backend_.memory, units_[i], 0xC, old)) { fail(LifeError::Memory); break; }
         scoped = registry_.flags_for(units_[i], kind(i), old);
         if (!backend_.write_word(backend_.memory.context, units_[i] + 0xC, scoped)) { fail(LifeError::Memory); break; }
-        backend_.phase(backend_.memory.context, units_[i], kind(i), phase, context);
+        bool dispatched = true;
+        if (backend_.checked_phase)
+            dispatched = backend_.checked_phase(backend_.memory.context, units_[i], kind(i), phase, context);
+        else backend_.phase(backend_.memory.context, units_[i], kind(i), phase, context);
         // stop() cannot free while busy. Preserve unrelated bits changed by the
         // engine, restoring only the original ten-bit view mask.
         if (!field(backend_.memory, units_[i], 0xC, now) ||
             !replace_draw_view(now, draw_view(old), &now) ||
             !backend_.write_word(backend_.memory.context, units_[i] + 0xC, now)) { fail(LifeError::Memory); break; }
+        if (!dispatched) { fail(LifeError::BadInput); break; }
     }
     busy_ = false;
     return state_ == LifeState::Live;
