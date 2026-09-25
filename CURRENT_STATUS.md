@@ -1,57 +1,39 @@
-# Estado actual — continuación del 25 de septiembre de 2026
+# Estado actual — HUD por instancia, continuación de solo fuentes
 
-**Implementación parcial. El cooperativo local completo todavía no está terminado ni validado jugando.** No confundir ejecución nativa de un helper aislado con ejecución del juego.
+25 de septiembre de 2026. **No se ha generado un nuevo EXE del juego, instalador ni ZIP.** La entrega vigente es código, pruebas y evidencia en GitHub según AGENTS.md.
 
-## Último candidato construido
+## Avance actual
 
-```
-SCRIPT SERIAL GUARD EXPERIMENTAL
-SHA-256 71f5e70dc19c334d303ee29a686d65a72cd18b0c87b98472170bff961cb048f4
-Tamaño 60.755.456 bytes
-Base inmediata 0c019d43b92c0092fa458abcf7e2990f8783895eb2bd8181f6e9f130b697d378
-Original enero 9124bb92d6c54a047ade47dacc8429221b18f9910b504f0e87718d5151013f69
-```
+Sobre la base consolidada `5118850441bf70ad8d6da2bd7d7c6505ab7bd234` se ha implementado `patches/hud_ownership/`: asociación explícita de cada widget a su clase, manager, actor vivo, serial/lifetime, miembro y vista; invalidación persistente al perder su vínculo; tokens generacionales para no confundir instancias reutilizadas; cálculo acotado de mDrawView preservando los demás bits.
 
-Esta continuación conserva el módulo LOCAL ROUTING EXPERIMENTAL, reproducido byte por byte desde sus fuentes. Añade una selección de miembro protegida a dos callbacks de guion. Solo el owner cFsmActionPcsSub exacto, con Sub0 local en Pad y contexto/serial concordantes, obtiene el miembro 1. Los demás casos conservan 0.
+Hay tres puentes i386 para las consultas Self de mira, equipo y mapa/hierbas. Conservan el frame, ECX y el argumento original del finder; en P2 inválido devuelven nulo en vez de adoptar P1. Son **fuentes no instaladas**. No se ha creado ni mostrado una segunda instancia dentro del juego.
 
-Fuentes y evidencia: [docs/22-script-serial-validation.md](docs/22-script-serial-validation.md), `patches/build_script_serial_guard.py` y `research/patches/script_member_serial_guard.S`.
+La evidencia nueva está en [docs/24-hud-lifetime-and-view-filter.md](docs/24-hud-lifetime-and-view-filter.md) y [docs/25-hud-ownership-source-component.md](docs/25-hud-ownership-source-component.md). Contrato y precondiciones: [patches/hud_ownership/README.md](patches/hud_ownership/README.md).
 
-## Qué se conserva y qué cambia
+## Hechos nuevos que no deben perderse
 
-Se conservan los cambios anteriores de re-enlace de Sub0, cadena de sensor/actor/serial en puertas gimmick, callback real de pickup, selección recíproca de ayuda y cuatro montajes de ActionCommand. Esta continuación no los implementa otra vez.
+El cockpit reconstruye una lista fija de 21 slots y libera widgets por slots explícitos. No basta añadir clones a su enlace final. La mira obtiene Self en slot9, no en slot8.
 
-Se añaden los callbacks `0x02976C30` y `0x029FF600` para la subclase comprobada. El cambio es de 92 bytes efectivos, incluido el checksum; se preservan `.lcfix/.lcdata` y todo el resto del archivo. La reversión es exacta.
+Mapa/hierbas pertenece a uMiniMapManager y NO hereda uBioCockpitGUI. Su pointer +40 es alias del primer elemento del array +30; no es otro objeto a liberar. Sus campos +290/+294 no tienen el layout de next/ForceSkip del cockpit.
 
-El constructor paralelo anterior `build_pcs_script_pad.py` se conserva como histórico: no es el candidato con validación de serial descrito aquí.
+Ambos gestores usan el filtro nativo mDrawView, diez bits en cUnit+0C. Se ha demostrado por metadata, getter, setter y consumidores. Esto no prueba transformación, escalado ni clipping correctos de las dos mitades.
 
-## Pruebas y distribución
+## Pruebas
 
-Nueve tests locales sin omisiones, 1.038 escenarios del intérprete limitado y 36 comprobaciones con imágenes reales. Windows x86 ejecutó los 72 bytes exactos del helper en 596 escenarios, comprobando registros y pila, sin funciones del motor. Linux y Windows pasaron la CI de run `36127817884`, commit `79e86fc19e8494ff0865665ed1e7fb4d34e0afcd`.
+El componente pasó nueve grupos C++ y UBSan; la mayoría de las aserciones cubren exhaustivamente las 1.024 máscaras de vista, no escenas de campaña. La auditoría de solo lectura pasó 94 comprobaciones del original y cinco tests locales. El original sigue intacto.
 
-`tools/portable_script_patch.py` permite generar y aplicar el manifiesto distribuido desde el EXE original, sin compiladores. La aplicación completa reprodujo el candidato exacto y rechazó ocho casos negativos. Los binarios permanecen fuera de GitHub.
+Los tres bridges se ejecutaron con el registro real en 16 escenarios i386 en GitHub Actions, usando un finder del motor simulado. Run `36176901629`, commit `0dc413931f21b192fb9f1fe37d5630e693824d53`: registry y bridges-i386 correctos. No se ejecutaron funciones del motor ni gameplay. La prueba privada de imagen no se sube a CI.
 
-## Punto exacto pendiente
+## Continuación exacta
 
-La auditoría de [HUD de hierbas](docs/23-herb-hud-owner-audit.md) identifica `uGUI_MapBaseAndHerb::update 0x02B61D60`: busca Self y actualiza su contador de instancia `+0x294` desde el pack del actor. Son 25 comprobaciones estáticas; NO es un HUD 2P implementado. La clase Blur no representa al jugador 2.
+Seguir la inicialización de recursos `0x02B402F0` (mira), `0x02B3B280` (equipo), `0x02B61A70` (mapa/hierbas) y el registro por grupos. Resolver identificadores compartidos y callbacks antes de crear/publicar las instancias de P2. Después conectar lifecycle y dispatch, aplicar/restaurar el filtro por vista y verificar las transformaciones de GUI. No reemplazar Self globalmente ni introducir mapa/hierbas en una lista que usa otro layout.
 
-Continuar por creación/lifetime y enlace actor/viewport de las instancias HUD; no cambiar Self a P2 globalmente ni duplicar el mismo contador. `uPcsInput::0x02DEE8D0` sigue pendiente de ownership demostrado. Tampoco están completos pausa/inventario por jugador, muerte/checkpoints/cutscenes, escenas sin partner ni la validación del orden real de callbacks y render/controles en campaña.
+El adaptador que suministra Session/Actor todavía debe implementarse: valida vida real y serial, incrementa lifetime/epoch en transiciones y mantiene las llamadas en el hilo del juego. El registro no puede convertir por sí solo un puntero liberado en seguro.
 
-## Rectificaciones preservadas
+## Trabajo anterior preservado
 
-v12 había modificado el callback de uObjModel en vez del de uItem; documentos 17/18 lo corrigen. v14 solo corregía una consulta final de puerta; el módulo posterior añade selección/serial. MainEquipWin/SubEquipWin significan equipo principal/secundario, no P1/P2. No alterar Network ni el serial/Self/GameMode global.
+No se han cambiado los parches previos de input, re-enlace, pickup, puertas, ayuda ni guiones. El último hash de imagen construido anteriormente sigue siendo `71f5e70dc19c334d303ee29a686d65a72cd18b0c87b98472170bff961cb048f4`; **esta continuación no genera otra imagen ni instala este módulo sobre ella**.
 
-El estado anterior se conserva íntegro en `docs/history/CURRENT_STATUS_before_script_serial.md`.
+El estado anterior se conserva íntegro en [docs/history/CURRENT_STATUS-before-hud-ownership.md](docs/history/CURRENT_STATUS-before-hud-ownership.md). `research/current_state.json` conserva los datos de esa implementación previa; para el nuevo componente consultar `research/hud_ownership_state.json`.
 
-## Consolidación de las dos continuaciones, sin aplicar dos veces el parche
-
-Se han reunido los cambios de `fc8211a20ac570dadff57ed304a3dec9b6a88ce5` y la continuación independiente `0e4be9db4c2fa4362dfa627918f029adbaaa5dab`. Ambos constructores actuales generan exactamente el mismo candidato `71f5e70d...`. **`build_script_member.py` y `build_script_serial_guard.py` son alternativas, no pasos consecutivos.** La primera salida independiente `a7abf154...` queda histórica y no se distribuye como actual.
-
-La continuación independiente añade 16 tests locales con imágenes, 2.592 combinaciones de guards, pruebas de ABI ejecutadas en Linux i386 y un instalador acumulativo reversible. CI de su código: commit `2affdb8d5c9bc4022c69fad87eb0d20c31cd27d6`, run `36127918860`, dos jobs correctos. Esas cifras no se suman a las de la otra suite para fingir cobertura de gameplay. Evidencia en [docs/script-member-validation.md](docs/script-member-validation.md).
-
-También añade 29 comprobaciones de RTTI/llamadas en [docs/gui-and-scheduler-ownership.md](docs/gui-and-scheduler-ownership.md): uPcsInput tiene padre `uScheduler` (DTI `0x0579963C`), no un jugador demostrado. Mira, equipo, mapa/hierbas y pausa contienen búsquedas de Self. Se identificó `uCockpitManagerMain::0x02B48510`, creación y slot de mira `+0x90`; continuar por `0x02B492D0 / 0x02B49A60 / 0x02B49DA0` y asociación de cada widget a actor y viewport.
-
-`research/current_state.json` está actualizado con esta continuidad, conservando los datos de la implementación previa. Las versiones íntegras de los dos estados antes de consolidarlos quedan en `docs/history/CURRENT_STATUS-independent-before-consolidation.md` y `CURRENT_STATUS-parallel-before-consolidation.md`.
-
-El paquete local de `patches/portable_script_member/apply.py` contiene el payload de SHA `deef32213898d607995c41b2986e5de4b864da4401c8763a6361fd68513d528d`; su generador está en el repositorio. Es una segunda receta reversible desde el original y no debe mezclarse con el formato de `tools/portable_script_patch.py`.
-
-**No se ha ejecutado Resident Evil Revelations. Siguen abiertas implementaciones de interfaz, transiciones completas y escenas sin compañero; no falta únicamente probar el juego.**
+El HUD/menú completo por jugador, scheduler compartido, muerte/checkpoints/cutscenes, escenas sin compañero y la validación conjunta en campaña siguen abiertos. No falta únicamente probar; quedan esas integraciones e implementaciones.

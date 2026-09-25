@@ -6,6 +6,7 @@ on:
     paths:
       - 'patches/hud_ownership/**'
       - 'tests/hud_ownership/**'
+      - 'scripts/audit_hud_lifetime.py'
       - '.github/workflows/hud-ownership.yml'
 permissions:
   contents: read
@@ -18,6 +19,8 @@ jobs:
         run: |
           g++ -std=c++17 -O2 -Wall -Wextra -Werror -pedantic -fsanitize=undefined -fno-sanitize-recover=all -Ipatches/hud_ownership patches/hud_ownership/ownership.cpp tests/hud_ownership/registry_tests.cpp -o "$RUNNER_TEMP/hud-registry"
           "$RUNNER_TEMP/hud-registry"
+      - name: Read-only auditor refusal tests, no game image supplied
+        run: python tests/hud_ownership/test_audit.py
   bridges-i386:
     runs-on: ubuntu-latest
     steps:

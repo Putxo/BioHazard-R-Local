@@ -1,0 +1,17 @@
+{
+  "status": "SOURCE_COMPONENT_TESTED_NOT_INSTALLED",
+  "base_commit": "5118850441bf70ad8d6da2bd7d7c6505ab7bd234",
+  "source_directory": "patches/hud_ownership",
+  "documents": ["docs/24-hud-lifetime-and-view-filter.md", "docs/25-hud-ownership-source-component.md"],
+  "manager_classes": ["uCockpitManagerMain", "uMiniMapManager"],
+  "widget_classes": ["uGUI_Reticle", "uGUI_MainEquipWin", "uGUI_MapBaseAndHerb"],
+  "source_features": ["exact type and manager ownership", "actor serial/lifetime and session epoch", "latched invalidation", "generation tokens", "stock/local/hidden routes", "preserved packed draw-view flags", "three caller-specific i386 Self bridges"],
+  "new_game_exe_generated": false,
+  "gameplay_executed": false,
+  "hooks_installed": false,
+  "duplicated_widgets_created": false,
+  "viewport_coordinates_implemented": false,
+  "engine_lifecycle_adapter_implemented": false,
+  "next_functions": ["0x02B402F0", "0x02B3B280", "0x02B61A70"],
+  "next": "Verify resource/GUI-ID ownership, then integrate independent widget creation, lifecycle, phase dispatch and viewport transforms. Keep source-only delivery."
+}
