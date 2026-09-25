@@ -1,35 +1,37 @@
-# Estado actual — recursos y ciclo de vida del HUD adicional
+# Estado actual — adaptador nativo del HUD de enero, solo fuentes
 
-25 de septiembre de 2026. Entrega de fuentes, tests y evidencia en GitHub. No se ha generado un EXE del juego, instalador ni ZIP en esta continuación. La implementación completa del cooperativo sigue abierta.
+25 de septiembre de 2026. Se continúa desde PR #7 sin generar ni modificar un EXE del juego. Fuentes, pruebas y evidencia se guardan en GitHub; el cooperativo completo no está terminado ni probado en campaña.
 
-## Avance nuevo sobre PR #6
+## Avance de esta continuación
 
-Se implementó `patches/hud_ownership/lifecycle.hpp/.cpp`: preparación de tres widgets independientes, comprobación de sus árboles de recursos, publicación por ticket vigente, dispatch de fases y retirada diferida con invalidación. Usa el registro y las clases del PR #6 sin cambiarlos. No altera los parches previos de input, pickup, puertas, ayuda o guiones.
+Se ha implementado `patches/hud_ownership/january_backend.hpp/.cpp` y la tabla/puentes i386 `january_calls.cpp/.S`. Conectan las operaciones específicas de enero al controlador Lifecycle del PR #7: asignadores y constructores por clase, inicialización void con postcondiciones, comprobación real de pertenencia a sUnit, firmas correctas de las fases y destructor escalar.
 
-El controlador preserva los originales P1 y no amplía sus listas/arrays nativos. Una preparación incompleta no se publica. Desactiva el conjunto si cambia el actor o sesión, no destruye en mitad de callbacks y rechaza solicitudes de generaciones antiguas antes de tocar la sesión nueva. Las estructuras de propiedad dudosa quedan en cuarentena en vez de invocar destructores que podrían afectar a P1.
+La construcción no añade objetos a las listas nativas. Se comprueban tanto moveline/enlaces como pertenencia real: un único elemento registrado puede tener enlaces nulos. Se preservan P1, los layouts separados de Cockpit/MiniMap y todos los parches anteriores. Las direcciones y slots son explícitos y se verifican antes de llamar.
 
-**Este controlador está escrito y probado como código fuente, pero su backend nativo no está implementado/conectado. No se ha creado ni dibujado el segundo HUD dentro del juego.**
+Los slots 8/9 reciben cero argumentos; el slot 11 recibe contexto. Se mantienen gates Active/ForceSkip según la clase, filtro de vista 1 y propagación del valor temporal del gestor. No se trata el contador de hierbas como ForceSkip. El driver deberá proporcionar la rama correcta de visibilidad y la transformación/clipping.
 
-## Evidencia nueva del original
+Se añadieron callbacks checked a Lifecycle. Un rechazo de destrucción conserva el objeto y sus tokens en cuarentena, en vez de contabilizarlo como liberado; un fallo de inicialización/fase bloquea la publicación/continuación. La ruta void anterior se conserva y pasa su suite de regresión.
 
-Reticle, MainEquipWin y MapBaseAndHerb enlazan una plantilla de recurso a una raíz y tabla de nodos propias de cada instancia. El owner de los nodos se escribe en +6C. Los inicializadores retornan void: hay que comprobar sus postcondiciones, no EAX como booleano.
+## Integración que aún no está activada
 
-La constante 0x69 de Reticle configura prioridad y capa, comprobado por consumidores y diagnósticos literales; no se interpreta como un ID de jugador. Esto no resuelve todavía todos los registros globales de GUI.
+El adaptador tiene llamadas nativas concretas, pero NO está instalado en el proceso del juego. Necesita un driver real que compruebe identidad del PE cargado, vida y exclusividad de asignaciones, hilo, fase, Session/lifetime/epoch y exclusión de trabajo de render. Los permisos no se suplen por constantes true. El componente no convierte un puntero desconocido en seguro ni captura errores internos del motor.
 
-Detalles: [docs/26-hud-resource-initialization.md](docs/26-hud-resource-initialization.md) y [docs/27-hud-transactional-lifecycle.md](docs/27-hud-transactional-lifecycle.md).
+Siguen pendientes la instalación selectiva de bridges de actor, driver/safe points, inscripción transitiva de callbacks, máscara P1 y transformación/clipping de las dos mitades. No se ha creado o dibujado un segundo HUD durante una partida. La cuarentena puede retener memoria y requiere diagnóstico, no una liberación a ciegas.
 
-## Verificación
+## Pruebas verificadas
 
-34 escenarios / 828 aserciones del controlador con registro real y motor simulado, tanto normal como con ASan/UBSan. Seis tests Python locales sin omisiones y 52 comprobaciones estáticas del original exacto, que conserva su hash. Sintaxis freestanding i386 verificada sin crear una imagen del juego.
+Código `6e9f326ae26d07d25c076eb104bbc36b310de7de`: 43 escenarios / 2.516 aserciones de backend/controlador/registro con funciones de motor simuladas, normal y ASan/UBSan. La regresión anterior conserva 34 escenarios / 828 aserciones.
 
-CI del código `5bdc9526b80cd59924f6db073b176b0de2754c0b`: run `36180203408`, dos jobs correctos (normal y sanitizado). La prueba privada del original no se ejecuta en CI. Informe `research/reports/hud-lifecycle-validation.json`.
+69 comprobaciones del original exacto y seis tests Python locales sin omisiones; original intacto con SHA `9124bb92d6c54a047ade47dacc8429221b18f9910b504f0e87718d5151013f69`. En CI el único test privado se omite explícitamente.
 
-## Punto pendiente exacto
+Run `36183979550`: tres jobs correctos. El job `108232822485` ejecutó 30 llamadas de los puentes/tabla i386 reales contra callees sintéticos. El host local no ejecuta ELF32; la ejecución se hizo en el runner. No se ejecutó código del motor ni gameplay. Detalles en `research/reports/hud-january-native-validation.json`.
 
-Implementar el backend nativo tras seguir la inscripción de unidades GUI en grupos y los consumidores de prioridad/capa. Debe garantizar objetos nuevos desvinculados de listas nativas para no ejecutarlos dos veces. Conectar un driver real de Session/lifetime/epoch, notificaciones de destrucción y puntos seguros de render; luego enlazar bridges, fases, visibilidad y transformaciones/clipping para P1/P2.
+## Punto exacto de continuación
 
-El controlador no puede garantizar vida de punteros sin ese driver. Su cap de 256 nodos es conservador y la cuarentena puede retener memoria. No se presenta como un HUD 2P integrado ni como una campaña comprobada.
+Implementar el driver de admisión/scheduling alrededor de las fases, creación y destrucción comprobadas de uCockpitManagerMain/uMiniMapManager. Derivar snapshots de Session/Actor del binder con lifetime/epoch, impedir doble scheduling y llamadas mientras haya render/callbacks en vuelo. Después conectar scopes de render y máscara P1 sin sustituir Self globalmente.
 
-Pausa/inventario por jugador, comandos compartidos de scheduler, muerte/checkpoints/cutscenes y escenas sin compañero siguen pendientes. El último EXE histórico sigue siendo 71f5e70d...; no se ha construido otro ni aplicado este componente a aquella imagen.
+Documentación actual: [docs/28-hud-native-registration-and-abi.md](docs/28-hud-native-registration-and-abi.md), [docs/29-january-hud-native-adapter.md](docs/29-january-hud-native-adapter.md) y `research/hud_native_ops_state.json`.
 
-Se preserva el estado anterior íntegro en [docs/history/CURRENT_STATUS-before-hud-lifecycle.md](docs/history/CURRENT_STATUS-before-hud-lifecycle.md). `research/hud_lifecycle_state.json` describe esta continuación; los estados y recetas previos permanecen históricos y no se ejecutan para entregar binarios.
+El estado anterior permanece íntegro en [docs/history/CURRENT_STATUS-before-january-native-ops.md](docs/history/CURRENT_STATUS-before-january-native-ops.md). Los módulos de ownership y sus archivos históricos no se rehacen ni se presentan como perdidos. Las recetas de EXE anteriores no se ejecutan.
+
+Pausa/inventario por jugador, scheduler compartido, muerte/checkpoints/cutscenes, escenas sin compañero y validación conjunta siguen abiertos. Este estado distingue implementación del adaptador, pruebas de componentes y activación real en el juego.
