@@ -99,6 +99,27 @@ continuation cockpit11
 continuation minimap8
 continuation minimap9
 continuation minimap11
+continuation mask_exit_cockpit11
+continuation mask_exit_minimap11
+
+# P1-mask symbols are part of the production gateway object. This legacy
+# six-entry ABI harness does not execute the two exit gateways, but resolves
+# their dependencies and lets draw-entry masking succeed.
+.global rev_hud_p1_mask_begin
+rev_hud_p1_mask_begin:
+    mov eax,1
+    ret
+.global rev_hud_p1_mask_end
+rev_hud_p1_mask_end:
+    mov eax,1
+    ret
+.global rev_hud_manager_stop
+rev_hud_manager_stop:
+    ret
+.global rev_hud_cockpit_tail_call
+rev_hud_cockpit_tail_call:
+    mov eax,0x13572468
+    ret
 
 # Synthetic cdecl receiver deliberately changes caller-saved machine state.
 # No dependency on a Windows game, symbols or any game resource.

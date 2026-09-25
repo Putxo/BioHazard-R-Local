@@ -1,35 +1,23 @@
-# Estado actual — ciclo CPU y captura de vida conectados a las fases del HUD
+# Estado actual — ciclo/vida del HUD + máscara P1 scoped por vista
 
-Continuación del PR #10 / `7bd05d2018739dfa47641b21b793df8b75d81662`. Solo fuentes, pruebas y evidencia en GitHub. No se ha generado/modificado otro EXE del juego ni instalado hooks. El cooperativo completo sigue pendiente.
+26 de septiembre de 2026. Continúa desde PR #11 / `3d624e39aec66063e67208107e587abffdd3062f`. Solo fuentes, pruebas y evidencia en GitHub. No se ha generado/modificado otro EXE ni instalado hooks.
 
-## Implementación añadida
+## Cambio actual
 
-`pipeline_clock.hpp/.cpp` identifica una invocación CPU del ciclo exterior de `sSkeletonMain`, con BEGIN `0x02F506A0` y END `0x02F50F4B`. Empareja receptor/EBP/hilo y mantiene secuencias sin desbordamiento. No incrementa un frame por cada widget o gestor ni utiliza el contador de simulación detenido por pausa. **No es un contador de Present exitosos ni un fence del render.**
+Se añade `P1ViewMask`: cuando el despacho manual de P2 en fase11/vista1 termina correctamente, elimina temporalmente el bit de vista1 únicamente de los tres originales que ya tienen clon P2: MainEquipWin (cockpit+5C), Reticle (cockpit+90) y MapBaseAndHerb (minimap+30, alias +40). Los demás widgets stock permanecen intactos.
 
-`PipelineFrameProvider` conecta ese reloj y el `LifetimeSource` existente a `ManagerHost::sample`. Produce un ManagerFrame coherente con Session y generaciones; comprueba que la invocación siga abierta después de capturar vida. El driver, controlador y adaptador anteriores se utilizan directamente, no se sustituyen por otra implementación.
+El scope se restaura al terminar el bucle stock de cada manager, recuperando solo los diez bits mDrawView y preservando otros cambios de cUnit. Una identidad de slot/vtable cambiada o un fallo de escritura provoca revocación del ManagerDriver, no una liberación durante el draw.
 
-Hay dos gateways de ciclo CPU con conservación de registros/flags/pila/estado FP y replay de sus instrucciones. BEGIN usa ECX original porque su local aún no está inicializado. END conserva el efecto real del ADD a ESP. Sus fuentes no están instaladas.
+Los gateways siguen sin instalarse. Este cambio no modifica coordenadas ni añade un escalado 0.5: la ruta común de GUI ya calcula ajustes de resolución y sigue pendiente demostrar el significado exacto del contexto+BC/viewport/scissor.
 
-Se corrigió la propagación de un fallo de restauración: si una entrada abre el scope y el ciclo cambia, lo restaura antes de rechazar el despacho. Si esa restauración falla, el callback opcional scope_failed solicita stop inmediato del ManagerDriver. No espera al siguiente fotograma ni destruye dentro de la fase.
+## Evidencia y continuación
 
-## Pruebas comprobadas
+Auditor local: 16 comprobaciones exactas del original, hash intacto. Detalle: docs/38-p1-scoped-view-mask.md y research/reports/hud-p1-view-mask-validation.json.
 
-Código `77f28384b5b64e06cbeed0c9b15214dcaf37537a`, run `36196102073`: tres jobs correctos. Reloj 22 escenarios / 1.231 aserciones, local y CI normal/ASan/UBSan. Cadena de siete componentes del proveedor: 20 escenarios / 1.266 aserciones en CI normal y sanitizada, con memoria, motor y scopes simulados. Dos gateways en tres invocaciones i386 en CI; no se atribuye ejecución ELF32 al contenedor local, que no la admite.
+Punto siguiente: seguir el productor del contexto de dibujo que contiene +158 (índice de vista) y +BC (estructura de dimensiones), y sus consumidores de proyección/scissor. Después implementar el scope nativo de render y validar que TOP/BOTTOM ya transforman el HUD antes de cualquier ajuste adicional.
 
-Auditor: ocho tests locales sin omisiones, siete más una omisión explícita del original privado en CI. Treinta y una comprobaciones de ventanas/RTTI/calls y cuerpo exterior de 2.271 bytes. Original intacto: SHA-256 `9124bb92d6c54a047ade47dacc8429221b18f9910b504f0e87718d5151013f69`. La regresión Local routing pasó el run `36196102080`.
+Siguen pendientes pausa/inventario por jugador, scheduler compartido, muerte/checkpoints/cutscenes, escenas sin compañero, instalación real y validación conjunta en campaña. El cooperativo local completo no está terminado.
 
-Informes y detalle: `research/reports/hud-pipeline-frame-validation.json`, `research/hud_pipeline_frame_state.json` y docs/35–36. No se contabilizan tests aislados como ejecución de campaña.
+## Estado anterior preservado
 
-## Punto exacto de continuación
-
-La lectura del código de dibujo identificó que Reticle, MainEquipWin y MapBaseAndHerb convergen por `0x01C19FFA -> 0x02CD28E0 -> 0x035DD4E0`. Esta ruta consulta datos de `context+0xBC` mediante `0x02B02F00` y actualiza estructuras propias de la GUI. El mapa de veinte ventanas está en `research/reports/gui-common-draw-entry-map.json` y el recorrido en docs/37.
-
-Seguir los productores de esas dimensiones y sus consumidores `0x035E1280/0x035E1790` antes de aplicar escalado adicional. Completar scope nativo, proyección/viewport/scissor y máscara de P1, sin sustituir globalmente Self ni duplicar una transformación que ya pueda realizar el motor.
-
-## Lo que todavía no se ha activado
-
-No están instalados los gateways de ciclo, vida o gestores. El proveedor exige callbacks dentro del intervalo/hilo observado y no inventa correlación para trabajo asíncrono. No otorga permisos de construcción, vida exclusiva de asignaciones ni render drenado. Los scopes de motor siguen siendo servicios pendientes, no constantes true.
-
-Pausa/inventario por jugador, comandos compartidos, muerte/checkpoints/cutscenes, escenas sin compañero y validación conjunta siguen abiertos. No se ha dibujado el HUD P2 dentro de una partida. La implementación actual resuelve la conexión de fuente entre ciclo/vida/fases, no el cooperativo completo.
-
-Se preservan todos los parches anteriores y los módulos Registry, LifetimeSource, Lifecycle, JanuaryBackend y sus gateways. Solo se amplía el callback opcional del ManagerHost para propagar el fallo de restauración. El estado previo se conserva íntegro en `docs/history/CURRENT_STATUS-before-pipeline-frame.md`; la imagen histórica 71f5e70d... no se reconstruye ni se renumera.
+El estado de PR #11 queda en docs/35–37 y en el historial Git; no se rehacen PipelineClock, LifetimeSource, Lifecycle, JanuaryBackend ni ManagerDriver.

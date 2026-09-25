@@ -1,0 +1,12 @@
+{
+  "status": "PASS_READ_ONLY_EVIDENCE",
+  "original_sha256": "9124bb92d6c54a047ade47dacc8429221b18f9910b504f0e87718d5151013f69",
+  "checks": 16,
+  "gameplay_executed": false,
+  "game_image_modified": false,
+  "slots": {"MainEquipWin":"cockpit+0x5C","Reticle":"cockpit+0x90","MapBaseAndHerb":"minimap+0x30","MapAlias":"minimap+0x40"},
+  "entry_sites": ["0x02B49DE3","0x02B68724"],
+  "exit_sites": ["0x02B49E5C","0x02B687F0"],
+  "policy": "remove only view1 from the three stock P1 originals while their stock draw loop runs; restore only mDrawView bits",
+  "original_verified_locally": true
+}

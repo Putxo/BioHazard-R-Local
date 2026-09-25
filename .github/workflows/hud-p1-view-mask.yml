@@ -1,0 +1,26 @@
+name: HUD P1 scoped view mask
+on:
+  push:
+    branches: [research/hud-p1-view-mask]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  mask:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        mode: [native, sanitized]
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Execute P1 mask component against synthetic manager memory
+        shell: bash
+        run: |
+          FLAGS="-std=c++17 -O1 -g -Wall -Wextra -Werror"
+          if [ "${{ matrix.mode }}" = sanitized ]; then FLAGS="$FLAGS -fsanitize=address,undefined -fno-omit-frame-pointer"; fi
+          g++ $FLAGS -Ipatches/hud_ownership patches/hud_ownership/{ownership,p1_view_mask}.cpp tests/hud_ownership/p1_view_mask_tests.cpp -o "$RUNNER_TEMP/p1-mask"
+          "$RUNNER_TEMP/p1-mask"
+      - name: Read-only audit and source map; private image optional
+        run: python tests/hud_ownership/test_p1_view_mask_audit.py
+      - name: Freestanding i386 syntax
+        run: g++ -m32 -std=c++17 -Wall -Wextra -Werror -ffreestanding -fno-exceptions -fno-rtti -fsyntax-only patches/hud_ownership/p1_view_mask.cpp

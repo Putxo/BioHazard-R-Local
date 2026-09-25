@@ -107,3 +107,6 @@ extern "C" unsigned int rev_hud_manager_event(unsigned int site,
         unsigned int manager, unsigned int context) {
     return rev_hud::Sink && rev_hud::Sink->event(site, manager, context) ? 1u : 0u;
 }
+extern "C" void rev_hud_manager_stop() {
+    if (rev_hud::Sink) rev_hud::Sink->stop();
+}
