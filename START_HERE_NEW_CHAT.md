@@ -2,7 +2,7 @@
 
 > **Ámbito:** exclusivamente la investigación de cooperativo local de Resident Evil Revelations 1 realizada en este chat.
 >
-> **Estado real más reciente:** la base estática canónica es **v13 SYMMETRIC AMMO RELIEF**. Después de v13 la investigación avanzó a **puertas/interacciones 2P**. No volver a empezar por pickups ni por v10.
+> **Estado real más reciente:** la base estática canónica es **v14 DOOR GIMMICK PAD2**. `uDoor2pBase` quedó compatible sin parche; v14 corrige un Pad 0 hardcodeado en `door_gimmick::MoveState`. El siguiente trabajo es **otras interacciones/QTE**. No volver a empezar por pickups, v10 ni la auditoría base de puertas.
 
 ---
 
@@ -50,41 +50,41 @@ Enero es la base principal porque conserva lógica real detrás de sistemas que 
 
 ---
 
-# 3. Base canónica actual: v13
+# 3. Base canónica actual: v14
 
 Output:
 
-`BioRevHD 30-Enero-2013 LOCAL COOP v13 SYMMETRIC AMMO RELIEF.exe`
+`BioRevHD 30-Enero-2013 LOCAL COOP v14 DOOR GIMMICK PAD2.exe`
 
 SHA-256:
 
-`3df0e1020b58b3ccc7e31a9046a2a3ce9e5230e1764869b517943b4a808838aa`
+`73fe1255697c47a624025ba40b33bab8df5812e76021bdc2d9acdeec3daf56ea`
 
 Base directa:
 
-`v12 SUB0 PICKUP PAD2`
+`v13 SYMMETRIC AMMO RELIEF`
 
-SHA v12:
+SHA v13:
 
-`5aafc3fd4273d608b4c9b8b60631256b56cb27d6aab0ecca8d2718d824dd28e8`
+`3df0e1020b58b3ccc7e31a9046a2a3ce9e5230e1764869b517943b4a808838aa`
 
 Builder:
 
-`patches/build_v13_ammo_relief.py`
+`patches/build_v14_door_gimmick_pad2.py`
 
 Assembly:
 
-`research/patches/ammo_relief_v13.S`
+`research/patches/door_gimmick_pad_v14.S`
 
 Manifest:
 
-`research/manifests/local-coop-v13-ammo-relief.json`
+`research/manifests/local-coop-v14-door-gimmick-pad2.json`
 
 Estado:
 
 **STATICALLY VERIFIED ONLY — runtime pendiente.**
 
----
+v14 añade una sola corrección sobre v13: en `door_gimmick::MoveState`, el callsite `0x02591118` dejaba Pad 0 hardcodeado aunque el estado puede dirigirse al partner. El helper `0x01C95300` conserva selector 0 fuera de local-coop y deriva P1=0/Sub0=1 cuando `gLocalCoopActive` está activo.
 
 # 4. Cadena canónica que lleva a v13
 
@@ -108,6 +108,9 @@ v12 pickup Pad 2
   ↓
 v13 symmetric ammo relief
 3df0e1020b58b3ccc7e31a9046a2a3ce9e5230e1764869b517943b4a808838aa
+  ↓
+v14 door-gimmick Pad 2
+73fe1255697c47a624025ba40b33bab8df5812e76021bdc2d9acdeec3daf56ea
 ```
 
 ## Advertencia sobre v11
@@ -613,118 +616,76 @@ la arbitraje de candidato todavía elige por cercanía antes de todas las compro
 
 ---
 
-# 17. PUNTO ACTUAL REAL: puertas/interacciones 2P
+# 17. Puertas/interacciones cerradas hasta v14
 
-Después de cerrar pickups v11/v12 y ammo relief v13, la investigación pasó a puertas.
+## uDoor2pBase
 
 Documento:
 
 `docs/13-door-2p.md`
 
-## Infraestructura nativa
+Resultado:
 
-Clases/strings:
+- Self y partner se resuelven por separado;
+- el setter `0x02588D20` indexa por actor 0/1, no por categoría pl/np;
+- offline aplica explícitamente slots 0 y 1;
+- la lectura general de input de `WaitState_PL` usa el selector del actor y ya quedó restaurada por v7;
+- los usos restantes de `localIndex` son red/ownership, presentación, transform o cámara.
 
-```text
-uDoor2pBase
-cDoor2pBaseClosedState
-Door2pBasePlayer_NetParam
-cDoor2pBaseWaitState_PL
-cDoor2pBaseCancelState_PL
-uTwoOpenDoor
-cTwoOpenDoorClosedState
-cTwoOpenDoorOpenState
-cTwoOpenDoorOpenState_PL
-cTwoOpenDoorStopedState
-```
+**No necesitó parche.**
 
-Layout duplicado 0/1:
+## door_gimmick::MoveState
 
-```text
-+0x1010 mReadyFlag[0]
-+0x1011 mReadyFlag[1]
+Documento:
 
-+0x1018 mGuestStatusFlag[0]
-+0x1019 mGuestStatusFlag[1]
+`docs/14-door-gimmick-pad-routing.md`
 
-+0x1024 mLocalFlag[0]
-+0x1025 mLocalFlag[1]
-```
-
-## Setter actor-específico
+Hallazgo:
 
 ```text
-0x01C9217B -> 0x02588D20
+0x02591118 push 0
+ -> sGamePad
+ -> 0x02DB0CF0
 ```
 
-Callsites directos:
+El mismo `MoveState` puede resolver `pPt`/partner y la lectura del mando cambia una transición interna real.
+
+v14 reemplaza únicamente ese selector fijo por:
 
 ```text
-0x0257185D
-0x0257198A
+gLocalCoopActive == 0 -> 0 stock
+gLocalCoopActive != 0 -> selector del actor
+P1 -> 0
+exact Sub0 -> 1
 ```
 
-Recibe actor y obtiene índice 0/1 mediante:
+Helper:
+
+`0x01C95300`
+
+Diff vs v13:
 
 ```text
-0x01BEDBB7 -> 0x01CB7610
+49 bytes
+2 rangos
+mismo tamaño PE
+reversible byte por byte a v13
 ```
-
-No filtra `pl/np`.
-
-Escribe el slot del actor.
-
-## Ready setter
-
-```text
-0x02589040
-```
-
-recibe índice explícito 0/1 y actualiza `mReadyFlag[index]` y estado paralelo.
-
-La lógica de puerta consulta ambos slots.
-
-## Riesgo pendiente
-
-Otras rutas llaman:
-
-```text
-0x01C85962 -> 0x02DA3050
-```
-
-y usan el índice local global del proceso.
-
-Todavía no se sabe si esas lecturas pertenecen a gameplay crítico o solo a red/feedback local.
-
----
 
 # 18. CONTINUAR EXACTAMENTE DESDE AQUÍ
 
-No volver a pickups como tarea principal.
+No volver a pickups ni a la auditoría base de `uDoor2pBase`.
 
-Siguiente trabajo exacto en puertas:
+Siguiente trabajo:
 
-1. identificar el owner/state que contiene los callsites:
-   `0x0257185D`, `0x0257198A`;
-2. reconstruir qué actor se pasa a `0x02588D20`;
-3. comprobar si la acción/wrapper PcsSub llega con Sub0;
-4. separar gameplay de sincronización/feedback que usa el índice local global;
-5. demostrar un bloqueo concreto antes de parchear;
-6. **no modificar globalmente el índice de jugador local**;
-7. solo crear v14 si se demuestra un cambio de código necesario.
-
-Después de puertas:
-
-- otras interacciones;
-- QTE;
-- revive/death;
-- checkpoints;
-- pausa/menu ownership;
-- HUD visual;
-- cutscenes/forced cameras;
-- runtime test.
-
----
+1. auditar **otras interacciones/QTE**;
+2. localizar selectores de pad/member `0` hardcodeados;
+3. localizar APIs que reciban selector pero sigan usando `mStartPadNo`;
+4. distinguir `localIndex` de red/presentación de cualquier uso que bloquee gameplay;
+5. buscar gates `pl` que excluyan al exact Sub0;
+6. preservar `ThinkMode::Network(3)`;
+7. preservar stock/online con `gLocalCoopActive=0`;
+8. crear v15 solo si se demuestra otro bloqueo concreto.
 
 # 19. Archivos que debe leer un chat nuevo
 
@@ -798,4 +759,4 @@ Cada hallazgo nuevo:
 6. no secuestrar Network(3);
 7. mantener comportamiento stock/online cuando local flag=0.
 
-**Base canónica actual: v13. Próximo trabajo: uDoor2pBase / callsites 0x0257185D y 0x0257198A.**
+**Base canónica actual: v14. Próximo trabajo: otras interacciones/QTE; buscar bloqueos concretos de Pad 2 antes de crear v15.**
