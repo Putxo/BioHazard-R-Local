@@ -28,13 +28,13 @@ Build `FullDebugWin32`, usada como base de ingeniería inversa y parche.
 
 ## Base experimental canónica actual
 
-**v13 — SYMMETRIC AMMO RELIEF**
+**v14 — DOOR GIMMICK PAD2**
 
-`BioRevHD 30-Enero-2013 LOCAL COOP v13 SYMMETRIC AMMO RELIEF.exe`
+`BioRevHD 30-Enero-2013 LOCAL COOP v14 DOOR GIMMICK PAD2.exe`
 
 SHA-256:
 
-`3df0e1020b58b3ccc7e31a9046a2a3ce9e5230e1764869b517943b4a808838aa`
+`73fe1255697c47a624025ba40b33bab8df5812e76021bdc2d9acdeec3daf56ea`
 
 Estado:
 
@@ -42,15 +42,15 @@ Estado:
 
 Builder:
 
-`patches/build_v13_ammo_relief.py`
+`patches/build_v14_door_gimmick_pad2.py`
 
 Assembly:
 
-`research/patches/ammo_relief_v13.S`
+`research/patches/door_gimmick_pad_v14.S`
 
 Manifest:
 
-`research/manifests/local-coop-v13-ammo-relief.json`
+`research/manifests/local-coop-v14-door-gimmick-pad2.json`
 
 ## Cadena canónica reciente
 
@@ -61,6 +61,7 @@ v7 input-only
  -> v11 canonical pickup
  -> v12 pickup Pad 2
  -> v13 symmetric ammo relief
+ -> v14 door-gimmick Pad 2
 ```
 
 SHA canónicos:
@@ -71,6 +72,7 @@ v10 5060269e5115ef8df53aa0ad4e26c09b4b273d4cfeb6628a7a4f902c606bb4e6
 v11 2c69c5f16626dc7478a6221c2bac98ed19f5b37dcf7991fc78f744f35f192d69
 v12 5aafc3fd4273d608b4c9b8b60631256b56cb27d6aab0ecca8d2718d824dd28e8
 v13 3df0e1020b58b3ccc7e31a9046a2a3ce9e5230e1764869b517943b4a808838aa
+v14 73fe1255697c47a624025ba40b33bab8df5812e76021bdc2d9acdeec3daf56ea
 ```
 
 **Importante:** hubo varias iteraciones históricas llamadas v11. La v11 que pertenece a la cadena v12/v13 es la de SHA `2c69c5...`.
@@ -94,33 +96,16 @@ v13 3df0e1020b58b3ccc7e31a9046a2a3ce9e5230e1764869b517943b4a808838aa
 
 ## Punto actual real
 
-Después de v13 la investigación avanzó a **puertas/interacciones de dos participantes**.
+La auditoría de **uDoor2pBase** quedó cerrada sin parche: la infraestructura nativa procesa Self y partner por separado y aplica slots 0/1 offline.
 
-Infraestructura confirmada:
-
-```text
-uDoor2pBase
-mReadyFlag[0/1]
-mGuestStatusFlag[0/1]
-mLocalFlag[0/1]
-```
-
-Setter actor-específico:
-
-```text
-0x01C9217B -> 0x02588D20
-```
-
-Callsites prioritarios:
-
-```text
-0x0257185D
-0x0257198A
-```
+La siguiente familia, **door_gimmick::MoveState**, sí tenía una lectura real de Pad 0 hardcodeada aunque el estado puede dirigirse al partner. v14 corrige únicamente ese callsite, protegido por `gLocalCoopActive`.
 
 Detalle:
 
-**[docs/13-door-2p.md](docs/13-door-2p.md)**
+- **[docs/13-door-2p.md](docs/13-door-2p.md)**
+- **[docs/14-door-gimmick-pad-routing.md](docs/14-door-gimmick-pad-routing.md)**
+
+Siguiente trabajo: auditar **otras interacciones/QTE** buscando selectores de pad/member 0 hardcodeados, usos de `mStartPadNo`, `localIndex` en gameplay o gates `pl` que excluyan al Sub0 exacto.
 
 ## Documentación principal
 
@@ -170,14 +155,14 @@ Sí se suben:
 
 ## Regla para continuar
 
-**No crear v14 todavía.**
+Base canónica actual: **v14 DOOR GIMMICK PAD2**.
 
-Primero demostrar si la infraestructura nativa de `uDoor2pBase` ya maneja Sub0 correctamente.
+No volver a auditar `uDoor2pBase` como pendiente: quedó compatible estáticamente y no necesitó parche.
 
 Siguiente trabajo exacto:
 
-- identificar el owner/state de los callsites `0x0257185D` y `0x0257198A`;
-- reconstruir qué actor se pasa a `0x02588D20`;
-- verificar llegada de PcsSub/Sub0;
-- separar gameplay de sincronización/feedback basado en índice local global;
-- parchear solo si aparece un bloqueo concreto.
+- auditar otras interacciones/QTE;
+- localizar selectores `0` hardcodeados o getters que ignoren su selector;
+- comprobar `mStartPadNo` y `localIndex` sólo cuando afecten gameplay;
+- comprobar gates `pl` que puedan excluir al Sub0 exacto;
+- preservar stock/online cuando `gLocalCoopActive=0`.
