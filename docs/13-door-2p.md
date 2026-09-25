@@ -465,3 +465,132 @@ cDoor2pBaseCancelState_PL
 ```
 
 i comprovar si l'ActionCommand/input del partner respecta el selector Pad 1 restaurat per v7 o si queda ancorat al pad principal.
+
+
+## 16. WaitState_PL: omissió real de Pad 2 demostrada
+
+Vtable:
+
+```text
+cDoor2pBaseWaitState_PL = 0x04D5B220
+```
+
+L'update/estat real conté dues consultes directes a `sGamePad`:
+
+```text
+0x025746A7 -> 0x01B94F53 -> 0x02DB0CF0
+0x025747E2 -> 0x01C0DC6E -> 0x02DB0DC0
+```
+
+Abans de totes dues, la porta calcula:
+
+```text
+0x02574661 -> 0x01C6C746 -> 0x027A27B0
+```
+
+Aquest és el selector de jugador/pad ja reutilitzat per la línia local-coop.
+
+Stock:
+
+```text
+0x027A27B0 -> 0
+```
+
+v6/v7/v13:
+
+```text
+actor == gSub0Npc -> 1
+resta             -> 0
+```
+
+El mateix resultat es passa com únic argument tant a `0x02DB0CF0` com a `0x02DB0DC0`.
+
+### Getter 0x02DB0CF0 — ja corregit a v7
+
+Stock:
+
+```asm
+0x02DB0D25 mov edx,[ecx+0x970] ; mStartPadNo
+0x02DB0D2F mov ecx,[eax+0x970] ; mStartPadNo
+```
+
+v7+:
+
+```asm
+0x02DB0D25 mov edx,[ebp+8]
+0x02DB0D2F mov ecx,[ebp+8]
+```
+
+### Getter 0x02DB0DC0 — omès per v7
+
+v13 encara conté:
+
+```asm
+0x02DB0DF5 mov edx,[ecx+0x970]
+0x02DB0DFF mov ecx,[eax+0x970]
+```
+
+Tot i que la funció rep el mateix selector i acaba amb `ret 4`.
+
+La cerca completa de callsites confirma que:
+
+```text
+0x01C0DC6E -> 0x02DB0DC0
+```
+
+té un únic caller directe en tot `.text`:
+
+```text
+0x025747E2
+```
+
+Per tant és un bloqueig concret i acotat de `cDoor2pBaseWaitState_PL`: una de les dues consultes ja usa PadData[1] per Sub0 i l'altra encara consulta el pad global principal.
+
+## 17. Candidat v14 — DOOR WAIT PAD2
+
+S'ha construït sobre v13 sense tocar cap altra lògica:
+
+```text
+BioRevHD 30-Enero-2013 LOCAL COOP v14 DOOR WAIT PAD2.exe
+SHA-256:
+5ae917d141aed577d0cb111e8c17eb2efe64d6940a52d7cc00ad1f3faff74e49
+```
+
+Canvis:
+
+```text
+0x02DB0DF5
+8b9170090000 -> 8b5508909090
+
+0x02DB0DFF
+8b8870090000 -> 8b4d08909090
+```
+
+És exactament el mateix patró de restauració del selector que v7 ja aplica a la funció germana.
+
+Verificació:
+
+```text
+mateix tamany PE: sí
+bytes efectivament diferents vs v13: 10
+rangos: 2
+revertir els dos punts -> SHA v13 exacte
+```
+
+Builder:
+
+```text
+patches/build_v14_door_wait_pad2.py
+```
+
+Manifest:
+
+```text
+research/manifests/local-coop-v14-door-wait-pad2.json
+```
+
+Estat:
+
+**STATICALLY VERIFIED ONLY — runtime pendent.**
+
+Encara no es declara canònica fins acabar l'auditoria de totes les classes `door_2p` i comprovar si convé incorporar algun altre bloqueig de porta a la mateixa v14.
