@@ -1,0 +1,15 @@
+{
+  "status": "PASS_COMPONENTS_AND_SELECTED_STATIC_WITNESSES",
+  "code_commit": "fabb38fb5028cec210603ab9aac6410be246581a",
+  "source_image": {"size": 60748800, "sha256_before": "9124bb92d6c54a047ade47dacc8429221b18f9910b504f0e87718d5151013f69", "sha256_after": "9124bb92d6c54a047ade47dacc8429221b18f9910b504f0e87718d5151013f69", "mode": "read-only"},
+  "local_static": {"checks": 46, "hook_sites": 11, "begin_before_early_branch": true, "existing_binder_hook_overlap": false},
+  "python_local": {"tests": 8, "passed": 6, "skipped": 2, "skipped_reason": "complete source tree not mounted; source-map cases instead executed in CI", "private_image_test": "PASS"},
+  "python_ci": {"tests": 8, "passed": 7, "skipped": 1, "skipped_reason": "private game image not uploaded", "source_map_and_negative_regression": "PASS"},
+  "observer_ci": {"run_id": 36193139147, "jobs": [{"id": 108262744234, "name": "source (native)", "conclusion": "success"}, {"id": 108262744015, "name": "source (sanitized)", "conclusion": "success"}, {"id": 108262744183, "name": "gateways", "conclusion": "success"}], "source_scenarios": 34, "source_assertions": 940, "memory_and_self_mocked": true, "gateway_invocations": 12, "unique_gateways": 11, "receiver_and_continuations_mocked": true},
+  "local_published_blob_matches": {"scripts/audit_lifetime_observer.py": "14d9182992bebd4e9a6565ab09118e9498bf2dab", "tests/hud_ownership/test_lifetime_audit.py": "1285a327e1ec844d196d108386699aec353caf98"},
+  "gameplay_executed": false,
+  "engine_executed": false,
+  "hooks_installed": false,
+  "game_image_generated": false,
+  "limitations": ["Requires all necessary lifetime events before world construction", "No arbitrary cross-thread lifetime synchronization", "No verified presentation-frame provider yet", "No render fence or transformation/clipping scope supplied by these tests", "Not a completed or gameplay-validated local-coop implementation"]
+}

@@ -1,0 +1,21 @@
+{
+  "scope": "source-only January actor/manager lifetime observer",
+  "integration_base": "9e8dfec08842d8e199a59932074220cc5581f96c",
+  "recovered_head": "d18aa28011118d01e6117eb5fd223218cd1b8b37",
+  "fix_commit": "82964fe1f49631cbac60b074305409caaa315573",
+  "validated_code_commit": "fabb38fb5028cec210603ab9aac6410be246581a",
+  "sources": ["patches/hud_ownership/lifetime_source.hpp", "patches/hud_ownership/lifetime_source.cpp", "patches/hud_ownership/lifetime_gateways.S", "patches/hud_ownership/lifetime_continuations.ld"],
+  "events": {"count": 11, "begin": "0x02DF4F65", "begin_continuation": "0x02DF4F6C", "end": "0x02DF504B", "superseded_begin": "0x02DF4F99"},
+  "snapshot": "Session, Actor lifetimes, manager addresses/lifetimes and revision; no presentation frame",
+  "invalidation": "pre-destruction events revoke selected P2 routes without reading the dying object; derived/base duplicate notices are idempotent",
+  "binding": "same observed actor preserves its lifetime; unobserved pointers are not manufactured into births",
+  "source_tests": {"ci_run": 36193139147, "scenarios": 34, "assertions": 940, "native_and_sanitized": true, "engine_calls_mocked": true},
+  "gateway_tests": {"ci_job": 108262744183, "gateways": 11, "invocations": 12, "begin_byte_cases": 2, "native_i386": true, "receiver_mocked": true},
+  "static_witnesses": 46,
+  "hooks_installed": false,
+  "game_executable_generated": false,
+  "engine_executed": false,
+  "gameplay_executed": false,
+  "complete_local_coop": false,
+  "next_step": "Complete verified presentation clock and engine admission/render scopes; connect LifetimeSource snapshots to ManagerHost with installation before world construction. Do not substitute simulation stamp or per-manager counter."
+}
