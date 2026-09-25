@@ -1,0 +1,42 @@
+name: HUD pipeline frame source
+on:
+  push:
+    branches: [research/hud-pipeline-frame-source]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  provider:
+    strategy:
+      fail-fast: false
+      matrix:
+        mode: [native, sanitized]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Clock and connected production components, synthetic engine only
+        shell: bash
+        run: |
+          FLAGS="-std=c++17 -O1 -g -Wall -Wextra -Werror"
+          if [ "${{ matrix.mode }}" = sanitized ]; then FLAGS="$FLAGS -fsanitize=address,undefined -fno-omit-frame-pointer"; fi
+          g++ $FLAGS -Ipatches/hud_ownership patches/hud_ownership/pipeline_clock.cpp tests/hud_ownership/pipeline_clock_tests.cpp -o "$RUNNER_TEMP/clock-test"
+          "$RUNNER_TEMP/clock-test"
+          g++ $FLAGS -Ipatches/hud_ownership -Itests/hud_ownership patches/hud_ownership/{ownership,lifetime_source,pipeline_clock,pipeline_frame_provider,manager_driver,lifecycle,january_backend,january_calls}.cpp tests/hud_ownership/pipeline_provider_tests.cpp -o "$RUNNER_TEMP/provider-test"
+          "$RUNNER_TEMP/provider-test"
+      - name: Source maps and read-only refusal tests, private original excluded
+        run: python tests/hud_ownership/test_pipeline_audit.py
+      - name: Freestanding i386 syntax, no game image linked
+        run: |
+          for f in patches/hud_ownership/{pipeline_clock,pipeline_frame_provider}.cpp; do
+            g++ -m32 -std=c++17 -Wall -Wextra -Werror -ffreestanding -fno-exceptions -fno-rtti -fsyntax-only "$f"
+          done
+  gateways:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Actual pipeline gateways with synthetic receiver and continuations
+        run: |
+          as --32 patches/hud_ownership/pipeline_gateways.S -o "$RUNNER_TEMP/pipeline-gates.o"
+          as --32 tests/hud_ownership/pipeline_gateway_abi.S -o "$RUNNER_TEMP/pipeline-harness.o"
+          ld -m elf_i386 "$RUNNER_TEMP/pipeline-gates.o" "$RUNNER_TEMP/pipeline-harness.o" -o "$RUNNER_TEMP/pipeline-abi"
+          "$RUNNER_TEMP/pipeline-abi"
