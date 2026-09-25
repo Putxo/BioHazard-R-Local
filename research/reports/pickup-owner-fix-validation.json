@@ -1,0 +1,39 @@
+{
+  "status": "PASS_STATIC_AND_FOCUSED_TESTS_NOT_GAMEPLAY_VALIDATED",
+  "candidate": "pickup-owner-fix-experimental",
+  "candidate_sha256": "e3c5c188782309a1683d27ade0ce9e38cf1c40219de9fb5d684b3d6fda2e285a",
+  "file_size": 60748800,
+  "source_original_sha256": "9124bb92d6c54a047ade47dacc8429221b18f9910b504f0e87718d5151013f69",
+  "source_v13_sha256": "3df0e1020b58b3ccc7e31a9046a2a3ce9e5230e1764869b517943b4a808838aa",
+  "base_v14_sha256": "73fe1255697c47a624025ba40b33bab8df5812e76021bdc2d9acdeec3daf56ea",
+  "parallel_reference_commit": "6fd8942886532e373665a941ad45c36a71b5eb89",
+  "same_output_from_v13_or_v14": true,
+  "changes_relative_to_v14": [
+    {"va": "0x024605D0", "file_offset": "0x008E79D0", "span": 46, "changed_bytes": 46, "action": "Install guarded selector at the uItem delegate actually bound during pickup setup"},
+    {"va": "0x026D7AD0", "file_offset": "0x00B5EED0", "span": 46, "changed_bytes": 45, "action": "Restore the uObjModel selector body to stock; remove the misplaced uItem layout assumption"}
+  ],
+  "effective_changed_bytes": 91,
+  "selector_code_size": 37,
+  "selector_padding_size": 9,
+  "exact_reversal_to_v14": true,
+  "v14_helper_and_callsite_preserved": true,
+  "existing_gamepad_getter_correction_preserved": true,
+  "tests": {
+    "focused_checks_passed": 44,
+    "includes_selector_bytecode_interpretation_cases": 8,
+    "interpretation_cases": ["null owner", "inactive local flag", "null Sub0 tracker", "null pickup candidate", "exact local Sub0", "P1", "other NPC", "nonzero local flag"],
+    "includes_negative_checks": 8,
+    "additional_cli_safety_checks_passed": 4,
+    "cli_cases": ["output equals input", "existing output", "report equals input", "unpatched original supplied to derived-build patcher"],
+    "cli_rejection_exit_code": 2,
+    "input_files_unchanged": true,
+    "method": "Byte/RTTI/call-target checks and a deliberately limited interpreter of the emitted selector instructions. Not a general x86 emulator and not gameplay."
+  },
+  "gameplay_executed": false,
+  "native_game_code_executed": false,
+  "builder_sha256": "fdaad516876d9bfb273ba00ed29824f3db9d1bf9b255a20b347aafb8ea377874",
+  "test_script_sha256": "4aceecc89062e5b197656774315750cfa97912f7fda1aaf1ff137a7c40bf13e4",
+  "full_test_report_sha256": "835eab627b4c6a33170ea66c68de0dad7eadee96f6897ecc0d9668a0262ff662",
+  "manifest_sha256": "55cfa06b2ddd60886e22a7e32b28188a146919c645e30976e83240440c4758f5",
+  "unresolved": ["Door-gimmick Self/pl candidate and serial lookup gates", "Pickup nearest-before-eligibility arbitration", "Full runtime co-op validation"]
+}
