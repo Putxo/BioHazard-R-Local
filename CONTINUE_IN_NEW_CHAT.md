@@ -8,56 +8,75 @@ Antes de hacer ningún cambio:
 
 1. lee completo `START_HERE_NEW_CHAT.md`;
 2. lee `research/current_state.json`;
-3. lee `docs/13-door-2p.md`;
-4. consulta `docs/02-investigation-log.md` y `docs/03-hypotheses-and-discarded-paths.md` cuando necesites trazabilidad;
+3. lee `docs/14-door-gimmick-pad-routing.md`;
+4. consulta `docs/13-door-2p.md`, `docs/02-investigation-log.md` y `docs/03-hypotheses-and-discarded-paths.md` para trazabilidad;
 5. no rehagas trabajo ya cerrado.
 
-La **base canónica actual es v13 SYMMETRIC AMMO RELIEF**:
+La **base canónica actual es v14 DOOR GIMMICK PAD2**:
 
 ```text
-BioRevHD 30-Enero-2013 LOCAL COOP v13 SYMMETRIC AMMO RELIEF.exe
+BioRevHD 30-Enero-2013 LOCAL COOP v14 DOOR GIMMICK PAD2.exe
 SHA-256:
+73fe1255697c47a624025ba40b33bab8df5812e76021bdc2d9acdeec3daf56ea
+```
+
+Base v13:
+
+```text
 3df0e1020b58b3ccc7e31a9046a2a3ce9e5230e1764869b517943b4a808838aa
 ```
 
 Está **verificada estáticamente, no runtime**.
 
-La siguiente investigación exacta es **puertas/interacciones 2P**:
+No vuelvas a tratar como pendientes:
+
+- `0x049A8023`: DTI de `uItem`;
+- pickup básico de Sub0: v11/v12;
+- Pad 2 del ActionCommand de pickup: v12;
+- ammo relief Coop: v13;
+- auditoría base de `uDoor2pBase`: compatible estáticamente, sin parche;
+- `door_gimmick::MoveState` Pad 0 hardcodeado: corregido por v14 en `0x02591118`, helper `0x01C95300`.
+
+v14 preserva stock/online:
 
 ```text
-uDoor2pBase
-setter actor-específico:
-0x01C9217B -> 0x02588D20
-
-callsites prioritarios:
-0x0257185D
-0x0257198A
+gLocalCoopActive == 0 -> selector 0 original
+gLocalCoopActive != 0 -> selector del actor
+P1 -> 0
+exact Sub0 -> 1
 ```
+
+Diff v14 vs v13:
+
+```text
+49 bytes
+2 rangos
+mismo tamaño PE
+reversible byte por byte
+```
+
+La siguiente investigación exacta es **otras interacciones/QTE**.
 
 Debes:
 
-- identificar el owner/state que contiene esos callsites;
-- reconstruir el actor exacto pasado a `0x02588D20`;
-- demostrar si PcsSub/Sub0 llega nativamente al slot 1;
-- separar lógica de gameplay de lógica de red/feedback que use el índice local global `0x01C85962 -> 0x02DA3050`;
-- **no modificar globalmente el índice local**;
-- no crear v14 salvo que se demuestre un bloqueo concreto;
-- preservar `ThinkMode::Network(3)`;
-- preservar comportamiento stock/online cuando `gLocalCoopActive=0`;
-- subir a GitHub cada hallazgo, descarte y corrección antes de avanzar demasiado.
+- buscar selectores de pad/member `0` hardcodeados;
+- buscar APIs que reciban selector pero sigan usando `mStartPadNo`;
+- separar usos de `localIndex` de red/presentación de los que afecten gameplay;
+- buscar gates `pl` que excluyan al exact Sub0;
+- no tocar globalmente el índice local;
+- no secuestrar `ThinkMode::Network(3)`;
+- preservar stock/online cuando `gLocalCoopActive=0`;
+- crear v15 solo si se demuestra un bloqueo concreto;
+- persistir cada hallazgo/corrección en GitHub antes de avanzar demasiado.
 
-No confundas versiones históricas:
+No confundas versiones históricas. La cadena canónica reciente es:
 
-- v8 está superseded;
-- hubo varias v11 experimentales;
-- la **v11 canónica** de la cadena v12/v13 tiene SHA:
-  `2c69c5f16626dc7478a6221c2bac98ed19f5b37dcf7991fc78f744f35f192d69`.
+```text
+v9 -> v10 -> v11 canonical -> v12 -> v13 -> v14
+```
 
-No vuelvas a tratar como pendientes:
+v11 canónica:
 
-- `0x049A8023`: ya identificado como DTI de `uItem`;
-- pickup básico de Sub0: ya resuelto por v11/v12;
-- Pad 2 para ActionCommand de pickup: ya resuelto por v12;
-- ammo relief Coop: ya resuelto por v13.
+`2c69c5f16626dc7478a6221c2bac98ed19f5b37dcf7991fc78f744f35f192d69`
 
-Toda la investigación procede **solo del chat original documentado en este repositorio**.
+Toda la investigación procede únicamente del chat original documentado en el repositorio.
