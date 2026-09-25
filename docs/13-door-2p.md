@@ -594,3 +594,128 @@ Estat:
 **STATICALLY VERIFIED ONLY — runtime pendent.**
 
 Encara no es declara canònica fins acabar l'auditoria de totes les classes `door_2p` i comprovar si convé incorporar algun altre bloqueig de porta a la mateixa v14.
+
+
+## 16. WaitState_PL calcula selector por actor y lo pasa a sGamePad — CONFIRMADO
+
+La vtable de `cDoor2pBaseWaitState_PL` es:
+
+```text
+0x04D5B220
+```
+
+y su update principal contiene dos consultas a `sGamePad`.
+
+Dentro del update, el actor activo está en:
+
+```text
+[ebp-0x14]
+```
+
+Antes de leer input:
+
+```asm
+0x02574661  mov ecx,[ebp-0x14]
+0x02574664  call 0x01C6C746   ; selector de pad del actor
+0x02574669  mov [ebp-0xBC],eax
+```
+
+La línea v6/v7 redefine ese selector para que:
+
+```text
+P1   -> 0
+Sub0 -> 1
+```
+
+El mismo valor se pasa a dos APIs de `sGamePad`:
+
+```text
+0x025746A7 -> 0x01B94F53 -> 0x02DB0CF0
+0x025747E2 -> 0x01C0DC6E -> 0x02DB0DC0
+```
+
+Ambas funciones terminan con `ret 4`, por lo que reciben un selector explícito.
+
+## 17. 0x02DB0CF0 ya fue restaurada por v7 — CONFIRMADO
+
+Stock PC en `0x02DB0CF0` ignoraba el selector y cargaba:
+
+```text
+sGamePad+0x970 = mStartPadNo
+```
+
+en:
+
+```text
+0x02DB0D25
+0x02DB0D2F
+```
+
+Ambas direcciones forman parte de `SITES` en:
+
+```text
+patches/build_v7_fullpad.py
+```
+
+v7 las sustituye por lecturas de:
+
+```text
+[ebp+8]
+```
+
+Por tanto la consulta principal de `WaitState_PL` ya queda:
+
+```text
+P1   -> PadData[0]
+Sub0 -> PadData[1]
+```
+
+en la línea canónica v13.
+
+## 18. 0x02DB0DC0 sigue anclada a mStartPadNo, pero está en una rama Coop-only
+
+Stock `0x02DB0DC0` tiene el mismo ABI, pero conserva:
+
+```asm
+0x02DB0DF5  mov edx,[ecx+0x970]
+0x02DB0DFF  mov ecx,[eax+0x970]
+```
+
+Esos dos sitios no aparecen en el parche v7.
+
+Sin embargo, el callsite `0x025747E2` solo se alcanza después de exigir simultáneamente:
+
+```text
+cSystemData<Game>::mGameMode == Coop
+actor ThinkMode == Pad
+timer/estado local válido
+actor asociado al mismo objeto esperado
+```
+
+La comprobación de GameMode es:
+
+```text
+0x02574768 -> 0x01C076CF
+```
+
+La línea canónica local-coop v13 **no cambia mGameMode globalmente**; sigue en Campaign.
+
+Consecuencia:
+
+- el agujero de selector en `0x02DB0DC0` existe en stock PC;
+- pero esa llamada concreta no se ejecuta en la ruta local-coop Campaign actual;
+- no demuestra por sí sola un bloqueo de puerta local;
+- no se parcheará todavía.
+
+La consulta realmente activa para la interacción general de `WaitState_PL` es `0x02DB0CF0`, ya cubierta por v7.
+
+## 19. Estado de v14
+
+Todavía **no** se crea v14.
+
+Para justificarlo falta demostrar que alguna lógica necesaria en local-coop:
+
+1. queda detrás de `GameMode::Coop` y debe replicarse explícitamente con `gLocalCoopActive`; o
+2. usa una API de input no restaurada en una ruta que sí se ejecuta en Campaign local.
+
+Siguiente paso: reconstruir la semántica de la rama Coop-only de `WaitState_PL` y auditar `cDoor2pBaseCancelState_PL`/transiciones asociadas.
