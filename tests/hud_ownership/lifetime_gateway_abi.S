@@ -10,7 +10,7 @@ _start:
     test eax,eax
     jne .Lfailed
     inc dword ptr [case_no]
-    cmp dword ptr [case_no],11
+    cmp dword ptr [case_no],12
     jb .Lnext
     mov eax,4
     mov ebx,1
@@ -40,13 +40,18 @@ test_one:
     mov [expected_site],edx
     mov dword ptr [callback_error],0
     mov dword ptr [callback_count],0
+    mov dword ptr [fake_object+0x50],0xAABBCC00
+    cmp eax,11
+    jne .Lseedready
+    mov byte ptr [fake_object+0x50],0xAB
+.Lseedready:
     fninit
     fld1
     movdqu xmm0,[xmm_seed]
     ldmxcsr [mxcsr_seed]
     fxsave [fx_before]
     mov ebp,offset fake_frame+128
-    mov dword ptr [ebp-8],0x00550000
+    mov dword ptr [ebp-8],offset fake_object
     mov dword ptr [ebp-0x2C],0
     mov esp,offset test_stack+8192
     mov [initial_esp],esp
@@ -54,7 +59,7 @@ test_one:
     mov dword ptr [esp+4],0x66666666
     mov dword ptr [esp+8],0x33333333
     mov eax,0x11221122
-    mov ecx,0x00550000
+    mov ecx,offset fake_object
     mov edx,0x33443344
     mov ebx,0x55555555
     mov esi,0x88888888
@@ -132,8 +137,6 @@ continuation bind_end
     jnz .Ldone
     cmp dword ptr [actual+24],offset fake_frame+128
     jne .Ldone
-    cmp dword ptr [actual],0x11221122
-    jne .Ldone
     cmp dword ptr [actual+12],0x55555555
     jne .Ldone
     cmp dword ptr [actual+16],0x88888888
@@ -142,17 +145,23 @@ continuation bind_end
     jne .Ldone
     cmp ecx,10
     je .Lbindend
-    cmp dword ptr [actual+4],0x00550000
+    # Corrected begin replays EAX=PCS and MOVZX of exactly its byte +50.
+    cmp dword ptr [actual],offset fake_object
+    jne .Ldone
+    movzx edx,byte ptr [fake_object+0x50]
+    cmp edx,[actual+4]
     jne .Ldone
     cmp dword ptr [actual+8],0x33443344
     jne .Ldone
-    cmp dword ptr [fake_frame+128-0x2C],0x11221122
+    cmp dword ptr [fake_frame+128-0x2C],0
     jne .Ldone
     mov edx,[initial_esp]
     cmp edx,[actual+28]
     jne .Ldone
     jmp .Lsuccess
 .Lbindend:
+    cmp dword ptr [actual],0x11221122
+    jne .Ldone
     cmp dword ptr [actual+4],offset fake_frame+128
     jne .Ldone
     cmp dword ptr [actual+8],offset rev_life_binder_debug_table
@@ -167,9 +176,9 @@ continuation bind_end
     jne .Ldone
     jmp .Lsuccess
 .Lconstructor:
-    cmp dword ptr [actual],0x00550000
+    cmp dword ptr [actual],offset fake_object
     jne .Ldone
-    cmp dword ptr [actual+4],0x00550000
+    cmp dword ptr [actual+4],offset fake_object
     jne .Ldone
     cmp dword ptr [actual+8],0x33443344
     jne .Ldone
@@ -193,7 +202,7 @@ continuation bind_end
 .Ldestructor:
     cmp dword ptr [actual],0x11221122
     jne .Ldone
-    cmp dword ptr [actual+4],0x00550000
+    cmp dword ptr [actual+4],offset fake_object
     jne .Ldone
     cmp dword ptr [actual+8],0x33443344
     jne .Ldone
@@ -244,7 +253,7 @@ rev_hud_lifetime_event:
     mov eax,[esp+4]
     cmp eax,[expected_site]
     jne .Lbadcallback
-    cmp dword ptr [esp+8],0x00550000
+    cmp dword ptr [esp+8],offset fake_object
     jne .Lbadcallback
     jmp .Lcallback
 .Lbadcallback:
@@ -264,10 +273,10 @@ rev_hud_lifetime_event:
 xmm_seed: .long 0x12345678,0x98ABCDEF,0x76543210,0xFFEEDDCC
 mxcsr_seed: .long 0x1F80
 mxcsr_other: .long 0x3F80
-sites: .long 0x0277D4FB,0x02B47907,0x02B67F51,0x0277DC70,0x027B5D00,0x02B47A30,0x02B68040,0x02DF5970,0x02DF5F90,0x02DF4F99,0x02DF504B
-sizes: .long 0,0,0,0xD8,0xCC,0x2C8,0xF4,0xCC,0xCC,0,0
-destinations: .long rev_life_gate_npc_born,rev_life_gate_cockpit_born,rev_life_gate_minimap_born,rev_life_gate_npc_dying,rev_life_gate_player_dying,rev_life_gate_cockpit_dying,rev_life_gate_minimap_dying,rev_life_gate_main_dying,rev_life_gate_sub_dying,rev_life_gate_bind_begin,rev_life_gate_bind_end
-pass_msg: .ascii "{\"status\":\"PASS\",\"gateways\":11,\"native_i386\":true,\"receiver_mocked\":true,\"gameplay_executed\":false}\n"
+sites: .long 0x0277D4FB,0x02B47907,0x02B67F51,0x0277DC70,0x027B5D00,0x02B47A30,0x02B68040,0x02DF5970,0x02DF5F90,0x02DF4F65,0x02DF504B,0x02DF4F65
+sizes: .long 0,0,0,0xD8,0xCC,0x2C8,0xF4,0xCC,0xCC,0,0,0
+destinations: .long rev_life_gate_npc_born,rev_life_gate_cockpit_born,rev_life_gate_minimap_born,rev_life_gate_npc_dying,rev_life_gate_player_dying,rev_life_gate_cockpit_dying,rev_life_gate_minimap_dying,rev_life_gate_main_dying,rev_life_gate_sub_dying,rev_life_gate_bind_begin,rev_life_gate_bind_end,rev_life_gate_bind_begin
+pass_msg: .ascii "{\"status\":\"PASS\",\"gateways\":11,\"invocations\":12,\"begin_byte_cases\":2,\"native_i386\":true,\"receiver_mocked\":true,\"gameplay_executed\":false}\n"
 .set pass_len,.-pass_msg
 .bss
 .align 16
@@ -284,6 +293,7 @@ callback_error: .skip 4
 callback_count: .skip 4
 .global rev_life_binder_debug_table
 rev_life_binder_debug_table: .skip 16
+fake_object: .skip 96
 fake_frame: .skip 256
 .align 16
 test_stack: .skip 16384

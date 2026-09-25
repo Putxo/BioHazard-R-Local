@@ -8,6 +8,6 @@ rev_life_continue_cockpit_dying = 0x02B47A39;
 rev_life_continue_minimap_dying = 0x02B68049;
 rev_life_continue_main_dying = 0x02DF5979;
 rev_life_continue_sub_dying = 0x02DF5F99;
-rev_life_continue_bind_begin = 0x02DF4F9F;
+rev_life_continue_bind_begin = 0x02DF4F6C;
 rev_life_continue_bind_end = 0x02DF5055;
 rev_life_binder_debug_table = 0x02DF5070;

@@ -12,7 +12,7 @@ constexpr LifetimeSite Sites[] = {
     {0x027B5D00,1,LifeObject::Actor},
     {0x02B47A30,1,LifeObject::Cockpit},
     {0x02B68040,1,LifeObject::MiniMap},
-    {0x02DF4F99,2,LifeObject::Actor},
+    {0x02DF4F65,2,LifeObject::Actor},
     {0x02DF504B,3,LifeObject::Actor},
     {0x02DF5970,4,LifeObject::Actor},
     {0x02DF5F90,4,LifeObject::Actor},

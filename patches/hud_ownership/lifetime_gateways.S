@@ -40,8 +40,10 @@ rev_life_gate_\name:
     mov ebp,esp
     sub esp,\frame_size
 .elseif \shape == 2
-    mov dword ptr [ebp-0x2C],eax
-    mov ecx,dword ptr [ebp-8]
+    # Before the +50 early-exit test: EVERY path reaching bind_end passes here.
+    # The former 0x02DF4F99 site was skipped by JNE 0x02DF5043.
+    mov eax,dword ptr [ebp-8]
+    movzx ecx,byte ptr [eax+0x50]
 .elseif \shape == 3
     push edx
     mov ecx,ebp
@@ -60,6 +62,6 @@ lifetime_gateway cockpit_dying, 0x02B47A30,1,0x2C8
 lifetime_gateway minimap_dying, 0x02B68040,1,0xF4
 lifetime_gateway main_dying,    0x02DF5970,1,0xCC
 lifetime_gateway sub_dying,     0x02DF5F90,1,0xCC
-lifetime_gateway bind_begin,    0x02DF4F99,2
+lifetime_gateway bind_begin,    0x02DF4F65,2
 lifetime_gateway bind_end,      0x02DF504B,3
 .section .note.GNU-stack,"",@progbits

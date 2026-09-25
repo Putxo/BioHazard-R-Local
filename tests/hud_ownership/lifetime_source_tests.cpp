@@ -7,7 +7,7 @@ static unsigned checks=0,scenarios=0;
 #define CHECK(x) do{++checks;if(!(x)){std::fprintf(stderr,"FAIL %d: %s\n",__LINE__,#x);std::abort();}}while(0)
 constexpr u32 NP=0x100000,PL=0x110000,CO=0x120000,MM=0x130000,MAIN=0x140000,SUB=0x150000;
 constexpr u32 NPC=0x04D9B25C,PLAYER=0x04D9CDF4,ACTIVE=0x057D9188,TRACK=0x057D9184;
-constexpr u32 BEGIN=0x02DF4F99,END=0x02DF504B;
+constexpr u32 BEGIN=0x02DF4F65,END=0x02DF504B;
 struct Fixture {
     Registry registry;
     std::map<u32,u32> mem;
@@ -97,5 +97,19 @@ int main(){
      f.mem[0x700000]=NPC;CHECK(!f.source.event(0x0277D4FB,0x700000));CHECK(f.source.fault()==SourceFault::Capacity);f.hidden();++scenarios;}
     {Fixture f;auto s=f.ready();f.clone();f.mem[SUB+0x44]=0;f.bind(SUB);f.hidden();f.unchanged(s);
      f.mem[SUB+0x44]=NP;f.bind(SUB);CHECK(f.source.capture(&s));f.hidden();++scenarios;}
+    // The former site must not remain accepted as a second begin notification.
+    {Fixture f;auto before=f.ready();const auto reads=f.reads;
+     CHECK(!f.source.event(0x02DF4F99,SUB));CHECK(f.reads==reads);
+     CHECK(f.source.binder_depth()==0);CHECK(f.source.fault()==SourceFault::None);
+     LifeSnapshot after{};CHECK(f.source.capture(&after));CHECK(before.session.epoch==after.session.epoch);++scenarios;}
+    // Model both paths around +50. The gateway/byte auditor verify the actual
+    // branch; the source must preserve identity for the early no-rebind path.
+    for(u32 skip:{0u,1u,255u}){Fixture f;auto before=f.ready();f.clone();f.mem[SUB+0x50]=skip;
+     CHECK(f.source.event(BEGIN,SUB));CHECK(f.source.binder_depth()==1);
+     LifeSnapshot s{};f.unchanged(s);if(!skip)f.mem[SUB+0x44]=NP;
+     CHECK(f.source.event(END,SUB));CHECK(f.source.binder_depth()==0);
+     CHECK(f.source.fault()==SourceFault::None);CHECK(f.source.capture(&s));
+     CHECK(before.session.epoch==s.session.epoch);CHECK(before.session.sub0.lifetime==s.session.sub0.lifetime);
+     CHECK(f.registry.resolve(0x900000,WidgetKind::Reticle).mode==Mode::Local);++scenarios;}
     std::printf("{\"status\":\"PASS\",\"scenarios\":%u,\"assertions\":%u,\"engine_calls_mocked\":true,\"gameplay_executed\":false}\n",scenarios,checks);
 }
