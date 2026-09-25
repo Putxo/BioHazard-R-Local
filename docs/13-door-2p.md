@@ -719,3 +719,159 @@ Para justificarlo falta demostrar que alguna lógica necesaria en local-coop:
 2. usa una API de input no restaurada en una ruta que sí se ejecuta en Campaign local.
 
 Siguiente paso: reconstruir la semántica de la rama Coop-only de `WaitState_PL` y auditar `cDoor2pBaseCancelState_PL`/transiciones asociadas.
+
+
+## 20. Auditoría de los usos restantes de localIndex
+
+Se revisaron los usos directos restantes de:
+
+```text
+0x01C85962 -> 0x02DA3050
+```
+
+en el bloque de puertas.
+
+### 0x02571FEB — ownership/origen de red del objeto puerta
+
+Este uso está dentro de `cDoor2pBaseClosedState::slot10 / 0x02571710`.
+
+El objeto en `[ebp-0x14]` está demostrado por checked cast como:
+
+```text
+uDoor2pBase
+DTI 0x05581BC0
+```
+
+El valor de `localIndex` se pasa a:
+
+```text
+0x01C5339F -> 0x027F15F0
+```
+
+que escribe:
+
+```text
+this+0xE8C
+```
+
+La metadata de la base común registra literalmente:
+
+```text
++0xE3C mSerialID
++0xE8C mNetOriginalHostPlayerSerialID
+```
+
+Por tanto este índice se usa como metadata de ownership/origen de red del **objeto puerta**, no como selección del participante que puede interactuar.
+
+El mismo bloque también modifica un modo virtual del objeto según estado de red. No se trata como prueba de un bloqueo P2.
+
+### 0x0258943A — getter del estado local de red/participante
+
+La función:
+
+```text
+0x02589410
+thunk 0x01BD3E65
+```
+
+hace:
+
+```cpp
+return this->field_102A[localIndex] == 1;
+```
+
+Solo tiene un caller directo localizado:
+
+```text
+0x0257210E
+```
+
+dentro del estado cerrado.
+
+El bloque consumidor está ligado a cambios de estado/ThinkMode según la situación de red y resuelve Self/Partner por separado. No escribe `mReadyFlag[0/1]` ni sustituye la evaluación conjunta de ambos participantes.
+
+Se clasifica como estado local de red/ownership, no como gate de apertura 2P.
+
+### 0x02589890 — helper de transform/posición local
+
+Este uso está dentro de:
+
+```text
+0x025897B0
+thunk 0x01BE5994
+```
+
+La función contiene nombres internos/literales:
+
+```text
+mat
+doorPos
+dstPos
+```
+
+y construye una transformación/posición que luego consumen estados de puerta.
+
+`localIndex` solo se usa para decidir si el actor recibido coincide con el miembro local antes de aplicar una variante de presentación al objeto.
+
+No actualiza los arrays `mReadyFlag`, `mGuestStatusFlag` ni `mLocalFlag`, y no decide por sí sola si los dos participantes están listos.
+
+Clasificación: cálculo de posición/presentación específica del cliente local.
+
+### 0x0258A18D — helper de cámara/presentación
+
+La función:
+
+```text
+0x0258A150
+thunk 0x01B8064D
+```
+
+resuelve el actor del `localIndex` y después llama directamente a:
+
+```text
+0x01C4A745 -> sGameCamera
+```
+
+seguido de operaciones del manager de cámara.
+
+Tiene múltiples callers desde estados de puertas, pero su función es preparar/restaurar presentación/cámara del jugador local; no modifica los slots de ready del gameplay 2P.
+
+Esto se conserva como tema futuro de **forced cameras/split-screen**, no como bloqueo de apertura de puerta.
+
+### 0x025900B4 — fuera de uDoor2pBase
+
+`0x02590040` se alcanza mediante:
+
+```text
+0x01B7E9EC -> 0x02590040
+```
+
+y ese thunk aparece en la tabla asociada a:
+
+```text
+uDoorAutoBase
+e:\bhr\source\biorevhd\prog\game\chara\obj_model\door_auto\udoorautobase.cpp
+```
+
+Por tanto `0x025900B4` no pertenece a la infraestructura `door_2p` auditada aquí y se excluye del diagnóstico de v14.
+
+## 21. Resultado de la auditoría localIndex
+
+Hasta este punto, todos los usos de `localIndex` encontrados se clasifican como:
+
+- sincronización/ownership online;
+- consulta de estado local de red;
+- cálculo de transform/presentación;
+- cámara local;
+- o código de otra clase de puerta.
+
+Ninguno sustituye la lógica confirmada que:
+
+- mantiene slots 0 y 1;
+- actualiza por actor mediante `0x02588D20`;
+- aplica ambos slots offline mediante `0x02589040`;
+- y exige ambos ready-state cuando corresponde.
+
+**Sigue sin existir un bloqueo demostrado que justifique v14.**
+
+Antes de cerrar puertas, queda una última auditoría: localizar todas las lecturas directas de input/`sGamePad` en estados `door_2p` y comprobar que cualquier ruta ejecutable en Campaign local usa un selector restaurado por v7.
