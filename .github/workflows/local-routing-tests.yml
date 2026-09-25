@@ -1,0 +1,38 @@
+name: Local routing source tests
+on:
+  push:
+    branches: [main, 'research/**']
+    paths: ['patches/local_routing/**', 'patches/build_local_routing.py', 'tests/**', '.github/workflows/local-routing-tests.yml']
+  pull_request:
+    paths: ['patches/local_routing/**', 'patches/build_local_routing.py', 'tests/**', '.github/workflows/local-routing-tests.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-tests:
+    name: source-${{ matrix.mode }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        mode: [native, sanitized, i386]
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Install compiler support
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y g++-multilib binutils
+      - name: Compile original helpers and run source checks
+        env:
+          TEST_MODE: ${{ matrix.mode }}
+          ASAN_OPTIONS: detect_leaks=0
+        run: |
+          case "$TEST_MODE" in
+            native) python3 tests/run_without_game.py ;;
+            sanitized) python3 tests/run_without_game.py --sanitize ;;
+            i386) python3 tests/run_without_game.py --i386-host ;;
+            *) exit 2 ;;
+          esac
