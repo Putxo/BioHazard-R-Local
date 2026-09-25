@@ -58,3 +58,5 @@ bool bind_manager_sink(ManagerDriver&);
 }
 extern "C" unsigned int rev_hud_manager_event(unsigned int site,
         unsigned int manager, unsigned int context);
+// Safe revocation only; never collects or destroys inside a gateway callback.
+extern "C" void rev_hud_manager_stop();
