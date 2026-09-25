@@ -875,3 +875,93 @@ Ninguno sustituye la lógica confirmada que:
 **Sigue sin existir un bloqueo demostrado que justifique v14.**
 
 Antes de cerrar puertas, queda una última auditoría: localizar todas las lecturas directas de input/`sGamePad` en estados `door_2p` y comprobar que cualquier ruta ejecutable en Campaign local usa un selector restaurado por v7.
+
+
+## 22. Auditoría global de sGamePad en el bloque de puertas
+
+Se escanearon las llamadas del bloque amplio de código de puertas y se resolvieron los thunks hasta implementaciones `sGamePad` en el rango PC.
+
+Solo aparecen tres llamadas relevantes:
+
+```text
+0x025746A7 -> 0x01B94F53 -> 0x02DB0CF0
+0x025747E2 -> 0x01C0DC6E -> 0x02DB0DC0
+0x02591121 -> 0x01B94F53 -> 0x02DB0CF0
+```
+
+Las dos primeras pertenecen a `cDoor2pBaseWaitState_PL` y ya están clasificadas:
+
+- `0x02DB0CF0`: ruta general, selector por actor, corregida por v7;
+- `0x02DB0DC0`: ruta stock `GameMode::Coop` únicamente; no ejecutada por la línea local Campaign v13.
+
+La tercera llamada **no pertenece a door_2p**.
+
+## 23. 0x02591121 pertenece a door_gimmick, no a uDoor2pBase
+
+La función que contiene `0x02591121` compara el actor contra DTI de:
+
+```text
+PlayerDoorGimmickStartState
+PlayerDoorGimmickMoveState
+PlayerDoorGimmickWaitState
+PlayerDoorGimmickEndState
+```
+
+Globals DTI observados:
+
+```text
+0x05581DB4 PlayerDoorGimmickStartState
+0x05581D74 PlayerDoorGimmickMoveState
+0x05581E14 PlayerDoorGimmickWaitState
+0x05581D94 PlayerDoorGimmickEndState
+```
+
+Las strings y RTTI los sitúan en:
+
+```text
+door_gimmick@obj_model@chara@game@app
+```
+
+No se encontraron referencias a estos DTI dentro del bloque `door_2p` auditado.
+
+Por tanto la lectura de `0x02591121` se separa como una interacción distinta y no invalida la conclusión de `uDoor2pBase`.
+
+### Hallazgo para la siguiente auditoría
+
+En `PlayerDoorGimmickWaitState`, la llamada es:
+
+```asm
+push 0
+call get_sGamePad
+call 0x02DB0CF0
+```
+
+es decir, pasa selector 0 de forma explícita.
+
+Esto **sí es un candidato de bloqueo de Pad 2**, pero solo justificará parche cuando se demuestre que Sub0/P2 puede o debe entrar en esta familia de estados de puerta.
+
+## 24. Cierre de uDoor2pBase
+
+Resultado estático de la auditoría base:
+
+- actor Self y partner se resuelven por separado;
+- el partner offline llega nativamente a la lógica `pPt`;
+- el setter actor-específico acepta índice 0/1 sin filtro pl/np;
+- ready-state mantiene y consume ambos slots;
+- offline aplica explícitamente slot 0 y slot 1;
+- los usos de `localIndex` restantes son red/ownership, presentación, transform o cámara;
+- la única lectura general de input de `WaitState_PL` ya respeta el selector P1/Sub0 por v7;
+- la segunda lectura no restaurada está detrás de stock `GameMode::Coop`.
+
+**Conclusión: no se crea v14 para uDoor2pBase.**
+
+Estado: **COMPATIBLE ESTÁTICAMENTE CON LA LÍNEA v13, runtime pendiente.**
+
+Siguiente investigación exacta:
+
+```text
+door_gimmick::PlayerDoorGimmickWaitState
+0x02591121 -> sGamePad selector 0 hardcodeado
+```
+
+Objetivo: demostrar si Sub0 puede entrar en esa familia de estados y, solo entonces, decidir si el selector debe derivarse del actor.
