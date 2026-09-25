@@ -1,0 +1,14 @@
+{
+  "status": "source-only detached lifecycle controller; no game installation",
+  "base_commit": "4d8b6833e6fff3d6ccacdebb935c907795806c7b",
+  "component": "patches/hud_ownership/lifecycle.cpp",
+  "resources": "scripts/audit_hud_resources.py",
+  "docs": ["docs/26-hud-resource-initialization.md", "docs/27-hud-transactional-lifecycle.md"],
+  "implements": ["resource tree capture", "three-widget prepare/publish", "generation tickets", "session invalidation", "scoped view mask", "deduplicated phase dispatch", "deferred reverse-order teardown", "quarantine of unproven ownership"],
+  "new_game_executable_generated": false,
+  "engine_backend_implemented": false,
+  "hooks_installed": false,
+  "gameplay_validated": false,
+  "known_limitations": ["backend must provide truly detached exclusive instances", "requires real safe-point and lifetime driver", "256-node conservative cap", "quarantine can retain memory", "no full allocation-range/ABA proof", "P1 mask and split coordinates not integrated"],
+  "next_step": "Trace GUI group/priority/layer registration and implement a detached native backend without duplicate scheduling, then connect lifecycle/phase hooks and viewport transforms."
+}
