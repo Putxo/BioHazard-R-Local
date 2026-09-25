@@ -15,7 +15,7 @@ _start:
     mov eax,4
     mov ebx,1
     mov ecx,offset pass_msg
-    mov edx,pass_len
+    mov edx,offset pass_len
     int 0x80
     xor eax,eax
     jmp .Lexit
