@@ -1,0 +1,58 @@
+{
+  "status": "EXPERIMENTAL_IMPLEMENTATION_WITH_COMPONENT_TESTS",
+  "source_revision": "d67b13836386dfb5f2f95654c10aec43adbe3546",
+  "base_sha256": "e3c5c188782309a1683d27ade0ce9e38cf1c40219de9fb5d684b3d6fda2e285a",
+  "candidate_sha256": "0c019d43b92c0092fa458abcf7e2990f8783895eb2bd8181f6e9f130b697d378",
+  "candidate_size": 60755456,
+  "changed_existing_bytes": 159,
+  "appended_bytes": 6656,
+  "new_sections": {
+    ".lcfix": {"va": "0x057E2000", "virtual_size": 2064, "raw_size": 2560, "permissions": "RX", "sha256": "2d13782b0b90ea593f8d1ae8abdd2c6df7be9c0522e6e250aec95d6c60a396e9"},
+    ".lcdata": {"va": "0x057E3000", "virtual_size": 4096, "raw_size": 4096, "permissions": "RW"}
+  },
+  "tests": {
+    "host_logic_assertions_per_run": 204,
+    "host_modes_completed": ["local native", "local ASan/UBSan", "CI native", "CI ASan/UBSan", "CI Linux i386"],
+    "bridge_scenarios": 23,
+    "bridge_assertions_from_candidate": 312,
+    "bridge_assertions_without_game_file": 311,
+    "bridge_engine_and_cpp_calls": "stubbed",
+    "file_integrity_assertions": 153,
+    "cli_negative_scenarios": 7,
+    "deterministic_local_recompile_and_rebuild": true,
+    "reversal_to_exact_base": true,
+    "sampler_unit_cases": 11,
+    "sampler_windows_api_test_at_this_checkpoint": "not yet completed"
+  },
+  "ci_completed": {
+    "commit": "0b30942ae8d3175fc7ef9727a6832a679d05f527",
+    "run_id": 36121464808,
+    "conclusion": "success",
+    "jobs": {"source-native": "success", "source-sanitized": "success", "source-i386": "success"},
+    "proprietary_game_files_used": false
+  },
+  "local_tested_git_blobs": {
+    "patches/build_local_routing.py": "3fa6d9b2a7c24971029d471773d2a24cf9163b66",
+    "patches/local_routing/core.cpp": "5aa0960d646540fce9ee13c92c483c31997ac401",
+    "patches/local_routing/hooks.S": "c5df39261afa1bdff1782807bd4b75fd61387d1e",
+    "patches/local_routing/link.ld": "e28d640bffd784e7523f1effa9c1832a72dfbcb5",
+    "tests/local_routing_host.cpp": "94d4cd8d7070c6564676c0972bd465b9e8b6555f",
+    "tests/test_bridges.py": "7a4faebceb44438c98aee76fed5dffc407a56990",
+    "tests/test_build_integrity.py": "93a3d1cf3f8fde985ac7b32f4492a812c46ee838",
+    "tests/run_without_game.py": "7be2d61e1f11e29a152bf5408c7c142422c0f497",
+    "tools/runtime_probe.py": "283308e8367e17f3f5da077d5154de43305734b1",
+    "tests/test_runtime_probe.py": "b0c0d47aa5d22c5894fcdbde4d6f3428503327c6"
+  },
+  "gameplay_executed": false,
+  "complete_local_coop": false,
+  "full_campaign_validated": false,
+  "full_hud_or_menu_implementation": false,
+  "native_engine_calls_executed": false,
+  "reproducibility_scope": "Identical sources and local compiler reproduce this candidate. Different compiler versions can change helper bytes; record the generated manifest rather than claiming universal byte identity.",
+  "limits": [
+    "No gameplay executed; only original helper source with mocked engine APIs and restricted assembly interpretation.",
+    "The runtime probe is observation-only, not a test certificate.",
+    "Stage-wide FSM/PCS selectors, complete HUD/menu ownership, death/checkpoint/cutscene behavior and scenes without an existing partner remain unresolved or unvalidated.",
+    "Sensor scheduling, object lifetime and bindings need actual scene testing."
+  ]
+}
