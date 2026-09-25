@@ -6,21 +6,22 @@
     "flavor": "FullDebugWin32"
   },
   "canonical_patch": {
-    "version": "v13",
-    "file": "BioRevHD 30-Enero-2013 LOCAL COOP v13 SYMMETRIC AMMO RELIEF.exe",
-    "sha256": "3df0e1020b58b3ccc7e31a9046a2a3ce9e5230e1764869b517943b4a808838aa",
+    "version": "v14",
+    "file": "BioRevHD 30-Enero-2013 LOCAL COOP v14 DOOR GIMMICK PAD2.exe",
+    "sha256": "73fe1255697c47a624025ba40b33bab8df5812e76021bdc2d9acdeec3daf56ea",
     "runtime_validated": false,
-    "base_v12_sha256": "5aafc3fd4273d608b4c9b8b60631256b56cb27d6aab0ecca8d2718d824dd28e8",
-    "builder": "patches/build_v13_ammo_relief.py",
-    "assembly": "research/patches/ammo_relief_v13.S",
-    "manifest": "research/manifests/local-coop-v13-ammo-relief.json"
+    "base_v13_sha256": "3df0e1020b58b3ccc7e31a9046a2a3ce9e5230e1764869b517943b4a808838aa",
+    "builder": "patches/build_v14_door_gimmick_pad2.py",
+    "assembly": "research/patches/door_gimmick_pad_v14.S",
+    "manifest": "research/manifests/local-coop-v14-door-gimmick-pad2.json"
   },
   "canonical_lineage": {
     "v9": "5dc7a7a413ce5916c2758be43b3107d5adf00beee93533b4acf5d83cec97c4be",
     "v10": "5060269e5115ef8df53aa0ad4e26c09b4b273d4cfeb6628a7a4f902c606bb4e6",
     "v11": "2c69c5f16626dc7478a6221c2bac98ed19f5b37dcf7991fc78f744f35f192d69",
     "v12": "5aafc3fd4273d608b4c9b8b60631256b56cb27d6aab0ecca8d2718d824dd28e8",
-    "v13": "3df0e1020b58b3ccc7e31a9046a2a3ce9e5230e1764869b517943b4a808838aa"
+    "v13": "3df0e1020b58b3ccc7e31a9046a2a3ce9e5230e1764869b517943b4a808838aa",
+    "v14": "73fe1255697c47a624025ba40b33bab8df5812e76021bdc2d9acdeec3daf56ea"
   },
   "globals": {
     "gSub0Npc": "0x057D9184",
@@ -106,6 +107,7 @@
   },
   "doorAudit": {
     "class": "uDoor2pBase",
+    "status": "statically compatible with canonical local-coop line; no door2p patch required",
     "localSetterThunk": "0x01C9217B",
     "localSetter": "0x02588D20",
     "directCallsites": [
@@ -115,23 +117,9 @@
     "readySetter": "0x02589040",
     "actorIndexThunk": "0x01BEDBB7",
     "actorIndexFunction": "0x01CB7610",
-    "localIndexGetterThunk": "0x01C85962",
-    "localIndexGetter": "0x02DA3050",
-    "arrays": {
-      "ready": [
-        "+0x1010",
-        "+0x1011"
-      ],
-      "guestStatus": [
-        "+0x1018",
-        "+0x1019"
-      ],
-      "local": [
-        "+0x1024",
-        "+0x1025"
-      ]
-    },
-    "currentQuestion": "Do actor-specific setters already update Sub0 slot 1 for local co-op, and are global local-index reads only network/feedback or a gameplay blocker?"
+    "offlineBehavior": "Self and pPt/partner are processed separately; slots 0 and 1 are applied explicitly offline.",
+    "waitStateInput": "0x025746A7 -> 0x02DB0CF0 uses actor selector restored by v7; secondary 0x02DB0DC0 path is stock-GameMode::Coop-only.",
+    "result": "No demonstrated uDoor2pBase blocker requiring v14."
   },
   "doNotRepeat": [
     "Do not use v8 as base; use canonical v13 lineage.",
@@ -143,6 +131,20 @@
     "Do not treat uObjModel mCameraList[0]/[1] as player cameras.",
     "Do not return to 0x049A8023 as unresolved; it was identified as uItem DTI initialization."
   ],
-  "nextStep": "Resume door audit: identify the owner/state containing callsites 0x0257185D and 0x0257198A, reconstruct the actor passed to 0x02588D20, verify whether PcsSub/Sub0 reaches it, and separate gameplay logic from global local-index network/feedback use before considering v14.",
-  "handoff": "START_HERE_NEW_CHAT.md"
+  "nextStep": "Audit other interactions and QTEs for hardcoded pad/member 0, mStartPadNo use, local-index gameplay gates, or pl-only gates that exclude exact local Sub0. Preserve v14 stock/online behavior when gLocalCoopActive=0.",
+  "handoff": "START_HERE_NEW_CHAT.md",
+  "doorGimmickAudit": {
+    "state": "door_gimmick::MoveState",
+    "targetOffset": "+0x10",
+    "partnerSupport": "MoveState slot5 resolves pPt/partner when target selector is negative",
+    "hardcodedPadCallsite": "0x02591118",
+    "padQuery": "0x02591121 -> 0x01B94F53 -> 0x02DB0CF0",
+    "stockBehavior": "caller pushes selector 0",
+    "localFlag": "0x057D9188",
+    "v14Helper": "0x01C95300",
+    "v14Behavior": "flag=0 keeps selector 0; flag=1 derives selector from resolved actor, so P1=0 and exact Sub0=1",
+    "netParam": "DoorGimmick_NetParam+0x04 = mUsePlayer; serialized as one byte",
+    "diffVsV13": "49 bytes in 2 ranges; exact reversible lineage to v13",
+    "status": "statically patched in v14; runtime validation pending"
+  }
 }
