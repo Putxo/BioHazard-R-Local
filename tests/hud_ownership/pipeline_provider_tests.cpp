@@ -87,7 +87,7 @@ int main() {
      C(!f.run(0x02B497CA));C(f.engine.events.empty());C(f.enters==1 && f.leaves==1 && !f.scope_depth);
      C(!f.provider.scope_fault());++scenarios;}
     {Fixture f;f.ready();f.enter_action=1;f.leave_result=false;
-     C(!f.run(0x02B497CA));C(f.provider.scope_fault());C(f.engine.events.empty());C(f.leaves==1);
+     C(!f.run(0x02B497CA));C(f.provider.scope_fault());C(f.engine.events.empty());C(f.leaves==1);C(f.life.state()==LifeState::Draining);
      C(f.begin());C(!f.run(0x02B497CA));C(f.life.state()==LifeState::Draining);C(f.leaves==1);++scenarios;}
     {Fixture f;f.ready();f.enter_result=false;C(!f.run(0x02B497CA));C(f.engine.events.empty());C(f.leaves==0);++scenarios;}
     {Fixture f;f.ready();f.leave_result=false;C(!f.run(0x02B497CA));C(f.provider.scope_fault());

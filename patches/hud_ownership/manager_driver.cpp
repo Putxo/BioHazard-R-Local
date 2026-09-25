@@ -85,7 +85,10 @@ bool ManagerDriver::event(u32 address, u32 manager, u32 context) {
     life_.observe(frame.session);
     if (!life_.live_ticket(ticket_)) { attached_ = false; return false; }
     last_frame_ = frame.frame;
-    if (!host_.enter_scope(host_.memory.context, *site, frame, context)) return false;
+    if (!host_.enter_scope(host_.memory.context, *site, frame, context)) {
+        if (host_.scope_failed && host_.scope_failed(host_.memory.context)) stop();
+        return false;
+    }
     // A successful scope must always be paired, including reentrant stop.
     current_ = site; context_ = context; admitted_ = attached_ && life_.live_ticket(ticket_);
     const bool result = admitted_ && life_.dispatch_manager(ticket_, frame.session, frame.frame,

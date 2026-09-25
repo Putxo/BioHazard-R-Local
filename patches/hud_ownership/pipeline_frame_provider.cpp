@@ -74,6 +74,7 @@ ManagerHost PipelineFrameProvider::callbacks() noexcept {
         return static_cast<PipelineFrameProvider*>(c)->enter(site,frame,context);
     };
     h.leave_scope = [](void* c) noexcept { return static_cast<PipelineFrameProvider*>(c)->leave(); };
+    h.scope_failed = [](void* c) noexcept { return static_cast<PipelineFrameProvider*>(c)->scope_fault(); };
     return h;
 }
 }

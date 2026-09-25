@@ -23,6 +23,9 @@ struct ManagerHost {
     // No default success: absent transform/clipping/lifetime proof -> false.
     bool (*enter_scope)(void*, const ManagerSite&, const ManagerFrame&, u32 context) noexcept = nullptr;
     bool (*leave_scope)(void*) noexcept = nullptr;
+    // Optional latched failure: an entry wrapper may have opened a native scope
+    // then failed to restore it after a reentrant clock change. Stop immediately.
+    bool (*scope_failed)(void*) noexcept = nullptr;
 };
 class ManagerDriver {
 public:
