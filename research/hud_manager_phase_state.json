@@ -1,0 +1,26 @@
+{
+  "status": "SOURCE_COMPONENTS_IMPLEMENTED_NOT_INSTALLED",
+  "base_commit": "f420a90f903af9d23069f18dc8978588d063bf34",
+  "code_commit": "78dcc277d7cc1b21bcfa28983abf6bc1348922b6",
+  "source_sha256": "9124bb92d6c54a047ade47dacc8429221b18f9910b504f0e87718d5151013f69",
+  "original_unchanged": true,
+  "game_exe_generated": false,
+  "hooks_installed": false,
+  "gameplay_executed": false,
+  "components": ["Lifecycle::dispatch_manager", "ManagerDriver", "six preserved-state i386 gateways"],
+  "sites": [
+    {"manager": "Cockpit", "phase": 8, "va": "0x02B497CA", "old": "8b45f88b483c", "continuation": "0x02B497D0"},
+    {"manager": "Cockpit", "phase": 9, "va": "0x02B49C5B", "old": "8b45f88b483c", "continuation": "0x02B49C61"},
+    {"manager": "Cockpit", "phase": 11, "va": "0x02B49DE3", "old": "8b45f88b483c", "continuation": "0x02B49DE9"},
+    {"manager": "MiniMap", "phase": 8, "va": "0x02B6847B", "old": "8b45f883c030", "continuation": "0x02B68481"},
+    {"manager": "MiniMap", "phase": 9, "va": "0x02B685B3", "old": "8b45f883c030", "continuation": "0x02B685B9"},
+    {"manager": "MiniMap", "phase": 11, "va": "0x02B68724", "old": "8b45f883c030", "continuation": "0x02B6872A"}
+  ],
+  "disallowed_common_epilogue": "0x02B687F0",
+  "phase_context": "8/9: no context argument; 11: original [ebp+8], view byte 1 only",
+  "native_provider_implemented": false,
+  "render_fence_proven": false,
+  "native_hook_installer_implemented": false,
+  "remaining": ["trusted frame and lifetime/Session producer", "native render admission and scoped state", "hook installation with exact live image validation", "P1 masks and coordinate/clipping integration", "complete menu/death/checkpoint/cutscene/partnerless-scene handling"],
+  "next": "Continue native lifetime/frame provider from resolved actor binder and pre-destruction notifications, then render scopes; do not infer a safe point from a manager loop entry."
+}
