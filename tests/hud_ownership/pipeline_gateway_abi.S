@@ -36,6 +36,8 @@ test_one:
     mov dword ptr [callback_count],0
     mov dword ptr [structural_error],0
     mov dword ptr [structural_count],0
+    mov dword ptr [activation_error],0
+    mov dword ptr [activation_count],0
     fninit
     fld1
     movdqu xmm0,[xmm_seed]
@@ -102,6 +104,15 @@ rev_pipeline_continue_end:
     cmp dword ptr [structural_count],ecx
     jne .done
     cmp dword ptr [structural_error],0
+    jne .done
+    # Only the first invocation is an accepted BEGIN. END goes to structural;
+    # the third BEGIN is rejected by rev_hud_pipeline_event.
+    xor ecx,ecx
+    cmp dword ptr [case_no],0
+    sete cl
+    cmp dword ptr [activation_count],ecx
+    jne .done
+    cmp dword ptr [activation_error],0
     jne .done
     mov edx,[fx_before]
     cmp edx,[fx_after]
@@ -218,6 +229,33 @@ rev_hud_pipeline_event:
     xor eax,1
     ret
 
+.global rev_hud_begin_activation_event
+rev_hud_begin_activation_event:
+    pushfd
+    pop eax
+    test eax,0x400
+    jnz .activate_bad
+    mov eax,esp
+    and eax,15
+    cmp eax,12
+    jne .activate_bad
+    cmp dword ptr [esp+4],0x02F506A0
+    jne .activate_bad
+    cmp dword ptr [esp+8],0x00550000
+    jne .activate_bad
+    cmp dword ptr [esp+12],offset fake_frame+128
+    jne .activate_bad
+    jmp .activate_count
+.activate_bad:
+    mov dword ptr [activation_error],1
+.activate_count:
+    inc dword ptr [activation_count]
+    fninit
+    pxor xmm0,xmm0
+    ldmxcsr [mxcsr_other]
+    mov eax,1
+    ret
+
 .global rev_hud_structural_event
 rev_hud_structural_event:
     pushfd
@@ -264,6 +302,8 @@ callback_error: .skip 4
 callback_count: .skip 4
 structural_error: .skip 4
 structural_count: .skip 4
+activation_error: .skip 4
+activation_count: .skip 4
 fake_frame: .skip 256
 .align 16
 test_stack: .skip 16384
