@@ -26,7 +26,9 @@ struct Fixture {
     }
     static bool read(void* c,u32 a,u32* out) noexcept {
         auto& f=*static_cast<Fixture*>(c);auto it=f.mem.find(a);
-        if(it==f.mem.end())return false;*out=it->second;return true;
+        if(it==f.mem.end()) return false;
+        *out=it->second;
+        return true;
     }
     static u32 tid(void* c) noexcept {return static_cast<Fixture*>(c)->thread;}
 };
