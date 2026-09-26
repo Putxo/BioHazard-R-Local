@@ -3,6 +3,7 @@
 .code32
 .text
 .extern rev_hud_pipeline_event
+.extern rev_hud_structural_event
 .macro pipeline_gate name, site, ending
 .global rev_pipeline_gate_\name
 .type rev_pipeline_gate_\name,@function
@@ -25,6 +26,17 @@ rev_pipeline_gate_\name:
     push \site
     call rev_hud_pipeline_event
     add esp,16
+.if \ending
+    test eax,eax
+    jz .Lstruct_done_\@
+    sub esp,4
+    push ebp
+    push dword ptr [ebp-8]
+    push \site
+    call rev_hud_structural_event
+    add esp,16
+.Lstruct_done_\@:
+.endif
     fxrstor [esp]
     mov esp,esi
     popad
