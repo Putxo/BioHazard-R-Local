@@ -21,6 +21,9 @@ struct AllocationRecord {
     WidgetKind kind=WidgetKind::Reticle;
     AllocationState state=AllocationState::Empty;
 };
+struct AllocationSpec {
+    WidgetKind kind; u32 size,allocator,constructor,destroy;
+};
 class JanuaryAllocationLedger {
 public:
     JanuaryAllocationLedger(AllocationGate gate, JanuaryCalls native)
@@ -35,12 +38,9 @@ public:
     u32 retained() const noexcept;
     AllocationFault fault() const noexcept { return fault_; }
 private:
-    struct Spec {
-        WidgetKind kind; u32 size,allocator,constructor,destroy;
-    };
-    static const Spec* spec_for_allocator(u32 target,u32 size,u32 align) noexcept;
-    static const Spec* spec_for_constructor(u32 target) noexcept;
-    static const Spec* spec_for_destroy(u32 target) noexcept;
+    static const AllocationSpec* spec_for_allocator(u32 target,u32 size,u32 align) noexcept;
+    static const AllocationSpec* spec_for_constructor(u32 target) noexcept;
+    static const AllocationSpec* spec_for_destroy(u32 target) noexcept;
     AllocationGate gate_{};
     JanuaryCalls native_{};
     AllocationRecord records_[3]{};
