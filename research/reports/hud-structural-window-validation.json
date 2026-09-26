@@ -1,0 +1,14 @@
+{
+  "status":"SOURCE_STRUCTURAL_WINDOW_TESTED",
+  "base_commit":"3f956e01010841735ce4888cb91e8cf79c0c9135",
+  "original_sha256":"9124bb92d6c54a047ade47dacc8429221b18f9910b504f0e87718d5151013f69",
+  "read_only_checks":12,
+  "endpoint":"0x02F50F4B",
+  "render_worker_start_event_offset":"0xD0",
+  "render_worker_completion_event_offset":"0xD4",
+  "cpu_render_worker_drained":true,
+  "gpu_fence_proven":false,
+  "structural_safe_persistent":false,
+  "gameplay_executed":false,
+  "game_image_modified":false
+}

@@ -44,6 +44,9 @@ bool PipelineClock::matches(const PipelineStamp& stamp) const noexcept {
     return capture(&now) && stamp.frame == now.frame && stamp.revision == now.revision &&
         stamp.owner == now.owner && stamp.frame_base == now.frame_base;
 }
+bool PipelineClock::quiescent() const noexcept {
+    return on_thread() && !open_ && fault_ == PipelineFault::None && sequence_.frame != 0;
+}
 bool bind_pipeline_sink(PipelineClock& clock) noexcept {
     if (sink) return false;
     sink = &clock; return true;

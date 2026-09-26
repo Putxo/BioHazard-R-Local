@@ -34,6 +34,8 @@ test_one:
     mov [saved_esp],esp
     mov dword ptr [callback_error],0
     mov dword ptr [callback_count],0
+    mov dword ptr [structural_error],0
+    mov dword ptr [structural_count],0
     fninit
     fld1
     movdqu xmm0,[xmm_seed]
@@ -92,6 +94,14 @@ rev_pipeline_continue_end:
     cmp dword ptr [callback_error],0
     jne .done
     cmp dword ptr [callback_count],1
+    jne .done
+    mov edx,[case_no]
+    xor ecx,ecx
+    cmp edx,1
+    sete cl
+    cmp dword ptr [structural_count],ecx
+    jne .done
+    cmp dword ptr [structural_error],0
     jne .done
     mov edx,[fx_before]
     cmp edx,[fx_after]
@@ -207,6 +217,33 @@ rev_hud_pipeline_event:
     sete al
     xor eax,1
     ret
+
+.global rev_hud_structural_event
+rev_hud_structural_event:
+    pushfd
+    pop eax
+    test eax,0x400
+    jnz .struct_bad
+    mov eax,esp
+    and eax,15
+    cmp eax,12
+    jne .struct_bad
+    cmp dword ptr [esp+4],0x02F50F4B
+    jne .struct_bad
+    cmp dword ptr [esp+8],0x00550000
+    jne .struct_bad
+    cmp dword ptr [esp+12],offset fake_frame+128
+    jne .struct_bad
+    jmp .struct_count
+.struct_bad:
+    mov dword ptr [structural_error],1
+.struct_count:
+    inc dword ptr [structural_count]
+    fninit
+    pxor xmm0,xmm0
+    ldmxcsr [mxcsr_other]
+    mov eax,1
+    ret
 .section .rodata
 .align 16
 xmm_seed: .long 0x12345678,0x98ABCDEF,0x76543210,0xFFEEDDCC
@@ -225,6 +262,8 @@ initial_esp: .skip 4
 saved_esp: .skip 4
 callback_error: .skip 4
 callback_count: .skip 4
+structural_error: .skip 4
+structural_count: .skip 4
 fake_frame: .skip 256
 .align 16
 test_stack: .skip 16384
