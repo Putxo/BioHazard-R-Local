@@ -1,7 +1,7 @@
 #include "allocation_ledger.hpp"
 namespace rev_hud {
 namespace {
-constexpr JanuaryAllocationLedger::Spec Specs[] = {
+constexpr AllocationSpec Specs[] = {
     {WidgetKind::Reticle,       0x2E0,0x01C11706,0x01C19CCB,0x01C40C04},
     {WidgetKind::MainEquipment, 0x370,0x01C15775,0x01B7D1F0,0x01C0C74C},
     {WidgetKind::MapHerb,       0x2C0,0x01C7855A,0x01C6392A,0x01BAB4F6},
@@ -14,18 +14,18 @@ bool overlap(u32 a,u32 n,u32 b,u32 m) noexcept {
     return range_ok(a,n) && range_ok(b,m) && a<b+m && b<a+n;
 }
 }
-const JanuaryAllocationLedger::Spec*
+const AllocationSpec*
 JanuaryAllocationLedger::spec_for_allocator(u32 target,u32 size,u32 align) noexcept {
     if(align!=0x10) return nullptr;
     for(const auto& s:Specs) if(s.allocator==target && s.size==size) return &s;
     return nullptr;
 }
-const JanuaryAllocationLedger::Spec*
+const AllocationSpec*
 JanuaryAllocationLedger::spec_for_constructor(u32 target) noexcept {
     for(const auto& s:Specs) if(s.constructor==target) return &s;
     return nullptr;
 }
-const JanuaryAllocationLedger::Spec*
+const AllocationSpec*
 JanuaryAllocationLedger::spec_for_destroy(u32 target) noexcept {
     for(const auto& s:Specs) if(s.destroy==target) return &s;
     return nullptr;
@@ -62,7 +62,7 @@ u32 JanuaryAllocationLedger::allocate(u32 target,u32 size,u32 align) noexcept {
         fail(busy_?AllocationFault::Protocol:AllocationFault::Unsafe); return 0;
     }
     if(!native_.allocate) {fail(AllocationFault::Config);return 0;}
-    const Spec* spec=spec_for_allocator(target,size,align);
+    const AllocationSpec* spec=spec_for_allocator(target,size,align);
     if(!spec) {fail(AllocationFault::Target);return 0;}
     for(const auto& r:records_)
         if(r.state==AllocationState::Pending) {fail(AllocationFault::Protocol);return 0;}
@@ -95,7 +95,7 @@ u32 JanuaryAllocationLedger::construct(u32 target,u32 self) noexcept {
     if(busy_ || fault_!=AllocationFault::None || !safe() || !native_.construct) {
         fail(!safe()?AllocationFault::Unsafe:AllocationFault::Config);return 0;
     }
-    const Spec* spec=spec_for_constructor(target);
+    const AllocationSpec* spec=spec_for_constructor(target);
     AllocationRecord* r=find(self);
     if(!spec || !r || r->state!=AllocationState::Certified ||
        r->kind!=spec->kind || r->constructor!=target) {
@@ -110,7 +110,7 @@ void JanuaryAllocationLedger::method0(u32 target,u32 self) noexcept {
     if(native_.method0) native_.method0(native_.context,target,self);
 }
 void JanuaryAllocationLedger::method1(u32 target,u32 self,u32 argument) noexcept {
-    const Spec* spec=spec_for_destroy(target);
+    const AllocationSpec* spec=spec_for_destroy(target);
     if(!spec) {
         if(native_.method1) native_.method1(native_.context,target,self,argument);
         return;
