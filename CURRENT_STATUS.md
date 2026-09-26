@@ -1,23 +1,25 @@
-# Estado actual — ciclo/vida del HUD + máscara P1 scoped por vista
+# Estado actual — viewport nativo validado para el HUD P2
 
-26 de septiembre de 2026. Continúa desde PR #11 / `3d624e39aec66063e67208107e587abffdd3062f`. Solo fuentes, pruebas y evidencia en GitHub. No se ha generado/modificado otro EXE ni instalado hooks.
+26 de septiembre de 2026. Continúa PR #12 / `627c352689946cb4b43adc3f35b0f545228ea5b8`. Solo fuentes, pruebas y evidencia en GitHub. No se ha generado/modificado otro EXE ni instalado hooks.
 
-## Cambio actual
+## Avance
 
-Se añade `P1ViewMask`: cuando el despacho manual de P2 en fase11/vista1 termina correctamente, elimina temporalmente el bit de vista1 únicamente de los tres originales que ya tienen clon P2: MainEquipWin (cockpit+5C), Reticle (cockpit+90) y MapBaseAndHerb (minimap+30, alias +40). Los demás widgets stock permanecen intactos.
+Se demuestra la cadena normal `sCamera::Viewport.mRegion -> cDraw+0xBC -> GUI`. El loop de sCamera escribe además el índice de Viewport en el byte bajo de `cDraw+0x158`. El split local existente configura Partner como VIEW_1/BOTTOM.
 
-El scope se restaura al terminar el bucle stock de cada manager, recuperando solo los diez bits mDrawView y preservando otros cambios de cUnit. Una identidad de slot/vtable cambiada o un fallo de escritura provoca revocación del ManagerDriver, no una liberación durante el draw.
+`NativeViewScope` valida el contexto ya preparado por el motor en lugar de aplicar un escalado manual: cDraw exacto, VIEW_1, sCamera/Viewport1 visible en BOTTOM, display 0, tracker Sub0 y rectángulo mRegion idéntico a cDraw+BC. Al salir vuelve a verificar esos anclajes. No escribe viewport, proyección, scissor ni coordenadas.
 
-Los gateways siguen sin instalarse. Este cambio no modifica coordenadas ni añade un escalado 0.5: la ruta común de GUI ya calcula ajustes de resolución y sigue pendiente demostrar el significado exacto del contexto+BC/viewport/scissor.
+`NativeViewScope::services()` llena los PipelineServices que estaban pendientes en PipelineFrameProvider. Las fases 8/9 se emparejan sin contexto de dibujo; fase11 exige la ruta nativa P2 completa.
 
-## Evidencia y continuación
+## Rectificación
 
-Auditor local: 16 comprobaciones exactas del original, hash intacto. Detalle: docs/38-p1-scoped-view-mask.md y research/reports/hud-p1-view-mask-validation.json.
+`0x02DC16F0` no pertenece al cDraw usado por los managers; se elimina como supuesto setter de view index. El setter real es `0x0328CE80` y se alimenta desde el loop normal de sCamera.
 
-Punto siguiente: seguir el productor del contexto de dibujo que contiene +158 (índice de vista) y +BC (estructura de dimensiones), y sus consumidores de proyección/scissor. Después implementar el scope nativo de render y validar que TOP/BOTTOM ya transforman el HUD antes de cualquier ajuste adicional.
+## Evidencia
 
-Siguen pendientes pausa/inventario por jugador, scheduler compartido, muerte/checkpoints/cutscenes, escenas sin compañero, instalación real y validación conjunta en campaña. El cooperativo local completo no está terminado.
+Auditor hash-pinned del original: 15 ventanas/relaciones concretas, SHA intacto. Detalle en `docs/39-native-viewport-region-to-cdraw.md` y `research/reports/hud-native-view-scope-validation.json`.
 
-## Estado anterior preservado
+## Siguiente punto
 
-El estado de PR #11 queda en docs/35–37 y en el historial Git; no se rehacen PipelineClock, LifetimeSource, Lifecycle, JanuaryBackend ni ManagerDriver.
+Conectar este scope con el host de admisión de JanuaryBackend: `NativeOp::Phase` debe exigir `ManagerDriver::phase_scope` más este scope nativo; `Structural/Initialize/Destroy` continúan necesitando un punto seguro real y vida exclusiva de asignaciones. En paralelo, seguir el scissor/device-state final para confirmar que no existe una segunda preparación necesaria.
+
+Pausa/inventario por jugador, scheduler, muerte/checkpoints/cutscenes, escenas sin compañero, instalación real y validación conjunta siguen abiertos. El cooperativo local completo no está terminado.
