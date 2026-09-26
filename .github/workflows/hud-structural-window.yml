@@ -1,0 +1,37 @@
+name: HUD structural window
+on:
+  push:
+    branches: [research/hud-structural-window]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  structural:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        mode: [native, sanitized]
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Execute pipeline clock and structural window
+        shell: bash
+        run: |
+          FLAGS="-std=c++17 -O1 -g -Wall -Wextra -Werror"
+          if [ "${{ matrix.mode }}" = sanitized ]; then FLAGS="$FLAGS -fsanitize=address,undefined -fno-omit-frame-pointer"; fi
+          g++ $FLAGS -Ipatches/hud_ownership patches/hud_ownership/{pipeline_clock,structural_window}.cpp tests/hud_ownership/structural_window_tests.cpp -o "$RUNNER_TEMP/structural"
+          "$RUNNER_TEMP/structural"
+      - name: Read-only evidence/source map; private image optional
+        run: python tests/hud_ownership/test_structural_window_audit.py
+      - name: Freestanding i386 syntax
+        run: g++ -m32 -std=c++17 -Wall -Wextra -Werror -ffreestanding -fno-exceptions -fno-rtti -fsyntax-only patches/hud_ownership/structural_window.cpp
+  gateway:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Execute pipeline gateways with structural END callback
+        run: |
+          as --32 patches/hud_ownership/pipeline_gateways.S -o "$RUNNER_TEMP/gates.o"
+          as --32 tests/hud_ownership/pipeline_gateway_abi.S -o "$RUNNER_TEMP/harness.o"
+          ld -m elf_i386 "$RUNNER_TEMP/gates.o" "$RUNNER_TEMP/harness.o" -o "$RUNNER_TEMP/abi"
+          "$RUNNER_TEMP/abi"
