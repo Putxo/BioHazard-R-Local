@@ -1,0 +1,14 @@
+{
+  "status": "SOURCE_COMPONENT_PENDING_CI",
+  "base": "ec7f8314fdc0cf585efdd2b5bed3167faa3011f3",
+  "original_sha256": "9124bb92d6c54a047ade47dacc8429221b18f9910b504f0e87718d5151013f69",
+  "allocator_witnesses": 6,
+  "allocators": {
+    "Reticle": ["0x01C11706","0x2E0"],
+    "MainEquipment": ["0x01C15775","0x370"],
+    "MapHerb": ["0x01C7855A","0x2C0"]
+  },
+  "policy": "exact allocator return -> Pending -> one fresh_allocation -> Certified -> exact scalar destructor retires",
+  "game_image_modified": false,
+  "gameplay_executed": false
+}

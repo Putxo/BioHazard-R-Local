@@ -1,25 +1,23 @@
-# Estado actual — ventana estructural CPU después del render worker
+# Estado actual — ventana estructural + ledger de asignaciones propias
 
-26 de septiembre de 2026. Continúa PR #14 / `3f956e01010841735ce4888cb91e8cf79c0c9135`. Solo fuentes, tests y evidencia.
+26 de septiembre de 2026. Continúa desde PR #15 / `ec7f8314fdc0cf585efdd2b5bed3167faa3011f3`. Solo fuentes/tests/evidencia; no se ha generado otro EXE ni instalado hooks.
 
 ## Avance actual
 
-La admisión exacta del JanuaryBackend está integrada. Se añade ahora `StructuralWindow` en el endpoint END del ciclo exterior de sSkeletonMain.
+La ventana estructural post-render-worker está integrada. Se añade `JanuaryAllocationLedger`: envuelve exclusivamente los tres allocators de Reticle/MainEquip/MapHerb, registra el retorno inmediato como Pending y permite una única transición Pending→Certified mediante fresh_allocation bajo la misma ventana estructural.
 
-El camino nativo demuestra: sRender::begin resetea el evento de finalización (+D4) y despierta el worker (+D0); el worker espera +D0 y señaliza +D4 al terminar; sRender::end espera/pollear +D4 antes de la llamada de Present; el endpoint 0x02F50F4B ocurre después de sRender::end y de los callbacks post-render restantes.
+El constructor exacto solo se reenvía para un bloque Certified de la clase correcta. El destructor escalar exacto retira la identidad después de retornar. Dirección/tamaño distintos, segunda certificación, desalineación, solapamiento, allocator no esperado o cambio de ventana fallan cerrado.
 
-`StructuralWindow::safe()` solo es true dentro de la tarea ejecutada desde ese END válido, con PipelineClock ya cerrado y en el hilo propietario. No queda habilitada entre ciclos. Cambio reentrante, hilo distinto o fallo de tarea la revocan.
-
-Esto prueba render-worker CPU drenado, **no GPU idle/fence**.
-
-## Conexión pendiente inmediata
-
-Conectar `StructuralWindow::safe()` a `AdmissionServices::structural_safe` y certificar `fresh_allocation` mediante un ledger de las llamadas de allocator que nosotros mismos iniciamos. Los clones siguen detached y no se insertan en listas nativas.
-
-Después conectar un coordinador en la propia tarea estructural para prepare/publish/collect de Lifecycle.
+`AllocationAdmissionBridge` conecta el gate estructural y el ledger con `AdmissionServices::structural_safe/fresh_allocation`, reenviando las comprobaciones existentes de memoria, hilo, imagen y escritura. No sustituye ninguna restricción previa por true.
 
 ## Render
 
-NativeViewScope ya demuestra VIEW_1/BOTTOM y mRegion -> cDraw+BC. El comando final de device viewport/scissor sigue en análisis; no se añade escalado 0.5 ni se escriben rectángulos.
+NativeViewScope ya valida VIEW_1/BOTTOM y la igualdad `Viewport1.mRegion == cDraw+0xBC`. La cadena nativa demuestra que cDraw recibe ese mRegion antes de la GUI; no se aplica un factor 0.5 manual. El comando final de dispositivo/scissor sigue como evidencia adicional, no como requisito para mutar el scope actual.
 
-Pausa/inventario, scheduler, muerte/checkpoints/cutscenes, escenas sin compañero, instalación y gameplay siguen abiertos.
+## Punto exacto siguiente
+
+Conectar un coordinador ejecutado dentro de `StructuralWindow::task` que haga prepare/publish/collect de Lifecycle y configure JanuaryBackend/Admission/Ledger en el orden correcto. Debe separar creación inicial, publicación y retirada, sin destruir durante callbacks de fase.
+
+Después: pausa/inventario por jugador, scheduler compartido, muerte/checkpoints/cutscenes, escenas sin compañero, instalación efectiva y validación de campaña.
+
+Estado anterior preservado en `docs/history/CURRENT_STATUS-before-allocation-ledger.md`.

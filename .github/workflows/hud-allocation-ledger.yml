@@ -1,0 +1,27 @@
+name: HUD allocation ledger
+on:
+  push:
+    branches: [research/hud-allocation-ledger]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  ledger:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        mode: [native, sanitized]
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Exact allocation-return ledger, synthetic allocator only
+        shell: bash
+        run: |
+          FLAGS="-std=c++17 -O1 -g -Wall -Wextra -Werror"
+          if [ "${{ matrix.mode }}" = sanitized ]; then FLAGS="$FLAGS -fsanitize=address,undefined -fno-omit-frame-pointer"; fi
+          g++ $FLAGS -Ipatches/hud_ownership patches/hud_ownership/allocation_ledger.cpp tests/hud_ownership/allocation_ledger_tests.cpp -o "$RUNNER_TEMP/ledger"
+          "$RUNNER_TEMP/ledger"
+      - name: Read-only allocator audit/source map; private image optional
+        run: python tests/hud_ownership/test_allocation_ledger_audit.py
+      - name: Freestanding i386 syntax
+        run: g++ -m32 -std=c++17 -Wall -Wextra -Werror -ffreestanding -fno-exceptions -fno-rtti -fsyntax-only patches/hud_ownership/allocation_ledger.cpp
