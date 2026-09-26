@@ -1,0 +1,12 @@
+{
+  "status":"SOURCE_SCOPE_IMPLEMENTED_STATIC_EVIDENCE",
+  "base_commit":"627c352689946cb4b43adc3f35b0f545228ea5b8",
+  "original_sha256":"9124bb92d6c54a047ade47dacc8429221b18f9910b504f0e87718d5151013f69",
+  "read_only_checks":15,
+  "chain":["Viewport.mRegion+0x18","Viewport render local rect","cDraw setup third argument","cDraw+0xBC","GUI resolution-adjust path"],
+  "view1":{"index":1,"mode":"BOTTOM","mode_value":3,"camera_global":"0x05799D3C"},
+  "writes_render_state":false,
+  "manual_half_scale_required":false,
+  "gameplay_executed":false,
+  "game_image_modified":false
+}
