@@ -1,0 +1,35 @@
+name: HUD next-cycle begin activator
+on:
+  push:
+    branches: [research/hud-begin-activator]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  activator:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        mode: [native, sanitized]
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Ticket activation state machine
+        shell: bash
+        run: |
+          FLAGS="-std=c++17 -O1 -g -Wall -Wextra -Werror"
+          if [ "${{ matrix.mode }}" = sanitized ]; then FLAGS="$FLAGS -fsanitize=address,undefined -fno-omit-frame-pointer"; fi
+          g++ $FLAGS -Ipatches/hud_ownership             patches/hud_ownership/{ownership,lifecycle,manager_driver,pipeline_clock,begin_activator}.cpp             tests/hud_ownership/begin_activator_tests.cpp             -o "$RUNNER_TEMP/activator"
+          "$RUNNER_TEMP/activator"
+      - name: Freestanding i386 syntax
+        run: g++ -m32 -std=c++17 -Wall -Wextra -Werror -ffreestanding -fno-exceptions -fno-rtti -fsyntax-only patches/hud_ownership/begin_activator.cpp
+  gateways:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Pipeline gateways dispatch BEGIN activator only after accepted clock event
+        run: |
+          as --32 patches/hud_ownership/pipeline_gateways.S -o "$RUNNER_TEMP/pipeline-gates.o"
+          as --32 tests/hud_ownership/pipeline_gateway_abi.S -o "$RUNNER_TEMP/pipeline-harness.o"
+          ld -m elf_i386 "$RUNNER_TEMP/pipeline-gates.o" "$RUNNER_TEMP/pipeline-harness.o" -o "$RUNNER_TEMP/pipeline-abi"
+          "$RUNNER_TEMP/pipeline-abi"
