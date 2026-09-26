@@ -56,6 +56,13 @@ bool ManagerDriver::phase_scope(WidgetKind kind, u32 unit, u32 phase, u32 contex
         unit && unit == life_.unit(static_cast<u32>(kind)) &&
         phase == current_->phase && context == context_;
 }
+bool ManagerDriver::phase_unit_scope(WidgetKind kind, u32 unit) const {
+    const KindInfo* info = kind_info(kind);
+    return attached_ && admitted_ && busy_ && current_ && info &&
+        host_.thread_id && host_.thread_id(host_.memory.context) == thread_ &&
+        life_.live_ticket(ticket_) && info->manager == current_->manager &&
+        unit && unit == life_.unit(static_cast<u32>(kind));
+}
 bool ManagerDriver::event(u32 address, u32 manager, u32 context) {
     const ManagerSite* site = manager_site(address);
     if (busy_ || !attached_ || !site || !life_.live_ticket(ticket_) ||
