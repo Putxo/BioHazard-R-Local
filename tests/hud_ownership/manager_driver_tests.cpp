@@ -58,6 +58,8 @@ struct Fixture {
             CHECK(f.scoped);CHECK(kind_info(k)->manager==f.scope_kind);
             CHECK(phase==f.scope_phase);CHECK(ctx==f.scope_context);
             CHECK(f.driver.phase_scope(k,u,phase,ctx));
+            CHECK(f.driver.phase_unit_scope(k,u));
+            CHECK(!f.driver.phase_unit_scope(k,u+4));
             CHECK(!f.driver.phase_scope(k,u+4,phase,ctx));
             CHECK(!f.driver.phase_scope(k,u,phase,ctx+4));
             CHECK(draw_view(f.mem[u+0xC])==2);

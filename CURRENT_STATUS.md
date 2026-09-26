@@ -1,25 +1,30 @@
-# Estado actual — viewport nativo validado para el HUD P2
+# Estado actual — JanuaryBackend conectado a admisión real de fase
 
-26 de septiembre de 2026. Continúa PR #12 / `627c352689946cb4b43adc3f35b0f545228ea5b8`. Solo fuentes, pruebas y evidencia en GitHub. No se ha generado/modificado otro EXE ni instalado hooks.
+26 de septiembre de 2026. Continúa PR #13 / `e8954343a498665a959bbc1856edc41dadb45b33`. Solo fuentes, tests y evidencia; no se ha generado otro EXE ni instalado hooks.
 
-## Avance
+## Avance actual
 
-Se demuestra la cadena normal `sCamera::Viewport.mRegion -> cDraw+0xBC -> GUI`. El loop de sCamera escribe además el índice de Viewport en el byte bajo de `cDraw+0x158`. El split local existente configura Partner como VIEW_1/BOTTOM.
+`JanuaryAdmission` implementa el host que JanuaryBackend necesitaba. `NativeOp::Phase` solo pasa si el ManagerDriver está en el widget/fase/contexto exactos y el NativeViewScope está activo. Las escrituras internas requieren la unidad exacta admitida mediante `phase_unit_scope`.
 
-`NativeViewScope` valida el contexto ya preparado por el motor en lugar de aplicar un escalado manual: cDraw exacto, VIEW_1, sCamera/Viewport1 visible en BOTTOM, display 0, tracker Sub0 y rectángulo mRegion idéntico a cDraw+BC. Al salir vuelve a verificar esos anclajes. No escribe viewport, proyección, scissor ni coordenadas.
+Lectura, identidad de imagen e hilo se validan en cada llamada. Creación/inicialización/destrucción NO se autorizan por estar en una fase: requieren un callback externo `structural_safe`, fuera de eventos y scopes de render. Fresh allocation hereda ese mismo requisito.
 
-`NativeViewScope::services()` llena los PipelineServices que estaban pendientes en PipelineFrameProvider. Las fases 8/9 se emparejan sin contexto de dibujo; fase11 exige la ruta nativa P2 completa.
+No se ha rellenado `structural_safe` con true ni con el contador del pipeline. PipelineClock sigue siendo identidad temporal CPU, no fence de GPU.
 
-## Rectificación
+## Piezas conectadas
 
-`0x02DC16F0` no pertenece al cDraw usado por los managers; se elimina como supuesto setter de view index. El setter real es `0x0328CE80` y se alimenta desde el loop normal de sCamera.
+La cadena de fuentes queda:
+`LifetimeSource + PipelineClock + NativeViewScope -> PipelineFrameProvider -> ManagerDriver -> Lifecycle -> JanuaryBackend`, con `JanuaryAdmission` como política del backend.
 
-## Evidencia
+El split nativo sigue usando VIEW_1/BOTTOM y el HUD P1 original se enmascara solo durante view1 para las tres clases clonadas.
 
-Auditor hash-pinned del original: 15 ventanas/relaciones concretas, SHA intacto. Detalle en `docs/39-native-viewport-region-to-cdraw.md` y `research/reports/hud-native-view-scope-validation.json`.
+## Pruebas
 
-## Siguiente punto
+CI específica de JanuaryAdmission en verde en el head de código. La suite de ManagerDriver verifica también que `phase_unit_scope` acepta solo la unidad clon actualmente admitida. El PR de integración vuelve a ejecutar las regresiones completas.
 
-Conectar este scope con el host de admisión de JanuaryBackend: `NativeOp::Phase` debe exigir `ManagerDriver::phase_scope` más este scope nativo; `Structural/Initialize/Destroy` continúan necesitando un punto seguro real y vida exclusiva de asignaciones. En paralelo, seguir el scissor/device-state final para confirmar que no existe una segunda preparación necesaria.
+## Punto exacto siguiente
 
-Pausa/inventario por jugador, scheduler, muerte/checkpoints/cutscenes, escenas sin compañero, instalación real y validación conjunta siguen abiertos. El cooperativo local completo no está terminado.
+Demostrar un punto estructural real para Allocate/Initialize/Destroy y una certificación real de la asignación. Examinar manager birth/death, sUnit scheduling y render begin/end/fences; no confundir “fuera del callback HUD” con “GPU drenada”.
+
+En paralelo, terminar la ruta final de viewport/scissor del dispositivo para confirmar que NativeViewScope puede permanecer no mutante.
+
+Pausa/inventario por jugador, scheduler, muerte/checkpoints/cutscenes, escenas sin compañero, instalación efectiva y validación de campaña siguen pendientes.
