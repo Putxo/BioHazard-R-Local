@@ -1,0 +1,10 @@
+{
+  "status": "PASS_COMPONENT_VALIDATION",
+  "run_id": 36273213216,
+  "native": {"scenarios": 8, "assertions": 59, "status": "PASS"},
+  "sanitized": {"scenarios": 8, "assertions": 59, "status": "PASS"},
+  "gateway_i386": {"gateways": 2, "invocations": 3, "status": "PASS"},
+  "gameplay_executed": false,
+  "game_image_modified": false,
+  "contract": "structural END publishes ticket; next accepted BEGIN attaches exactly once; failed attach revokes and defers destruction"
+}

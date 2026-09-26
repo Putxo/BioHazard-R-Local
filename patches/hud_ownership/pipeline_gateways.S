@@ -4,6 +4,7 @@
 .text
 .extern rev_hud_pipeline_event
 .extern rev_hud_structural_event
+.extern rev_hud_begin_activation_event
 .macro pipeline_gate name, site, ending
 .global rev_pipeline_gate_\name
 .type rev_pipeline_gate_\name,@function
@@ -36,6 +37,16 @@ rev_pipeline_gate_\name:
     call rev_hud_structural_event
     add esp,16
 .Lstruct_done_\@:
+.else
+    test eax,eax
+    jz .Lactivate_done_\@
+    sub esp,4
+    push ebp
+    push dword ptr [esi+24]
+    push \site
+    call rev_hud_begin_activation_event
+    add esp,16
+.Lactivate_done_\@:
 .endif
     fxrstor [esp]
     mov esp,esi

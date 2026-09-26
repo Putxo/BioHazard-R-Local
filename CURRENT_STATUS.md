@@ -1,36 +1,43 @@
-# Estado actual — ledger + coordinador estructural del HUD P2
+# Estado actual — HUD estructural publicado y adjuntado en el siguiente BEGIN
 
-26 de septiembre de 2026. Continúa desde el allocation ledger. Solo fuentes/tests/evidencia; no se ha generado otro EXE ni instalado hooks.
+26 de septiembre de 2026. Solo fuentes/tests/evidencia; no se ha generado otro EXE ni instalado hooks.
 
-## Avance actual
+## Flujo conectado
 
-`StructuralCoordinator` ejecuta dentro de `StructuralWindow::task` el mantenimiento estructural de los tres clones. Con captura válida de `LifetimeSource` y Lifecycle Empty valida los originales stock, exige ledger vacío, configura `JanuaryBackend` y ejecuta `prepare → publish`.
+El mantenimiento estructural del HUD queda separado por fase del motor:
 
-Originales verificados por ownership:
-- Reticle = Cockpit+0x90;
-- MainEquipWin = Cockpit+0x5C;
-- MapBaseAndHerb = MiniMap+0x30, con alias +0x40 idéntico.
+1. END estructural: LifetimeSource captura vida; StructuralCoordinator valida originales, configura JanuaryBackend y ejecuta prepare/publish, o stop/collect si la vida cambió.
+2. El ticket Live publicado queda pendiente.
+3. Siguiente BEGIN aceptado por PipelineClock: BeginActivator valida owner/frame_base y ejecuta una sola vez ManagerDriver::attach(ticket).
+4. Las fases de Cockpit/MiniMap usan ManagerDriver + NativeViewScope + Lifecycle para los clones P2.
+5. Un attach fallido solo revoca; la destrucción espera al siguiente END estructural.
 
-El ticket Live resultante queda almacenado para el siguiente ciclo.
+No se hace attach durante END ni allocate/destroy durante callbacks GUI.
 
-Si desaparece/cambia la vida del partner o de los managers, el END actual solo ejecuta `ManagerDriver::stop → Lifecycle::collect`. No destruye y vuelve a crear en la misma tarea. Quarantine, collect incompleto o ledger retenido fallan cerrado.
+## Pruebas del activador
 
-## Separación END / BEGIN
+Run 36273213216:
+- native: 8 escenarios / 59 aserciones, PASS;
+- ASan/UBSan: 8 escenarios / 59 aserciones, PASS;
+- gateways i386: 2 gateways / 3 invocaciones, PASS.
 
-`ManagerDriver::attach(ticket)` **no** se ejecuta durante END estructural. `PipelineFrameProvider::sample` exige `PipelineClock` abierto. El siguiente componente debe consumir el ticket publicado en el próximo BEGIN y adjuntar el driver una sola vez antes de las fases GUI.
+El gateway BEGIN solo llama al activador después de un PipelineClock aceptado. END no lo llama y un BEGIN rechazado tampoco.
 
-## Pruebas
+Detalle: docs/44-next-begin-hud-activation.md.
 
-Run `36272849073`: native y ASan/UBSan PASS, 17 escenarios / 49 aserciones en cada modo; cuatro pruebas de contrato de fuentes PASS; sintaxis i386 PASS. Motor simulado, sin gameplay.
+## Lo que el render ya hereda
 
-Detalle: `docs/43-structural-coordinator.md`.
-
-## Estado previo
-
-`StructuralWindow`, `JanuaryAdmission`, `NativeViewScope`, `JanuaryAllocationLedger`, la máscara P1 y el frame provider permanecen intactos. El estado anterior se conserva en `docs/history/CURRENT_STATUS-before-structural-coordinator.md`.
+NativeViewScope valida VIEW_1/BOTTOM y Viewport.mRegion → cDraw+0xBC; no se aplica un 0.5 manual. La máscara stock de P1 evita duplicar los tres originales con clon P2 en view1. StructuralWindow prueba render-worker CPU drenado, no GPU idle.
 
 ## Punto exacto siguiente
 
-Implementar el activador del siguiente BEGIN: ticket Live pendiente → `ManagerDriver::attach(ticket)` dentro de un ciclo Pipeline abierto. Debe rechazar ticket reemplazado/revocado, evitar attach repetido y nunca fabricar un ManagerFrame fuera del ciclo.
+El cableado fuente del HUD queda conectado de END a BEGIN y a las fases GUI. Falta instalación efectiva/runtime, pero el siguiente análisis funcional se mueve a los sistemas de gameplay aún compartidos:
 
-Después siguen pausa/inventario por jugador, scheduler/QTE compartidos, muerte/checkpoints/cutscenes, escenas sin compañero, instalación efectiva y validación conjunta en campaña. El cooperativo local completo aún no está terminado.
+- pausa e inventario por jugador;
+- comandos scheduler/QTE restantes;
+- muerte/reanimación/checkpoints;
+- cutscenes/cámaras forzadas;
+- escenas sin compañero/creación de P2;
+- instalación y validación conjunta en campaña.
+
+Estado anterior preservado en docs/history/CURRENT_STATUS-before-begin-activator.md.
