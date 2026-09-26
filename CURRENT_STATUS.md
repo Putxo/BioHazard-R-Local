@@ -1,30 +1,25 @@
-# Estado actual — JanuaryBackend conectado a admisión real de fase
+# Estado actual — ventana estructural CPU después del render worker
 
-26 de septiembre de 2026. Continúa PR #13 / `e8954343a498665a959bbc1856edc41dadb45b33`. Solo fuentes, tests y evidencia; no se ha generado otro EXE ni instalado hooks.
+26 de septiembre de 2026. Continúa PR #14 / `3f956e01010841735ce4888cb91e8cf79c0c9135`. Solo fuentes, tests y evidencia.
 
 ## Avance actual
 
-`JanuaryAdmission` implementa el host que JanuaryBackend necesitaba. `NativeOp::Phase` solo pasa si el ManagerDriver está en el widget/fase/contexto exactos y el NativeViewScope está activo. Las escrituras internas requieren la unidad exacta admitida mediante `phase_unit_scope`.
+La admisión exacta del JanuaryBackend está integrada. Se añade ahora `StructuralWindow` en el endpoint END del ciclo exterior de sSkeletonMain.
 
-Lectura, identidad de imagen e hilo se validan en cada llamada. Creación/inicialización/destrucción NO se autorizan por estar en una fase: requieren un callback externo `structural_safe`, fuera de eventos y scopes de render. Fresh allocation hereda ese mismo requisito.
+El camino nativo demuestra: sRender::begin resetea el evento de finalización (+D4) y despierta el worker (+D0); el worker espera +D0 y señaliza +D4 al terminar; sRender::end espera/pollear +D4 antes de la llamada de Present; el endpoint 0x02F50F4B ocurre después de sRender::end y de los callbacks post-render restantes.
 
-No se ha rellenado `structural_safe` con true ni con el contador del pipeline. PipelineClock sigue siendo identidad temporal CPU, no fence de GPU.
+`StructuralWindow::safe()` solo es true dentro de la tarea ejecutada desde ese END válido, con PipelineClock ya cerrado y en el hilo propietario. No queda habilitada entre ciclos. Cambio reentrante, hilo distinto o fallo de tarea la revocan.
 
-## Piezas conectadas
+Esto prueba render-worker CPU drenado, **no GPU idle/fence**.
 
-La cadena de fuentes queda:
-`LifetimeSource + PipelineClock + NativeViewScope -> PipelineFrameProvider -> ManagerDriver -> Lifecycle -> JanuaryBackend`, con `JanuaryAdmission` como política del backend.
+## Conexión pendiente inmediata
 
-El split nativo sigue usando VIEW_1/BOTTOM y el HUD P1 original se enmascara solo durante view1 para las tres clases clonadas.
+Conectar `StructuralWindow::safe()` a `AdmissionServices::structural_safe` y certificar `fresh_allocation` mediante un ledger de las llamadas de allocator que nosotros mismos iniciamos. Los clones siguen detached y no se insertan en listas nativas.
 
-## Pruebas
+Después conectar un coordinador en la propia tarea estructural para prepare/publish/collect de Lifecycle.
 
-CI específica de JanuaryAdmission en verde en el head de código. La suite de ManagerDriver verifica también que `phase_unit_scope` acepta solo la unidad clon actualmente admitida. El PR de integración vuelve a ejecutar las regresiones completas.
+## Render
 
-## Punto exacto siguiente
+NativeViewScope ya demuestra VIEW_1/BOTTOM y mRegion -> cDraw+BC. El comando final de device viewport/scissor sigue en análisis; no se añade escalado 0.5 ni se escriben rectángulos.
 
-Demostrar un punto estructural real para Allocate/Initialize/Destroy y una certificación real de la asignación. Examinar manager birth/death, sUnit scheduling y render begin/end/fences; no confundir “fuera del callback HUD” con “GPU drenada”.
-
-En paralelo, terminar la ruta final de viewport/scissor del dispositivo para confirmar que NativeViewScope puede permanecer no mutante.
-
-Pausa/inventario por jugador, scheduler, muerte/checkpoints/cutscenes, escenas sin compañero, instalación efectiva y validación de campaña siguen pendientes.
+Pausa/inventario, scheduler, muerte/checkpoints/cutscenes, escenas sin compañero, instalación y gameplay siguen abiertos.
