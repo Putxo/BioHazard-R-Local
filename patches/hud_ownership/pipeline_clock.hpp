@@ -26,6 +26,12 @@ public:
     // These never read game memory; closed/invalid intervals leave out intact.
     bool capture(PipelineStamp* out) const noexcept;
     bool matches(const PipelineStamp&) const noexcept;
+    // True only on the armed owner thread after a valid END paired with BEGIN.
+    // This says nothing about GPU completion; it is a CPU-cycle state.
+    bool quiescent() const noexcept;
+    unsigned int completed_frame() const noexcept {
+        return !open_ && fault_ == PipelineFault::None ? sequence_.frame : 0;
+    }
     PipelineFault fault() const noexcept { return fault_; }
 private:
     PipelineAccess access_;
