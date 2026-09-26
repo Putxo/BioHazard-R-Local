@@ -1,0 +1,27 @@
+name: HUD native view scope
+on:
+  push:
+    branches: [research/hud-native-view-scope]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  scope:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        mode: [native, sanitized]
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Execute native-view validation scope with synthetic memory
+        shell: bash
+        run: |
+          FLAGS="-std=c++17 -O1 -g -Wall -Wextra -Werror"
+          if [ "${{ matrix.mode }}" = sanitized ]; then FLAGS="$FLAGS -fsanitize=address,undefined -fno-omit-frame-pointer"; fi
+          g++ $FLAGS -Ipatches/hud_ownership patches/hud_ownership/{ownership,native_view_scope}.cpp tests/hud_ownership/native_view_scope_tests.cpp -o "$RUNNER_TEMP/view-scope"
+          "$RUNNER_TEMP/view-scope"
+      - name: Read-only audit and source map; private image optional
+        run: python tests/hud_ownership/test_native_view_scope_audit.py
+      - name: Freestanding i386 source syntax
+        run: g++ -m32 -std=c++17 -Wall -Wextra -Werror -ffreestanding -fno-exceptions -fno-rtti -fsyntax-only patches/hud_ownership/native_view_scope.cpp
