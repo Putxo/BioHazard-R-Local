@@ -32,7 +32,9 @@ bool StructuralWindow::event(unsigned int site,unsigned int owner,
     return true;
 }
 bool bind_structural_sink(StructuralWindow& window) noexcept {
-    if(sink)return false;sink=&window;return true;
+    if (sink) return false;
+    sink=&window;
+    return true;
 }
 }
 extern "C" unsigned int rev_hud_structural_event(unsigned int site,
