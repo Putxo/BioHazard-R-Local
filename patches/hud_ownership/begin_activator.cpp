@@ -29,8 +29,11 @@ bool BeginActivator::event(u32 site, u32 owner, u32 frame_base) noexcept {
     if (busy_)
         return fail(BeginActivationFault::Protocol);
 
-    if (fault_ != BeginActivationFault::None ||
-        site != PipelineBegin || !owner || !frame_base || (frame_base & 3) ||
+    if (fault_ != BeginActivationFault::None &&
+        fault_ != BeginActivationFault::Attach)
+        return false;
+
+    if (site != PipelineBegin || !owner || !frame_base || (frame_base & 3) ||
         !ops_.ticket || !ops_.attach || !ops_.stop)
         return fail(BeginActivationFault::Config);
 
@@ -45,6 +48,7 @@ bool BeginActivator::event(u32 site, u32 owner, u32 frame_base) noexcept {
     if (!ticket) {
         attached_ticket_ = 0;
         rejected_ticket_ = 0;
+        fault_ = BeginActivationFault::None;
         return true;
     }
 
@@ -53,6 +57,9 @@ bool BeginActivator::event(u32 site, u32 owner, u32 frame_base) noexcept {
 
     if (ticket == rejected_ticket_)
         return false;
+
+    if (fault_ == BeginActivationFault::Attach)
+        fault_ = BeginActivationFault::None;
 
     if (ops_.attach(ops_.context, ticket)) {
         attached_ticket_ = ticket;
