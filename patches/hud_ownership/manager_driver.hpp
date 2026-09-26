@@ -41,6 +41,9 @@ public:
     // Branch component of JanuaryHost::permit, NOT the entire permission.
     // It grants no Structural/Destroy permission and no allocation certificate.
     bool phase_scope(WidgetKind, u32 unit, u32 phase, u32 context) const;
+    // Same admission without phase/context equality, used only for writes that
+    // are internal to the already admitted widget dispatch.
+    bool phase_unit_scope(WidgetKind, u32 unit) const;
     bool in_event() const { return busy_; }
 private:
     Lifecycle& life_; ManagerHost host_;
