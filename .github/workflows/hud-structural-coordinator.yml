@@ -1,0 +1,27 @@
+name: HUD structural coordinator
+on:
+  push:
+    branches: [research/hud-structural-coordinator]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  coordinator:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        mode: [native, sanitized]
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Structural coordinator state machine
+        shell: bash
+        run: |
+          FLAGS="-std=c++17 -O1 -g -Wall -Wextra -Werror"
+          if [ "${{ matrix.mode }}" = sanitized ]; then FLAGS="$FLAGS -fsanitize=address,undefined -fno-omit-frame-pointer"; fi
+          g++ $FLAGS -Ipatches/hud_ownership             patches/hud_ownership/{ownership,lifecycle,january_backend,january_admission,allocation_ledger,lifetime_source,manager_driver,pipeline_clock,structural_window,structural_coordinator}.cpp             tests/hud_ownership/structural_coordinator_tests.cpp             -o "$RUNNER_TEMP/coordinator"
+          "$RUNNER_TEMP/coordinator"
+      - name: Source contract
+        run: python tests/hud_ownership/test_structural_coordinator.py
+      - name: Freestanding i386 syntax
+        run: g++ -m32 -std=c++17 -Wall -Wextra -Werror -ffreestanding -fno-exceptions -fno-rtti -fsyntax-only patches/hud_ownership/structural_coordinator.cpp
