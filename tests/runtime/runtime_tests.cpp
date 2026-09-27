@@ -52,6 +52,17 @@ struct Fixture {
     void prepare(){start();births();begin();C(f.allocations.empty());end();C(r.lifecycle().state()==LifeState::Live);C(f.allocations.size()==(f.original[6]?7u:f.original[5]?6u:f.original[4]?5u:f.original[3]?4u:LegacyWidgetKinds));}
 };
 int main(){
+    {Fixture x(7);x.prepare();x.begin();constexpr u32 target=0xEF0000;x.f.m[target]=0x04DA8570;
+     C(x.r.genesis_targets().event(0x0281AE26,target));const auto key=x.r.genesis_targets().capture(target);
+     const u32 widget=x.r.lifecycle().unit(6);rev_genesis::ViewSample sample{{0x3F800000,0,0},2},out{};
+     const auto before=x.f.m;
+     C(x.r.genesis_target_views().publish(widget,key,sample)==Mode::Local);
+     C(x.r.genesis_target_views().read(widget,key,&out)==Mode::Local);C(out.focus==2);C(out.position[0]==0x3F800000);C(x.f.m==before);
+     C(x.r.genesis_target_views().read(x.f.original[6],key,&out)==Mode::Stock);
+     x.thread=9;C(x.r.genesis_target_views().read(widget,key,&out)==Mode::Hidden);C(out.focus==0);x.thread=7;
+     C(x.r.genesis_targets().event(0x02823A53,target));C(x.r.genesis_target_views().read(widget,key,&out)==Mode::Hidden);
+     x.end();++scenarios;}
+
     {Fixture x;x.start();constexpr u32 target=0xEF0000;x.f.m[target]=0x04DA8570;
      C(x.r.genesis_targets().event(0x0281AE26,target));auto key=x.r.genesis_targets().capture(target);
      C(key.valid());C(x.r.genesis_targets().live(key));x.f.m.erase(target);

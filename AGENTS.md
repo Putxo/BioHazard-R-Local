@@ -2,7 +2,7 @@
 
 Actualización: 27/09/2026. Rama canónica: research/script-member-serial-validation.
 
-PR34 integrado: 2b9b8f27d7420ef14fe47349308ef8e9ffa0a12b, 20 workflows PASS.
+PR35 integrado: c79545ffa16d043656bacf18a525de7ed7db8b62, 20 workflows PASS.
 
 Leer CURRENT_STATUS.md, docs/50-runtime-composition.md,
 
@@ -51,3 +51,5 @@ Genesis: [clon y consumidores integrados; activación/objetivos pendientes](docs
 Genesis: [cámara propia y límites de productores](docs/62-genesis-camera-producers.md).
 
 Genesis: [vida observada de objetivos](docs/63-genesis-target-lifetime.md).
+
+Genesis: [estado de detección por propietario](docs/64-genesis-target-view-state.md).

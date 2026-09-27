@@ -20,6 +20,7 @@ public:
     bool event(u32 site,u32 target) noexcept;
     TargetKey capture(u32 target) noexcept;
     bool live(TargetKey key) noexcept;
+    u32 slot(TargetKey key) noexcept;
     bool healthy() const noexcept;
 private:
     TargetHost host_{};
