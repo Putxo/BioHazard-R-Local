@@ -72,3 +72,7 @@ rev_genesis_phase9_end = 0x02B201BF;
 rev_genesis_filter_draw_resume = 0x02933B29;
 rev_genesis_noise_draw_resume = 0x02935669;
 rev_genesis_outline_draw_resume = 0x037DE566;
+rev_genesis_weapon_born_resume = 0x02487324;
+rev_genesis_weapon_dying_resume = 0x0248742C;
+rev_genesis_weapon_retain_resume = 0x02B20D9F;
+rev_genesis_weapon_activate_end = 0x02B21097;

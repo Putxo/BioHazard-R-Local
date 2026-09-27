@@ -98,6 +98,9 @@ def hook_sites():
                         (0x037DE560,'538bdc83ec08','outline')):
         out.append((va,bytes.fromhex(old),'rev_genesis_'+name+'_draw_gate',0xE9))
     out.append((0x0326862E,rel(0x0326862E,0x01BCD42A),'rev_runtime_draw_schedule_gate',0xE8))
+    for va,name in ((0x0248731E,'born'),(0x02487426,'dying')):
+        out.append((va,bytes.fromhex('c700e48ed304'),'rev_genesis_weapon_'+name+'_gate',0xE9))
+    out.append((0x02B20D99,bytes.fromhex('8988fc020000'),'rev_genesis_weapon_retain_gate',0xE9))
     for va in (0x03268708,0x03268918):
         out.append((va,rel(va,0x01BE2D20),'rev_action_mask_gate',0xE8))
     for va,old,name in ((0x01EA61A7,'8d85e4feffff50','begin'),

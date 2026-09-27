@@ -11,6 +11,7 @@
 #include "../genesis/filter_resource.hpp"
 #include "../genesis/target_lifetime.hpp"
 #include "../genesis/effect_lifetime.hpp"
+#include "../genesis/weapon_lifetime.hpp"
 #include "../genesis/effects.hpp"
 #include "../genesis/target_views.hpp"
 #include "../hud_ownership/heal_queue.hpp"
@@ -56,6 +57,8 @@ public:
     rev_genesis::Progress& genesis_progress() noexcept {return genesis_;}
     rev_genesis::TargetLifetime& genesis_targets() noexcept {return targets_;}
     rev_genesis::EffectLifetime& genesis_effects() noexcept {return effects_;}
+    rev_genesis::WeaponLifetime& genesis_weapons() noexcept {return weapons_;}
+    bool genesis_weapon_retain(u32 widget,u32 weapon) noexcept;
     rev_genesis::TargetViews& genesis_target_views() noexcept {return target_views_;}
     Mode genesis_target_focus(u32 target,u32* out) noexcept;
     Mode genesis_target_position(u32 target,u32 destination) noexcept;
@@ -90,6 +93,10 @@ private:
     rev_genesis::Progress genesis_;
     rev_genesis::TargetLifetime targets_;
     rev_genesis::EffectLifetime effects_;
+    rev_genesis::WeaponLifetime weapons_;
+    rev_genesis::WeaponKey scanner_weapon_key_{};
+    rev_genesis::Owner scanner_weapon_owner_{};
+    u32 scanner_weapon_widget_=0,scanner_weapon_ticket_=0;
     rev_genesis::Effects effects_owned_{},effects_stock_{};
     bool effect_mask_busy_=false;
     bool effect_draw_busy_=false;

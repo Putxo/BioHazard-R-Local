@@ -2,18 +2,21 @@
 namespace rev_runtime {
 namespace {
 Runtime* HealSink=nullptr;
-bool same_effect_frame(const rev_genesis::ViewFrame& a,const rev_genesis::ViewFrame& b) noexcept {
+bool same_genesis_owner(const rev_genesis::Owner& a,const rev_genesis::Owner& b) noexcept {
     const auto actor=[](const Actor& x,const Actor& y) noexcept {
         return x.address==y.address && x.lifetime==y.lifetime && x.serial==y.serial && x.think_mode==y.think_mode;
     };
-    return a.number==b.number && a.owner.actor==b.owner.actor &&
-        a.owner.session.active==b.owner.session.active && a.owner.session.epoch==b.owner.session.epoch &&
-        actor(a.owner.session.self,b.owner.session.self) && actor(a.owner.session.sub0,b.owner.session.sub0);
+    return a.actor==b.actor && a.session.active==b.session.active && a.session.epoch==b.session.epoch &&
+        actor(a.session.self,b.session.self) && actor(a.session.sub0,b.session.sub0);
+}
+bool same_effect_frame(const rev_genesis::ViewFrame& a,const rev_genesis::ViewFrame& b) noexcept {
+    return a.number==b.number && same_genesis_owner(a.owner,b.owner);
 }
 }
 Runtime::Runtime(Registry& registry,Host host,u32 count) noexcept
     : host_(host), registry_(registry), genesis_(genesis_host()),
       targets_({host.memory,host.thread}), effects_({host.memory,host.thread}),
+      weapons_({host.memory,host.thread}),
       target_views_(targets_,target_view_host()), count_(count),
       source_(registry,{host.memory.context,host.memory.word,host.thread,host.self}),
       clock_({host.memory.context,host.thread}),
@@ -271,14 +274,36 @@ bool Runtime::scope_feed(u32 unit,u32 actor) noexcept {
     scope_ticket_=ticket;scope_applied_=intent.revision;scope_weapon_=weapon;scope_class_=kind;
     return true;
 }
+bool Runtime::genesis_weapon_retain(u32 widget,u32 weapon) noexcept {
+    auto vh=target_view_host();
+    if(!vh.on_thread(vh.context))return true;
+    const auto route=registry_.resolve(widget,WidgetKind::Scanner);
+    if(route.mode==Mode::Stock)return true;
+    rev_genesis::ViewFrame before{},after{};u32 current=0;
+    const u32 ticket=activator_.attached_ticket();
+    const auto key=weapons_.capture(weapon);
+    if(route.mode!=Mode::Local || !lifecycle_.live_ticket(ticket) || vh.resolve(vh.context,widget,&before)!=Mode::Local ||
+       !scanner_effects(widget,effects_stock_.scanner,false) ||
+       (weapon && !weapons_.live(key)) ||
+       rev_genesis::equipment(genesis_host(),host_.memory,widget,&current)!=Mode::Local || current!=weapon ||
+       vh.resolve(vh.context,widget,&after)!=Mode::Local || !same_effect_frame(before,after) ||
+       (weapon && !weapons_.live(key)) || !lifecycle_.live_ticket(ticket) || activator_.attached_ticket()!=ticket)return false;
+    scanner_weapon_key_=key;scanner_weapon_widget_=widget;scanner_weapon_owner_=before.owner;scanner_weapon_ticket_=ticket;
+    return true;
+}
 bool Runtime::scanner_weapon_current(u32 widget) noexcept {
     u32 retained=0,current=0,again=0;
     if(!widget || widget>Invalid-0x2FF || !word(widget+0x2FC,retained))return false;
     // Native allows a scanner without a weapon. Never dereference the retained
     // pointer merely to decide whether the actor still owns it.
     if(!retained)return true;
+    auto h=genesis_host();rev_genesis::Owner before{},after{};
+    if(widget!=scanner_weapon_widget_ || !lifecycle_.live_ticket(scanner_weapon_ticket_) ||
+       activator_.attached_ticket()!=scanner_weapon_ticket_ || retained!=scanner_weapon_key_.address || !weapons_.live(scanner_weapon_key_) ||
+       h.resolve(h.context,widget,&before)!=Mode::Local || !same_genesis_owner(before,scanner_weapon_owner_))return false;
     return rev_genesis::equipment(genesis_host(),host_.memory,widget,&current)==Mode::Local &&
-        current==retained && word(widget+0x2FC,again) && again==retained;
+        current==retained && word(widget+0x2FC,again) && again==retained && weapons_.live(scanner_weapon_key_) &&
+        h.resolve(h.context,widget,&after)==Mode::Local && same_genesis_owner(before,after);
 }
 bool Runtime::scanner_begin(u32 widget) noexcept {
     auto h=target_view_host();
@@ -589,7 +614,7 @@ bool Runtime::start() noexcept {
        !n.singleton || !n.contains || (count_>4 && !n.damage) || !host_.image(host_.memory.context))return false;
     const u32 thread=host_.thread(host_.memory.context);
     thread_=thread;
-    started_=thread && targets_.start(thread) && effects_.start(thread) && source_.start(thread) && clock_.start(thread) &&
+    started_=thread && targets_.start(thread) && effects_.start(thread) && weapons_.start(thread) && source_.start(thread) && clock_.start(thread) &&
         window_.start(thread) && admission_.start(thread);
     return started_;
 }
@@ -601,7 +626,7 @@ bool Runtime::bind() noexcept {
     if(HealSink)return false;
     HealSink=this;
     if(!rev_genesis::bind_progress(genesis_) || !rev_genesis::bind_targets(targets_) ||
-       !rev_genesis::bind_effects(effects_))return false;
+       !rev_genesis::bind_effects(effects_) || !rev_genesis::bind_weapons(weapons_))return false;
     return bind_lifetime_sink(source_) && bind_pipeline_sink(clock_) &&
         bind_structural_sink(window_) && bind_manager_sink(driver_) &&
         bind_begin_activator_sink(activator_) && bind_p1_mask_sink(mask_) &&
@@ -695,4 +720,7 @@ extern "C" unsigned int rev_runtime_unit_mask(unsigned int unit,unsigned int ori
 }
 extern "C" unsigned int rev_genesis_effect_draw(unsigned int kind,unsigned int unit,unsigned int context) noexcept {
     return rev_runtime::HealSink && rev_runtime::HealSink->effect_draw(kind,unit,context)?1u:0u;
+}
+extern "C" unsigned int rev_genesis_weapon_retain(unsigned int widget,unsigned int weapon) noexcept {
+    return !rev_runtime::HealSink || rev_runtime::HealSink->genesis_weapon_retain(widget,weapon)?1u:0u;
 }
