@@ -19,7 +19,7 @@ bool MenuOwnerRouter::valid_sub(u32& out,u32* serial_out) const noexcept {
        !access_.local_active(access_.context)) return false;
     const u32 sub=access_.sub0(access_.context);
     u32 mode=0,serial=0;
-    if(!sub || !read(sub+ThinkMode,mode) || mode!=1 ||
+    if(!sub || sub>Invalid-ThinkMode-3 || !read(sub+ThinkMode,mode) || mode!=1 ||
        !read(sub+ActorSerial,serial) || serial>127) return false;
     out=sub;
     if(serial_out) *serial_out=serial;
@@ -37,7 +37,7 @@ bool MenuOwnerRouter::pad_word(u32 pad,u32 member,u32 offset,u32& out) const noe
 }
 u32 MenuOwnerRouter::stock_word(u32 pad,u32 offset) const noexcept {
     u32 member=0,value=0;
-    if(!pad || !read(pad+StartPad,member) || member>1 ||
+    if(!pad || pad>Invalid-StartPad-3 || !read(pad+StartPad,member) || member>1 ||
        !pad_word(pad,member,offset,value)) return 0;
     return value;
 }
@@ -68,12 +68,15 @@ u32 MenuOwnerRouter::open_word(u32 pad,u32 mask,Surface surface) noexcept {
 }
 u32 MenuOwnerRouter::owner_word(u32 pad,Surface surface,u32 offset) noexcept {
     u32 value=0;
-    if(surface_!=surface || owner_!=1) return stock_word(pad,offset);
-    if(!bound_sub_valid()) {
+    // Any routed read may observe invalidation, even on a different surface.
+    // Revoke immediately so restoring the actor cannot resurrect ownership.
+    if(owner_==1 && !bound_sub_valid()) {
         clear();
         return stock_word(pad,offset);
     }
+    if(surface_!=surface || owner_!=1) return stock_word(pad,offset);
     if(pad_word(pad,1,offset,value)) return value;
+    clear();
     return stock_word(pad,offset);
 }
 u32 MenuOwnerRouter::pause_open_word(u32 pad) noexcept { return open_word(pad,0x8,Surface::Pause); }
@@ -83,11 +86,11 @@ u32 MenuOwnerRouter::submenu_open_word(u32 pad) noexcept { return open_word(pad,
 u32 MenuOwnerRouter::submenu_word_198(u32 pad) noexcept { return owner_word(pad,Surface::SubMenu,State198); }
 u32 MenuOwnerRouter::submenu_word_1a0(u32 pad) noexcept { return owner_word(pad,Surface::SubMenu,State1A0); }
 u32 MenuOwnerRouter::submenu_actor(u32 stock) noexcept {
-    if(surface_!=Surface::SubMenu || owner_!=1) return stock;
-    if(!bound_sub_valid()) {
+    if(owner_==1 && !bound_sub_valid()) {
         clear();
         return stock;
     }
+    if(surface_!=Surface::SubMenu || owner_!=1) return stock;
     return owner_actor_;
 }
 void MenuOwnerRouter::state_transition(u32 next_state) noexcept {

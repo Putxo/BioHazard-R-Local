@@ -13,9 +13,11 @@ _start:
 call_pad_gate:
     push ebp
     mov ebp,esp
+    mov [stack_before],esp
     push dword ptr [ebp+12]
     mov ecx,[ebp+8]
     call dword ptr [ebp+16]
+    mov [stack_after],esp
     mov esp,ebp
     pop ebp
     ret
@@ -34,10 +36,14 @@ call_actor_gate:
 call_state_gate:
     push ebp
     mov ebp,esp
+    mov [stack_before],esp
     push dword ptr [ebp+16]
     push dword ptr [ebp+12]
     mov ecx,[ebp+8]
+    mov eax,0x11223344
+    mov edx,0x55667788
     call rev_menu_gate_state_transition
+    mov [stack_after],esp
     mov esp,ebp
     pop ebp
     ret
@@ -49,6 +55,8 @@ rev_menu_stock_self:
 
 .global rev_menu_stock_state_transition
 rev_menu_stock_state_transition:
+    mov [seen_incoming_eax],eax
+    mov [seen_incoming_edx],edx
     mov [seen_state_this],ecx
     mov eax,[esp+4]
     mov [seen_state],eax
@@ -95,4 +103,9 @@ seen_state_this:.skip 4
 seen_state:.skip 4
 seen_flag:.skip 4
 seen_observed_state:.skip 4
+.global stack_before,stack_after,seen_incoming_eax,seen_incoming_edx
+stack_before:.skip 4
+stack_after:.skip 4
+seen_incoming_eax:.skip 4
+seen_incoming_edx:.skip 4
 .section .note.GNU-stack,"",@progbits

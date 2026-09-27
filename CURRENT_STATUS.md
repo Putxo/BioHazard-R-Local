@@ -1,5 +1,13 @@
 # Estado actual — cooperativo local, menú J2 y handoff canónico
 
+> Actualización PR #23, 27/09/2026: el remoto ya integró PR21 (input PauseHD)
+> y PR22 (lifetime con retorno nested), checkpoint `cf472903`.
+> Esta propuesta conserva ambos y corrige lecturas inválidas/desbordamientos
+> y revocación entre superficies. Win32: suites 16/59 y 18/89 PASS.
+> [Detalle y límites](docs/49-menu-owner-read-safety.md).
+> No se ha instalado ni validado en campaña. El bloque inferior conserva
+> el checkpoint histórico PR19; no debe ocultar estos avances posteriores.
+
 27 de septiembre de 2026. Rama técnica canónica: `research/script-member-serial-validation`.
 
 Último bloque integrado: **PR #19**, merge `b0900736d9e44a04a47f9804b75059f007dd12fd`, con **15 workflows PASS**. Entrega vigente: **fuentes, tests, evidencia y documentación en GitHub**. No generar ni entregar EXE salvo petición expresa del propietario.

@@ -1,7 +1,7 @@
 name: Menu owner lifetime
 on:
   push:
-    branches: [research/menu-owner-lifetime]
+    branches: [research/menu-owner-lifetime, research/pause-owner-lifetime-audit]
   pull_request:
 permissions:
   contents: read
@@ -20,10 +20,13 @@ jobs:
           if [ "${{ matrix.mode }}" = sanitized ]; then FLAGS="$FLAGS -fsanitize=address,undefined -fno-omit-frame-pointer"; fi
           g++ $FLAGS -Ipatches/menu_routing patches/menu_routing/menu_owner.cpp tests/menu_routing/menu_owner_tests.cpp -o "$RUNNER_TEMP/menu-owner"
           "$RUNNER_TEMP/menu-owner"
+          g++ $FLAGS -Ipatches/menu_routing patches/menu_routing/menu_owner.cpp tests/menu_routing/menu_owner_safety_tests.cpp -o "$RUNNER_TEMP/menu-owner-safety"
+          "$RUNNER_TEMP/menu-owner-safety"
       - name: Audit source map and exact-image script
         run: |
           python tests/menu_routing/test_menu_owner_lifetime.py
           python -m py_compile scripts/audit_menu_owner_lifetime.py
+          python tests/menu_routing/test_pause_lifetime_audit.py
       - name: Freestanding i386 syntax
         run: g++ -m32 -std=c++17 -Wall -Wextra -Werror -ffreestanding -fno-exceptions -fno-rtti -fsyntax-only patches/menu_routing/menu_owner.cpp
   gateways:
