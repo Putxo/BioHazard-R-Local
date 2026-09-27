@@ -15,13 +15,12 @@ public:
     explicit MenuOwnerRouter(Access access) : access_(access) {}
     MenuOwnerRouter(const MenuOwnerRouter&)=delete;
     MenuOwnerRouter& operator=(const MenuOwnerRouter&)=delete;
-    // These return the same kind of sPad bitfield as the stock call.
     u32 pause_open_word(u32 pad) noexcept;
+    u32 pause_word_1a0(u32 pad) noexcept;
+    u32 pause_word_1ac(u32 pad) noexcept;
     u32 submenu_open_word(u32 pad) noexcept;
     u32 submenu_word_198(u32 pad) noexcept;
     u32 submenu_word_1a0(u32 pad) noexcept;
-    // Stock is the result of the original Self finder. Only the exact valid
-    // local Sub0 may replace it, and only while Sub0 owns the submenu.
     u32 submenu_actor(u32 stock) noexcept;
     u32 owner() const noexcept { return owner_; }
     Surface surface() const noexcept { return surface_; }
@@ -35,11 +34,13 @@ private:
     bool pad_word(u32 pad,u32 member,u32 offset,u32& out) const noexcept;
     u32 stock_word(u32 pad,u32 offset) const noexcept;
     u32 open_word(u32 pad,u32 mask,Surface surface) noexcept;
-    u32 submenu_word(u32 pad,u32 offset) noexcept;
+    u32 owner_word(u32 pad,Surface surface,u32 offset) noexcept;
 };
 bool bind_menu_owner_sink(MenuOwnerRouter&) noexcept;
 }
 extern "C" unsigned int rev_menu_pause_open_word(unsigned int pad) noexcept;
+extern "C" unsigned int rev_menu_pause_word_1a0(unsigned int pad) noexcept;
+extern "C" unsigned int rev_menu_pause_word_1ac(unsigned int pad) noexcept;
 extern "C" unsigned int rev_menu_submenu_open_word(unsigned int pad) noexcept;
 extern "C" unsigned int rev_menu_submenu_word_198(unsigned int pad) noexcept;
 extern "C" unsigned int rev_menu_submenu_word_1a0(unsigned int pad) noexcept;
