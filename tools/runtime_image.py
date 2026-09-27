@@ -89,6 +89,10 @@ def hook_sites():
     out.append((0x02B25D8B,rel(0x02B25D8B,0x01C5741D),'rev_genesis_camera_gate',0xE8))
     out.append((0x0281AE26,bytes.fromhex('8b45f85f5e'),'rev_genesis_target_born_gate',0xE9))
     out.append((0x02823A53,bytes.fromhex('8b45f8c7007085da04'),'rev_genesis_target_dying_gate',0xE9))
+    for va,vt,name in ((0x0293344E,0x04DB80CC,'filter_born'),(0x02933576,0x04DB80CC,'filter_dying'),
+                       (0x0293559E,0x04DB833C,'noise_born'),(0x02935816,0x04DB833C,'noise_dying'),
+                       (0x037DD309,0x04F9A7F4,'outline_born'),(0x037DD4A2,0x04F9A7F4,'outline_dying')):
+        out.append((va,b'\xc7\x00'+struct.pack('<I',vt),'rev_genesis_effect_'+name+'_gate',0xE9))
     out.append((0x0326862E,rel(0x0326862E,0x01BCD42A),'rev_runtime_draw_schedule_gate',0xE8))
     for va in (0x03268708,0x03268918):
         out.append((va,rel(va,0x01BE2D20),'rev_action_mask_gate',0xE8))

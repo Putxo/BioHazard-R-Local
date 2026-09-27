@@ -6,6 +6,23 @@ on:
 permissions:
   contents: read
 jobs:
+  effect-lifetimes:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        mode: [native, sanitized]
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Scheduled effect identity and destructor revocation
+        run: |
+          FLAGS="-std=c++17 -O1 -g -Wall -Wextra -Werror"
+          if [ "${{ matrix.mode }}" = sanitized ]; then FLAGS="$FLAGS -fsanitize=address,undefined -fno-omit-frame-pointer"; fi
+          g++ $FLAGS patches/genesis/effect_lifetime.cpp tests/genesis/effect_lifetime_tests.cpp -o "$RUNNER_TEMP/effect-lifetime"
+          "$RUNNER_TEMP/effect-lifetime"
+          as --32 patches/genesis/effect_gateways.S -o "$RUNNER_TEMP/effect-gates.o"
+          as --32 tests/genesis/effect_abi.S -o "$RUNNER_TEMP/effect-abi.o"
+          ld -m elf_i386 "$RUNNER_TEMP/effect-gates.o" "$RUNNER_TEMP/effect-abi.o" -o "$RUNNER_TEMP/effect-abi"
+          "$RUNNER_TEMP/effect-abi"
   filter-copy:
     runs-on: ubuntu-latest
     strategy:

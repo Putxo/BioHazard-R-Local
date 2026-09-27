@@ -10,6 +10,7 @@
 #include "../genesis/equipment.hpp"
 #include "../genesis/filter_resource.hpp"
 #include "../genesis/target_lifetime.hpp"
+#include "../genesis/effect_lifetime.hpp"
 #include "../genesis/target_views.hpp"
 #include "../hud_ownership/heal_queue.hpp"
 
@@ -52,6 +53,7 @@ public:
     rev_action::PriorityDriver& priority() noexcept { return priority_; }
     rev_genesis::Progress& genesis_progress() noexcept {return genesis_;}
     rev_genesis::TargetLifetime& genesis_targets() noexcept {return targets_;}
+    rev_genesis::EffectLifetime& genesis_effects() noexcept {return effects_;}
     rev_genesis::TargetViews& genesis_target_views() noexcept {return target_views_;}
     Mode genesis_target_focus(u32 target,u32* out) noexcept;
     Mode genesis_target_position(u32 target,u32 destination) noexcept;
@@ -83,6 +85,7 @@ private:
     Registry& registry_;
     rev_genesis::Progress genesis_;
     rev_genesis::TargetLifetime targets_;
+    rev_genesis::EffectLifetime effects_;
     rev_genesis::TargetViews target_views_;
     rev_genesis::TargetViewHost target_view_host() noexcept;
     u32 scanner_scope_=0;
