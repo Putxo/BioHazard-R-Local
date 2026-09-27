@@ -43,3 +43,6 @@ SECTIONS {
  }
  /DISCARD/ : { *(.eh_frame*) *(.note*) *(.comment*) *(.llvm_addrsig) }
 }
+
+rev_genesis_target_focus_resume = 0x0281F569;
+rev_genesis_target_position_resume = 0x02823229;

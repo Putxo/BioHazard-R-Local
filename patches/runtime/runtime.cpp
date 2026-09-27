@@ -15,7 +15,9 @@ Runtime::Runtime(Registry& registry,Host host,u32 count) noexcept
       allocation_(structural_allocation_gate(window_),ledger_,services()),
       admission_(gate(),allocation_.callbacks()),
       backend_(admission_.callbacks(),ledger_.callbacks(),count,&registry,
-        {this,[](void* p,u32 u,u32 a) noexcept {return static_cast<Runtime*>(p)->heal_feed(u,a);}}),
+        {this,[](void* p,u32 u,u32 a) noexcept {return static_cast<Runtime*>(p)->heal_feed(u,a);},
+        [](void* p,u32 u) noexcept {return static_cast<Runtime*>(p)->scanner_begin(u);},
+        [](void* p,u32 u) noexcept {return static_cast<Runtime*>(p)->scanner_end(u);}}),
       lifecycle_(registry,backend_.callbacks(),count),
       frames_(clock_,source_,view_.services()),
       driver_(lifecycle_,frames_.callbacks()),
@@ -57,6 +59,58 @@ rev_genesis::TargetViewHost Runtime::target_view_host() noexcept {
         if(!out || !r.clock_.capture(&stamp))return Mode::Hidden;
         *out={owner,stamp.frame};return Mode::Local;
     }};
+}
+bool Runtime::scanner_begin(u32 widget) noexcept {
+    auto h=target_view_host();
+    if(!h.on_thread(h.context) || scanner_scope_ || !gate().unit(this,WidgetKind::Scanner,widget))return false;
+    rev_genesis::ViewFrame f{};
+    if(h.resolve(h.context,widget,&f)!=Mode::Local)return false;
+    scanner_scope_=widget;scanner_frame_=f;scanner_copy_failed_=false;return true;
+}
+bool Runtime::scanner_current() noexcept {
+    auto h=target_view_host();rev_genesis::ViewFrame f{};
+    if(!h.on_thread(h.context) || !scanner_scope_ ||
+       !gate().unit(this,WidgetKind::Scanner,scanner_scope_) ||
+       h.resolve(h.context,scanner_scope_,&f)!=Mode::Local)return false;
+    const auto equal=[](const Actor& a,const Actor& b) noexcept {
+        return a.address==b.address && a.lifetime==b.lifetime && a.serial==b.serial && a.think_mode==b.think_mode;
+    };
+    const auto& a=f.owner;const auto& b=scanner_frame_.owner;
+    return f.number==scanner_frame_.number && a.actor==b.actor && a.session.active==b.session.active &&
+        a.session.epoch==b.session.epoch && equal(a.session.self,b.session.self) && equal(a.session.sub0,b.session.sub0);
+}
+bool Runtime::scanner_end(u32 widget) noexcept {
+    auto h=target_view_host();
+    if(!h.on_thread(h.context))return false;
+    const bool ok=widget==scanner_scope_ && !scanner_copy_failed_ && scanner_current();
+    scanner_scope_=0;scanner_frame_={};scanner_copy_failed_=false;return ok;
+}
+Mode Runtime::scanner_sample(u32 target,rev_genesis::ViewSample* out) noexcept {
+    auto h=target_view_host();
+    // Other threads and ordinary stock callbacks do not inspect scope state.
+    if(!h.on_thread(h.context) || !scanner_scope_)return Mode::Stock;
+    if(out)*out={};
+    if(!out || !scanner_current())return Mode::Hidden;
+    return target_views_.read(scanner_scope_,targets_.capture(target),out);
+}
+Mode Runtime::genesis_target_focus(u32 target,u32* out) noexcept {
+    rev_genesis::ViewSample sample{};const auto mode=scanner_sample(target,&sample);
+    if(mode!=Mode::Stock && out)*out=mode==Mode::Local?sample.focus:0;
+    return mode;
+}
+Mode Runtime::genesis_target_position(u32 target,u32 destination) noexcept {
+    rev_genesis::ViewSample sample{};const auto mode=scanner_sample(target,&sample);
+    if(mode==Mode::Stock)return mode;
+    u32 before[4]{};
+    if(!destination || destination>Invalid-15 || !host_.write){scanner_copy_failed_=true;return Mode::Hidden;}
+    for(u32 i=0;i<4;++i)if(!word(destination+i*4,before[i])){scanner_copy_failed_=true;return Mode::Hidden;}
+    // January Vector3 copy sets w=0, including when x/y/z are hidden.
+    const u32 values[]={sample.position[0],sample.position[1],sample.position[2],0};
+    for(u32 i=0;i<4;++i)if(!host_.write(host_.memory.context,destination+i*4,values[i])){
+        for(u32 j=0;j<i;++j)(void)host_.write(host_.memory.context,destination+j*4,before[j]);
+        scanner_copy_failed_=true;return Mode::Hidden;
+    }
+    return mode;
 }
 bool Runtime::heal_event(u32 actor) noexcept {
     auto h=action_host();rev_action::Frame f{};
@@ -185,4 +239,11 @@ extern "C" unsigned int rev_hud_heal_request(unsigned int actor) noexcept {
 extern "C" unsigned int rev_genesis_camera(unsigned int widget,unsigned int manager,unsigned int* out) noexcept {
     if(!rev_runtime::HealSink)return 0;
     return static_cast<unsigned int>(rev_runtime::HealSink->genesis_camera(widget,manager,out));
+}
+
+extern "C" unsigned int rev_genesis_target_focus(unsigned int target,unsigned int* out) noexcept {
+    return rev_runtime::HealSink?static_cast<unsigned int>(rev_runtime::HealSink->genesis_target_focus(target,out)):0;
+}
+extern "C" unsigned int rev_genesis_target_position(unsigned int target,unsigned int destination) noexcept {
+    return rev_runtime::HealSink?static_cast<unsigned int>(rev_runtime::HealSink->genesis_target_position(target,destination)):0;
 }

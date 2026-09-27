@@ -39,6 +39,8 @@ struct JanuaryHost {
 struct HudEventFeed {
     void* context=nullptr;
     bool (*heal)(void*,u32 unit,u32 actor) noexcept=nullptr;
+    bool (*scanner_begin)(void*,u32 unit) noexcept=nullptr;
+    bool (*scanner_end)(void*,u32 unit) noexcept=nullptr;
 };
 class JanuaryBackend {
 public:

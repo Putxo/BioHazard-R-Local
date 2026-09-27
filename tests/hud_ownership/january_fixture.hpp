@@ -24,6 +24,8 @@ struct Fake {
     bool admission=true,fresh=true,unit_available=true,draw_admission=true;
     bool deny_destroy=false,deny_init=false,stop_in_phase=false,stop_in_init=false;
     bool stop_in_construct=false,alias_tree=false,attach_in_phase=false;
+    void* phase_observer_context=nullptr;
+    void (*phase_observer)(void*,u32,u32) noexcept=nullptr;
     Lifecycle* life=nullptr;
     Fake(u32 count=LegacyWidgetKinds){
         if(!valid_widget_count(count))count=LegacyWidgetKinds;
@@ -93,6 +95,7 @@ struct Fake {
             if(f.stop_in_init && f.life)f.life->stop();
         }else{
             C(target==t->phase8 || target==t->phase9);f.m[self+0xC]^=0x80000000;
+            if(f.phase_observer)f.phase_observer(f.phase_observer_context,target,self);
             if(f.attach_in_phase)f.attached=self;
             if(f.stop_in_phase && f.life){f.life->stop();C(!f.life->collect());}
         }
@@ -106,7 +109,8 @@ struct Fake {
             if(f.life)C(!f.life->collect());
             f.deleted.push_back(self);
             for(auto it=f.m.begin();it!=f.m.end();)if(it->first>=self && it->first<self+0x10000)it=f.m.erase(it);else ++it;
-        }else{C(target==t->draw);C(arg==f.context);f.m[self+0xC]^=0x80000000;}
+        }else{C(target==t->draw);C(arg==f.context);f.m[self+0xC]^=0x80000000;
+            if(f.phase_observer)f.phase_observer(f.phase_observer_context,target,self);}
     }
     static u32 singleton(void* c,u32 t) noexcept {C(t==0x01C8C27B);return static_cast<Fake*>(c)->unit_available?0x700000:0;}
     static u32 contains(void* c,u32 t,u32 s,u32 u) noexcept {

@@ -58,3 +58,9 @@ jobs:
           if [ "${{ matrix.mode }}" = sanitized ]; then FLAGS="$FLAGS -fsanitize=address,undefined -fno-omit-frame-pointer"; fi
           g++ $FLAGS patches/genesis/target_lifetime.cpp patches/genesis/target_views.cpp tests/genesis/target_views_tests.cpp -o "$RUNNER_TEMP/target-views"
           "$RUNNER_TEMP/target-views"
+      - name: Native target getter x86 ABI and stock trampolines
+        run: |
+          as --32 patches/genesis/target_consumers.S -o "$RUNNER_TEMP/target-consumers.o"
+          as --32 tests/genesis/target_consumers_abi.S -o "$RUNNER_TEMP/target-consumers-abi.o"
+          ld -m elf_i386 "$RUNNER_TEMP/target-consumers.o" "$RUNNER_TEMP/target-consumers-abi.o" -o "$RUNNER_TEMP/target-consumers-abi"
+          "$RUNNER_TEMP/target-consumers-abi"

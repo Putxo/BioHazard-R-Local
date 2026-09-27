@@ -46,6 +46,8 @@ public:
     rev_genesis::Progress& genesis_progress() noexcept {return genesis_;}
     rev_genesis::TargetLifetime& genesis_targets() noexcept {return targets_;}
     rev_genesis::TargetViews& genesis_target_views() noexcept {return target_views_;}
+    Mode genesis_target_focus(u32 target,u32* out) noexcept;
+    Mode genesis_target_position(u32 target,u32 destination) noexcept;
     Mode genesis_camera(u32 widget,u32 manager,u32* out) noexcept {
         return rev_genesis::camera(genesis_host(),host_.memory,widget,manager,out);
     }
@@ -62,6 +64,13 @@ private:
     rev_genesis::TargetLifetime targets_;
     rev_genesis::TargetViews target_views_;
     rev_genesis::TargetViewHost target_view_host() noexcept;
+    u32 scanner_scope_=0;
+    rev_genesis::ViewFrame scanner_frame_{};
+    bool scanner_copy_failed_=false;
+    bool scanner_begin(u32) noexcept;
+    bool scanner_end(u32) noexcept;
+    bool scanner_current() noexcept;
+    Mode scanner_sample(u32 target,rev_genesis::ViewSample*) noexcept;
     rev_genesis::ProgressHost genesis_host() noexcept;
     const u32 count_;
     bool attempted_=false,started_=false,bind_attempted_=false;
