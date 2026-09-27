@@ -5,6 +5,7 @@ using rev_runtime::Host;
 constexpr u32 OWNER=0x900000,MAIN=0xA00000,SUB=0xA10000;
 struct Fixture {
     Fake f;Registry registry;u32 thread=7;bool image=true;
+    u32 action_draws=0,action_member=0,action_reads=0;
     Runtime r;
     Host host() {
         return {{this,[](void* p,u32 a,u32* v) noexcept {
@@ -13,7 +14,10 @@ struct Fixture {
             return Fake::write(&static_cast<Fixture*>(p)->f,a,v);
         },[](void* p) noexcept {return static_cast<Fixture*>(p)->thread;},
         [](void* p) noexcept {return static_cast<Fixture*>(p)->image;},
-        [](void* p) noexcept {return static_cast<Fixture*>(p)->f.session.self.address;},f.calls()};
+        [](void* p) noexcept {return static_cast<Fixture*>(p)->f.session.self.address;},f.calls(),
+        {this,[](void* p,u32) noexcept {
+            auto& x=*static_cast<Fixture*>(p);++x.action_reads;return x.action_member;
+        },[](void* p,u32,u32) noexcept {++static_cast<Fixture*>(p)->action_draws;}}};
     }
     Fixture(u32 count=LegacyWidgetKinds):f(count),r(registry,host(),count) {
         f.life=&r.lifecycle();
@@ -44,6 +48,20 @@ struct Fixture {
     void prepare(){start();births();begin();C(f.allocations.empty());end();C(r.lifecycle().state()==LifeState::Live);C(f.allocations.size()==(f.original[3]?WidgetKinds:LegacyWidgetKinds));}
 };
 int main(){
+    {Fixture x;x.prepare();
+     constexpr u32 icon=0xF00000,command=0xF10000,manager=0xF20000;
+     x.f.m[icon]=0x04CDCA9C;x.f.m[icon+0x40]=command;x.f.m[command]=0x04CDA850;
+     for(u32 o:{0x34u,0x38u,0x3Cu})x.f.m[command+o]=0;
+     x.f.m[0x0556279C]=manager;x.f.m[manager]=0x04CDBDB4;x.f.m[manager+0x174]=1;
+     x.f.m[x.f.context+0x158]=1;x.action_member=1;
+     C(x.r.action().draw(icon,x.f.context)==rev_action::Result::Refused);
+     x.begin();C(x.r.action().draw(icon,x.f.context)==rev_action::Result::Drawn);C(x.action_draws==1);
+     x.f.m[x.f.context+0x158]=0;C(x.r.action().draw(icon,x.f.context)==rev_action::Result::Skipped);
+     x.thread=8;C(x.r.action().draw(icon,x.f.context)==rev_action::Result::Refused);C(x.action_reads==2);
+     x.thread=7;C(x.r.source().event(0x0277DC70,x.f.session.sub0.address));
+     C(x.r.action().draw(icon,x.f.context)==rev_action::Result::Refused);C(x.action_draws==1);
+     x.f.m[0x057D9188]=0;C(x.r.action().draw(icon,x.f.context)==rev_action::Result::Stock);C(x.action_draws==2);
+     x.end();++scenarios;}
     {Fixture x;x.image=false;C(!x.r.start());C(!x.r.bind());C(x.f.allocations.empty());++scenarios;}
     {Fixture x;x.thread=0;C(!x.r.start());C(!x.r.bind());++scenarios;}
     {Fixture x;x.start();x.begin();x.end();C(x.f.allocations.empty());C(x.r.lifecycle().state()==LifeState::Empty);++scenarios;}

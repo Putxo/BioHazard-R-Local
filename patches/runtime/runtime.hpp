@@ -2,6 +2,7 @@
 #include "../hud_ownership/begin_activator.hpp"
 #include "../hud_ownership/p1_view_mask.hpp"
 #include "../menu_routing/menu_owner.hpp"
+#include "../action_icons/router.hpp"
 
 namespace rev_runtime {
 using namespace rev_hud;
@@ -12,6 +13,7 @@ struct Host {
     bool (*image)(void*) noexcept = nullptr;
     u32 (*self)(void*) noexcept = nullptr;
     JanuaryCalls native{};
+    rev_action::Calls action{};
 };
 // One process-lifetime graph. Construct and start before ANY installed gateway
 // is reachable. No callback is invoked during member construction.
@@ -31,6 +33,7 @@ public:
     BeginActivator& activator() noexcept { return activator_; }
     ManagerDriver& driver() noexcept { return driver_; }
     rev_menu::MenuOwnerRouter& menu() noexcept { return menu_; }
+    rev_action::Router& action() noexcept { return action_; }
 private:
     Host host_;
     const u32 count_;
@@ -52,6 +55,8 @@ private:
     BeginActivator activator_;
     P1ViewMask mask_;
     rev_menu::MenuOwnerRouter menu_;
+    rev_action::Router action_;
+    rev_action::Host action_host() noexcept;
     AdmissionGate gate() noexcept;
     AdmissionServices services() noexcept;
     bool select_managers() noexcept;

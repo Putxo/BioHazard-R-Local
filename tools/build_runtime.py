@@ -16,6 +16,7 @@ def sources():
         (ROOT/'patches/hud_ownership').glob('*.S')) + [
         ROOT/'patches/menu_routing/menu_owner.cpp',
         ROOT/'patches/menu_routing/menu_gateways.S',
+        ROOT/'patches/action_icons/router.cpp', ROOT/'patches/action_icons/gateway.S',
         ROOT/'patches/runtime/runtime.cpp', ROOT/'patches/runtime/native_host.cpp',
         ROOT/'patches/runtime/entry.S']
 

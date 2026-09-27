@@ -6,6 +6,7 @@ using rev_hud::u32;
 using usize=__SIZE_TYPE__;
 void* operator new(usize,void* p) noexcept {return p;}
 extern "C" {
+void __attribute__((thiscall)) rev_action_stock_draw(u32 icon,u32 context) noexcept;
 void* memset(void* p,int v,usize n) {
     auto* d=static_cast<unsigned char*>(p);for(usize i=0;i<n;++i)d[i]=static_cast<unsigned char>(v);return p;
 }
@@ -45,6 +46,13 @@ u32 thread(void*) noexcept {
 bool accepted=false;
 bool image(void*) noexcept {return accepted;}
 u32 self(void*) noexcept {return reinterpret_cast<u32(*)()>(0x01C16468u)();}
+u32 action_member(void*,u32 command) noexcept {
+    using Member=u32(__attribute__((thiscall))*)(u32);
+    return reinterpret_cast<Member>(0x01E8CDC0u)(command);
+}
+void action_draw(void*,u32 icon,u32 context) noexcept {
+    rev_action_stock_draw(icon,context);
+}
 alignas(rev_runtime::Runtime) unsigned char storage[sizeof(rev_runtime::Runtime)];
 bool attempted=false;
 }
@@ -65,6 +73,7 @@ extern "C" u32 rev_runtime_initialize() noexcept {
     for(auto p=rev_init_begin;p!=rev_init_end;++p)if(*p)(*p)();
     accepted=true;
     rev_runtime::Host h{{nullptr,word},write,thread,image,self,rev_hud::january_native_calls()};
+    h.action={nullptr,action_member,action_draw};
     auto* r=new(storage) rev_runtime::Runtime(rev_hud::registry(),h,rev_hud::WidgetKinds);
     if(!r->start() || !r->bind()){accepted=false;return 0;}
     return 1;

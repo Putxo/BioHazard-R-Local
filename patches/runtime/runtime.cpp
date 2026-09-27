@@ -27,7 +27,25 @@ Runtime::Runtime(Registry& registry,Host host,u32 count) noexcept
           u32 v=0;return static_cast<Runtime*>(p)->word(0x057D9188,v)?v:0;
       },[](void* p) noexcept -> u32 {
           u32 v=0;return static_cast<Runtime*>(p)->word(0x057D9184,v)?v:0;
-      }}) {}
+      }}), action_(action_host()) {}
+
+rev_action::Host Runtime::action_host() noexcept {
+    return {{this,[](void* p,u32 a,u32* v) noexcept {
+        return v && static_cast<Runtime*>(p)->word(a,*v);
+    }},[](void* p,u32 a,u32 v) noexcept {
+        auto& r=*static_cast<Runtime*>(p);
+        return r.host_.write && r.host_.write(r.host_.memory.context,a,v);
+    },[](void* p,rev_action::Frame* f) noexcept {
+        using M=rev_action::SnapshotMode;
+        auto& r=*static_cast<Runtime*>(p);
+        u32 active=0;
+        if(!f || !r.started_ || !r.word(0x057D9188,active))return M::Unavailable;
+        if(!active)return M::Stock;
+        PipelineStamp stamp{};LifeSnapshot life{};
+        if(!r.clock_.capture(&stamp) || !r.source_.capture(&life))return M::Unavailable;
+        *f={stamp.frame,life.session};return M::Local;
+    },host_.action};
+}
 
 AdmissionGate Runtime::gate() noexcept {
     // Store this, rather than accessing driver_ before its construction.
@@ -71,7 +89,7 @@ bool Runtime::bind() noexcept {
     return bind_lifetime_sink(source_) && bind_pipeline_sink(clock_) &&
         bind_structural_sink(window_) && bind_manager_sink(driver_) &&
         bind_begin_activator_sink(activator_) && bind_p1_mask_sink(mask_) &&
-        rev_menu::bind_menu_owner_sink(menu_);
+        rev_menu::bind_menu_owner_sink(menu_) && rev_action::bind(action_);
 }
 bool Runtime::select_managers() noexcept {
     // sIDCockpit[0], verified through 01BE32C5 -> 01CB57A0 and

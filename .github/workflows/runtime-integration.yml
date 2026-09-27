@@ -18,7 +18,7 @@ jobs:
         run: |
           FLAGS="-std=c++17 -O1 -g -Wall -Wextra -Werror"
           if [ "${{ matrix.mode }}" = sanitized ]; then FLAGS="$FLAGS -fsanitize=address,undefined -fno-omit-frame-pointer"; fi
-          g++ $FLAGS -Ipatches/hud_ownership patches/hud_ownership/*.cpp patches/runtime/runtime.cpp patches/menu_routing/menu_owner.cpp tests/runtime/runtime_tests.cpp -o "$RUNNER_TEMP/runtime-tests"
+          g++ $FLAGS -Ipatches/hud_ownership patches/hud_ownership/*.cpp patches/runtime/runtime.cpp patches/menu_routing/menu_owner.cpp patches/action_icons/router.cpp tests/runtime/runtime_tests.cpp -o "$RUNNER_TEMP/runtime-tests"
           "$RUNNER_TEMP/runtime-tests"
       - name: Lifetime regression
         run: |
@@ -34,3 +34,4 @@ jobs:
         run: python tools/build_runtime.py "$RUNNER_TEMP/runtime-module"
       - name: Reject missing or discarded hooks and invalid images
         run: REV_RUNTIME_ELF="$RUNNER_TEMP/runtime-module/runtime.elf" python tests/runtime/test_runtime_image.py
+
