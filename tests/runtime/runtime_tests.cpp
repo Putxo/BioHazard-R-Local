@@ -138,6 +138,8 @@ struct Fixture {
             for(u32 j=0;j<15;++j)f.m[p+4+4*j]=0;
             f.m[p+12]=0xED0000+i*0x1000;
         }
+        f.m[0xED1000]=0x04D38EE4;C(r.genesis_weapons().event(0x0248731E,0xED1000));
+        C(r.genesis_weapon_retain(r.lifecycle().unit(6),0xED1000));
         f.m[r.lifecycle().unit(6)+0x2FC]=0xED1000;
     }
     void scope_setup(){
@@ -161,6 +163,23 @@ struct Fixture {
     }
 };
 int main(){
+    for(u32 fault=0;fault<4;++fault){Fixture x(7);x.detector_setup();x.equipment_setup();
+     const u32 scanner=x.r.lifecycle().unit(6);
+     if(fault==0)C(x.r.genesis_weapons().event(0x02487426,0xED1000));
+     if(fault==1){C(x.r.genesis_weapons().event(0x02487426,0xED1000));C(x.r.genesis_weapons().event(0x0248731E,0xED1000));}
+     if(fault==2){x.thread=8;C(!x.r.genesis_weapons().event(0x02487426,0xED1000));x.thread=7;}
+     if(fault==3){x.f.m[0xED2000]=0x04D38EE4;x.f.m[0xEC100C]=0xED2000;x.f.m[scanner+0x2FC]=0xED2000;
+         C(!x.r.genesis_weapon_retain(scanner,0xED2000));}
+     const auto before=x.f.events.size();C(!x.r.driver().event(0x02B49C5B,x.f.p[0],0));
+     for(size_t i=before;i<x.f.events.size();++i){C(x.f.events[i].self!=scanner);}
+     ++scenarios;}
+    {Fixture x(7);x.detector_setup();x.equipment_setup();const u32 scanner=x.r.lifecycle().unit(6);
+     C(x.r.genesis_weapon_retain(x.f.original[6],0xED0000));
+     C(!x.r.genesis_weapon_retain(scanner,0xED0000));C(!x.r.genesis_weapon_retain(scanner,0));
+     C(x.r.genesis_weapons().event(0x02487426,0xED1000));C(x.r.genesis_weapons().event(0x0248731E,0xED1000));
+     C(x.r.genesis_weapon_retain(scanner,0xED1000));
+     C(x.r.driver().event(0x02B49C5B,x.f.p[0],0));x.next_frame();
+     C(x.r.driver().event(0x02B49C5B,x.f.p[0],0));x.end();++scenarios;}
     {Fixture x(8);x.prepare();x.begin();const u32 scanner=x.r.lifecycle().unit(6);const auto before=x.f.m;
      for(u32 kind=0;kind<3;++kind){const u32 root=x.f.m[scanner+effect_fixture::Offsets[kind]];
          C(x.r.effect_draw(kind,root,x.f.context));C(x.effect_draws==kind+1);

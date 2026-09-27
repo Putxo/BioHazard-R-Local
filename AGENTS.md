@@ -2,7 +2,7 @@
 
 Actualización: 27/09/2026. Rama canónica: research/script-member-serial-validation.
 
-PR51 integrado: 326f9079ff63886a33c1f86f6851ca18d717105a, 20 workflows PASS.
+PR52 integrado: e14a6e965a48de3074cb87b534693788b9f05ac2, 20 workflows PASS.
 
 Leer CURRENT_STATUS.md, docs/50-runtime-composition.md,
 
@@ -12,7 +12,7 @@ Leer también docs/54-action-icon-view-routing.md, docs/55-action-priority-loop.
 
 y docs/56-local-draw-scheduling.md. Prioridad y parada del bucle por miembro;
 
-selector de dibujo inmediato local integrado: 134 hooks. No confundirlo
+selector de dibujo inmediato local integrado: 137 hooks. No confundirlo
 
 con cobertura completa de ActionCommand ni con validación jugando.
 
@@ -85,3 +85,5 @@ Genesis: [retirada de los tres auxiliares antes del Scanner](docs/78-genesis-eff
 Genesis: [filtro de efectos por vista en sUnit](docs/79-genesis-effect-views.md).
 
 Genesis: [contexto nativo de dibujo](docs/80-genesis-effect-draw-scope.md) y [gestores compartidos de activación](docs/81-genesis-activation-globals.md).
+
+Genesis: [vida del arma y admisión de la retención](docs/82-genesis-weapon-lifetime.md).

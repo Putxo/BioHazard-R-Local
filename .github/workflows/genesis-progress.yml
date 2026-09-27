@@ -25,6 +25,16 @@ jobs:
           as --32 tests/genesis/effect_abi.S -o "$RUNNER_TEMP/effect-abi.o"
           ld -m elf_i386 "$RUNNER_TEMP/effect-gates.o" "$RUNNER_TEMP/effect-abi.o" -o "$RUNNER_TEMP/effect-abi"
           "$RUNNER_TEMP/effect-abi"
+      - name: Scanner weapon generations and retention-store ABI
+        run: |
+          FLAGS="-std=c++17 -O1 -g -Wall -Wextra -Werror"
+          if [ "${{ matrix.mode }}" = sanitized ]; then FLAGS="$FLAGS -fsanitize=address,undefined -fno-omit-frame-pointer"; fi
+          g++ $FLAGS patches/genesis/weapon_lifetime.cpp tests/genesis/weapon_lifetime_tests.cpp -o "$RUNNER_TEMP/weapon-lifetime"
+          "$RUNNER_TEMP/weapon-lifetime"
+          as --32 patches/genesis/weapon_gateways.S -o "$RUNNER_TEMP/weapon-gates.o"
+          as --32 tests/genesis/weapon_abi.S -o "$RUNNER_TEMP/weapon-abi.o"
+          ld -m elf_i386 "$RUNNER_TEMP/weapon-gates.o" "$RUNNER_TEMP/weapon-abi.o" -o "$RUNNER_TEMP/weapon-abi"
+          "$RUNNER_TEMP/weapon-abi"
   filter-copy:
     runs-on: ubuntu-latest
     strategy:

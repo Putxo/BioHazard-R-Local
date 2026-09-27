@@ -2,9 +2,9 @@
   "schema_version": 4,
   "canonical_branch": "research/script-member-serial-validation",
   "checkpoint": {
-    "merged_pr": 51,
-    "merge_sha": "326f9079ff63886a33c1f86f6851ca18d717105a",
-    "tested_head": "9d696eb48a5257f2508639d42e59d83657220e2f",
+    "merged_pr": 52,
+    "merge_sha": "e14a6e965a48de3074cb87b534693788b9f05ac2",
+    "tested_head": "ef66ce0e88a46db10be32483117f3046bde6dc72",
     "ci": "20 workflows PASS"
   },
   "user_constraints": {
@@ -25,7 +25,7 @@
   },
   "runtime": {
     "composition_root": true,
-    "hud_menu_hook_count": 134,
+    "hud_menu_hook_count": 137,
     "local_views_use_native_immediate_draw": true,
     "action_loop_priority_per_member": true,
     "action_loop_stop_per_member": true,
@@ -81,7 +81,10 @@
     "genesis_auxiliary_effect_retirement_connected": true,
     "genesis_auxiliary_effect_scheduler_view_mask_connected": true,
     "genesis_auxiliary_effect_render_clipping_complete": false,
-    "genesis_auxiliary_effect_draw_context_gate_connected": true
+    "genesis_auxiliary_effect_draw_context_gate_connected": true,
+    "genesis_scanner_weapon_lifetime_observer_connected": true,
+    "genesis_weapon_retention_admission_connected": true,
+    "genesis_weapon_storage_pinned_through_callbacks": false
   },
   "pending": [
     "full HUD and interaction prompts",
@@ -124,6 +127,7 @@
     "docs/78-genesis-effect-retirement.md",
     "docs/79-genesis-effect-views.md",
     "docs/80-genesis-effect-draw-scope.md",
-    "docs/81-genesis-activation-globals.md"
+    "docs/81-genesis-activation-globals.md",
+    "docs/82-genesis-weapon-lifetime.md"
   ]
 }
