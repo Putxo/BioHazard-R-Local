@@ -23,6 +23,8 @@ struct Host {
     JanuaryCalls native{};
     rev_action::Calls action{};
     u32 (*action_rank)(void*,u32) noexcept=nullptr;
+    // Native bool predicate used by January's actor aim-visibility routine.
+    bool (*aim_weapon_hidden)(void*,u32 actor) noexcept=nullptr;
 };
 // One process-lifetime graph. Construct and start before ANY installed gateway
 // is reachable. No callback is invoked during member construction.
@@ -58,6 +60,7 @@ public:
     Mode genesis_set_position(u32 target,u32 source) noexcept;
     void genesis_remove_target(u32 target) noexcept;
     bool genesis_notify(u32 target,u32 world_owner,u32 delegate) noexcept;
+    void aim_visibility(u32 actor,u32 hide) noexcept;
     Mode genesis_camera(u32 widget,u32 manager,u32* out) noexcept {
         return rev_genesis::camera(genesis_host(),host_.memory,widget,manager,out);
     }
@@ -78,6 +81,7 @@ private:
     rev_genesis::ViewFrame scanner_frame_{};
     bool scanner_copy_failed_=false;
     bool detector_busy_=false,detector_producing_=false;
+    bool aim_busy_=false,aim_faulted_=false;
     struct Notification {u32 generation=0,owner=0,invoke=0;};
     Notification notifications_[rev_genesis::TargetLifetime::Capacity]{};
     Mode detector_mode() noexcept;

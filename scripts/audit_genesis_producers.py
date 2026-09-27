@@ -3,6 +3,15 @@ from pathlib import Path
 import argparse,json
 from audit_genesis_progress import Image
 WITNESSES=[
+    (0x0279CFBD,"e958010000","Secondary-camera branch gateway displaced jump"),
+    (0x0279CFA0,"894df8","Aim routine actor local"),
+    (0x0279CFC2,"0fb6450883f801","Visibility tests first argument low byte equals one"),
+    (0x0279D024,"e8bb5f41ff0fb6c085c0","Native weapon visibility bool predicate and AL result"),
+    (0x0279CFD3,"83e0fe508b4df8","Primary actor clears only view zero"),
+    (0x0279D041,"83e0fe508b4dec","Primary weapon clears only view zero"),
+    (0x0279D11A,"5f5e5b81c4e8000000","Original aim epilogue restores three registers and frame"),
+    (0x0279D12D,"c20800","Aim routine consumes two arguments"),
+
     (0x01D336C6,"81c124150000","Actor-specific inventory pointer field"),
     (0x01D36542,"8b45f88b00","Inventory smart-pointer dereference"),
     (0x02067E98,"8b88d4000000","Selected weapon slot index"),

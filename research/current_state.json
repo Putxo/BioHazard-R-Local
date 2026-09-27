@@ -2,10 +2,10 @@
   "schema_version": 4,
   "canonical_branch": "research/script-member-serial-validation",
   "checkpoint": {
-    "merged_pr": 40,
-    "merge_sha": "3f7a8e6b5fd6d1880d4f49fb541b2f82ad258725",
-    "tested_head": "59eb0ee85ad3ae9c3bb0ad7f2b5dc66cf3a4d284",
-    "ci": "21 workflows PASS"
+    "merged_pr": 41,
+    "merge_sha": "96e26d20f346d7096b8c0d039a4c4e3b6737540b",
+    "tested_head": "4cbc7c04fdc5eb0fb8bf9cb2c6640cf7954b584d",
+    "ci": "20 applicable workflows PASS"
   },
   "user_constraints": {
     "launch_game": false,
@@ -25,7 +25,7 @@
   },
   "runtime": {
     "composition_root": true,
-    "hud_menu_hook_count": 110,
+    "hud_menu_hook_count": 111,
     "local_views_use_native_immediate_draw": true,
     "action_loop_priority_per_member": true,
     "action_loop_stop_per_member": true,
@@ -64,7 +64,8 @@
     "genesis_detector_callback_scope_isolated": true,
     "genesis_detector_callback_pair_deduplication": true,
     "genesis_retained_weapon_inventory_guard": true,
-    "genesis_weapon_lifetime_pinned": false
+    "genesis_weapon_lifetime_pinned": false,
+    "aim_secondary_camera_visibility": true
   },
   "pending": [
     "full HUD and interaction prompts",
@@ -95,6 +96,7 @@
     "docs/66-genesis-detector-routing.md",
     "docs/67-genesis-target-removal.md",
     "docs/68-genesis-world-notifications.md",
-    "docs/69-genesis-equipped-weapon.md"
+    "docs/69-genesis-equipped-weapon.md",
+    "docs/70-aim-secondary-visibility.md"
   ]
 }

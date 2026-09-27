@@ -54,6 +54,10 @@ void action_draw(void*,u32 icon,u32 context) noexcept {
     rev_action_stock_draw(icon,context);
 }
 u32 action_rank(void*,u32 raw) noexcept {return reinterpret_cast<u32(*)(u32)>(0x01E87DB0u)(raw);}
+bool aim_weapon_hidden(void*,u32 actor) noexcept {
+    using Predicate=unsigned char(__attribute__((thiscall))*)(u32);
+    return reinterpret_cast<Predicate>(0x01BB2FE4u)(actor)!=0;
+}
 alignas(rev_runtime::Runtime) unsigned char storage[sizeof(rev_runtime::Runtime)];
 bool attempted=false;
 }
@@ -76,6 +80,7 @@ extern "C" u32 rev_runtime_initialize() noexcept {
     rev_runtime::Host h{{nullptr,word},write,thread,image,self,rev_hud::january_native_calls()};
     h.action={nullptr,action_member,action_draw};
     h.action_rank=action_rank;
+    h.aim_weapon_hidden=aim_weapon_hidden;
     auto* r=new(storage) rev_runtime::Runtime(rev_hud::registry(),h,rev_hud::WidgetKinds);
     if(!r->start() || !r->bind()){accepted=false;return 0;}
     return 1;

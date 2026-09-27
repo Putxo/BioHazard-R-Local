@@ -86,6 +86,12 @@ jobs:
           if [ "${{ matrix.mode }}" = sanitized ]; then FLAGS="$FLAGS -fsanitize=address,undefined -fno-omit-frame-pointer"; fi
           g++ $FLAGS patches/genesis/equipment.cpp tests/genesis/equipment_tests.cpp -o "$RUNNER_TEMP/equipment"
           "$RUNNER_TEMP/equipment"
+      - name: Secondary-camera aiming visibility gateway ABI
+        run: |
+          as --32 patches/genesis/aim_gateway.S -o "$RUNNER_TEMP/aim-gate.o"
+          as --32 tests/genesis/aim_abi.S -o "$RUNNER_TEMP/aim-abi.o"
+          ld -m elf_i386 "$RUNNER_TEMP/aim-gate.o" "$RUNNER_TEMP/aim-abi.o" -o "$RUNNER_TEMP/aim-abi"
+          "$RUNNER_TEMP/aim-abi"
       - name: World callback gate keeps detector locals and thiscall ABI
         run: |
           as --32 patches/genesis/notification_gateway.S -o "$RUNNER_TEMP/notification-gate.o"
