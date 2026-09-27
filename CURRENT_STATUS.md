@@ -1,7 +1,7 @@
 # Estado actual del cooperativo local
 
 27/09/2026. Rama técnica: `research/script-member-serial-validation`.
-PR26 integrado: `c1b2d1b0d64f95633e81780819c70829aa2fa35d`, 19 workflows PASS.
+PR27 integrado: `91fad6cdd3ceb7551705b9f234305dae52970e64`, 19 workflows PASS.
 
 **El cooperativo completo sigue en desarrollo. El juego no se ha ejecutado.**
 El propietario prohíbe abrirlo y hará personalmente las pruebas jugando.
@@ -53,4 +53,5 @@ Panel de subarmas y rollback de máscaras: [detalle](docs/52-subweapon-hud.md).
 Icono de interacción: [productor y arbitraje pendientes](docs/53-action-icon-findings.md).
 
 Nuevo aislamiento del dibujo: [ActionIcon por vista](docs/54-action-icon-view-routing.md).
-Las pruebas sintéticas pasan; la prioridad global sigue pendiente.
+Las pruebas sintéticas y 19 workflows pasan; la prioridad global y el soporte
+de ejecución del icono en workers siguen pendientes. El juego no se ha ejecutado.

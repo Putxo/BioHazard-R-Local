@@ -1,10 +1,12 @@
 # Trabajo y entrega
 
 Actualización: 27/09/2026. Rama canónica: research/script-member-serial-validation.
-PR26 integrado: c1b2d1b0d64f95633e81780819c70829aa2fa35d, 19 workflows PASS.
+PR27 integrado: 91fad6cdd3ceb7551705b9f234305dae52970e64, 19 workflows PASS.
 
 Leer CURRENT_STATUS.md, docs/50-runtime-composition.md,
 docs/51-runtime-installer.md y research/current_state.json antes de editar.
+Leer también docs/54-action-icon-view-routing.md: 39 hooks integrados; filtros
+de vista/claim implementados, prioridad global y ejecución en workers pendientes.
 
 El usuario pide terminar el cooperativo y subir avances a GitHub; prohíbe abrir
 o ejecutar el juego. Las copias locales de compilación no son entregas finales.

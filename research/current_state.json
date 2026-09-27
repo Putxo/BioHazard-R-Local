@@ -2,8 +2,9 @@
   "schema_version": 4,
   "canonical_branch": "research/script-member-serial-validation",
   "checkpoint": {
-    "merged_pr": 26,
-    "merge_sha": "c1b2d1b0d64f95633e81780819c70829aa2fa35d",
+    "merged_pr": 27,
+    "merge_sha": "91fad6cdd3ceb7551705b9f234305dae52970e64",
+    "tested_head": "79060a59a48d1124b7d13369db149b81f2bf49ad",
     "ci": "19 workflows PASS"
   },
   "user_constraints": {
@@ -29,6 +30,7 @@
     "action_icon_view_filter": true,
     "action_icon_claim_per_view": true,
     "action_priority_per_member": false,
+    "action_icon_worker_execution": false,
     "hud_widgets": [
       "Reticle",
       "MainEquipment",
