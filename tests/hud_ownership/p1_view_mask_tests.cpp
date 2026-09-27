@@ -9,7 +9,8 @@ struct Fixture {
     std::map<u32,u32> m; P1ViewMask mask; u32 writes=0,fail_write=0;
     u32 cockpit=0x100000,minimap=0x110000,equip=0x200000,reticle=0x210000,herb=0x220000,ctx=0x300000;
     Fixture(u32 count=LegacyWidgetKinds):mask({{this,read},write},count) {
-        if(count==WidgetKinds){m[cockpit+0x64]=0x230000;m[0x230000]=kind_info(WidgetKind::SubEquipment)->vtable;m[0x23000C]=0x83031234;}
+        if(count>=5){m[cockpit+0x3C]=0x240000;m[0x240000]=kind_info(WidgetKind::Damage)->vtable;m[0x24000C]=0x83031234;}
+        if(count>=4){m[cockpit+0x64]=0x230000;m[0x230000]=kind_info(WidgetKind::SubEquipment)->vtable;m[0x23000C]=0x83031234;}
         m[cockpit]=manager_vtable(ManagerKind::Cockpit);m[minimap]=manager_vtable(ManagerKind::MiniMap);
         m[cockpit+0x5C]=equip;m[cockpit+0x90]=reticle;
         m[minimap+0x30]=herb;m[minimap+0x40]=herb;
@@ -28,6 +29,10 @@ struct Fixture {
     }
 };
 int main(){
+    {Fixture f(5);const auto before=f.m;
+     CHECK(f.mask.begin(0x02B49DE3,f.cockpit,f.ctx));CHECK((draw_view(f.m[0x24000C])&2)==0);
+     CHECK(f.mask.end(0x02B49E5C,f.cockpit));CHECK(f.m==before);++scenarios;}
+
     {Fixture f;const u32 e=f.m[f.equip+0xC],r=f.m[f.reticle+0xC];
      CHECK(f.mask.begin(0x02B49DE3,f.cockpit,f.ctx));CHECK(f.mask.active());
      CHECK(draw_view(f.m[f.equip+0xC])==(draw_view(e)&~2u));CHECK(draw_view(f.m[f.reticle+0xC])==(draw_view(r)&~2u));
@@ -56,10 +61,10 @@ int main(){
     {Fixture f;const u32 e=f.m[f.equip+0xC];f.m.erase(f.reticle+0xC);
      CHECK(!f.mask.begin(0x02B49DE3,f.cockpit,f.ctx));CHECK(f.m[f.equip+0xC]==e);
      CHECK(f.mask.fault()==P1MaskFault::Memory);++scenarios;}
-    {Fixture f(WidgetKinds);const auto before=f.m;
+    {Fixture f(4);const auto before=f.m;
      CHECK(f.mask.begin(0x02B49DE3,f.cockpit,f.ctx));CHECK(draw_view(f.m[0x23000C])==(draw_view(before.at(0x23000C))&~2u));
      CHECK(f.mask.end(0x02B49E5C,f.cockpit));CHECK(f.m==before);++scenarios;}
-    {Fixture f(WidgetKinds);const u32 e=f.m[f.equip+0xC],r=f.m[f.reticle+0xC];
+    {Fixture f(4);const u32 e=f.m[f.equip+0xC],r=f.m[f.reticle+0xC];
      f.m.erase(0x23000C);CHECK(!f.mask.begin(0x02B49DE3,f.cockpit,f.ctx));
      CHECK(f.m[f.equip+0xC]==e);CHECK(f.m[f.reticle+0xC]==r);++scenarios;}
     std::printf("{\"status\":\"PASS\",\"scenarios\":%u,\"assertions\":%u,\"gameplay_executed\":false}\n",scenarios,checks);

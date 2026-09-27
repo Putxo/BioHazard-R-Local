@@ -6,6 +6,7 @@ constexpr JanuaryType Types[] = {
     {0x370,0x01C15775,0x01B7D1F0,0x01C0C74C,0x01B96D58,0x01C65A9A,0x01BF295F,0x01C6445B},
     {0x2C0,0x01C7855A,0x01C6392A,0x01BAB4F6,0x01C33D4C,0x01C28CAD,0x01BF295F,0x01C67381},
     {0x370,0x01B8BCE6,0x01C39C88,0x01C32956,0x01C7FD6E,0x01BA1E2E,0x01BF295F,0x01C8373E},
+    {0x2B0,0x01B8DD52,0x01BB72E2,0x01C2CA29,0x01B98D2E,0x01C6E591,0x01BBEFAB,0x01BB9E75},
 };
 constexpr u32 GetUnit = 0x01C8C27B, Contains = 0x0326AA90;
 struct Busy { bool& flag; explicit Busy(bool& f):flag(f){flag=true;} ~Busy(){flag=false;} };
@@ -146,6 +147,17 @@ bool JanuaryBackend::phase(u32 u,WidgetKind k,u32 phase,u32 context) {
     if (!u || u!=e.unit || !e.ready || e.quarantine || (phase!=8 && phase!=9 && phase!=11)) return fail(NativeFault::Layout);
     Busy lock(busy_);
     if (!allow(NativeOp::Phase,k,u,phase,context) || !targets(k) || !detached(u,k)) return false;
+    if (k==WidgetKind::Damage && phase==8) {
+        const Route route=owners_?owners_->resolve(u,k):Route{};
+        if (route.mode!=Mode::Local || route.member!=1 || route.view!=1 ||
+            !route.actor || !calls_.damage || !calls_.damage(calls_.context,u,route.actor))
+            return fail(NativeFault::Permit);
+        const Route after=owners_->resolve(u,k);
+        if (!allow(NativeOp::Phase,k,u,phase,context) || !detached(u,k) ||
+            after.mode!=Mode::Local || after.actor!=route.actor || after.member!=1 || after.view!=1) {
+            e.quarantine=true;return fail(NativeFault::Permit);
+        }
+    }
     u32 flags=0,skip=0;
     if (!field(u,0xC,flags)) return false;
     if (k!=WidgetKind::MapHerb) {

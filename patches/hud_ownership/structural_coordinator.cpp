@@ -98,7 +98,8 @@ bool StructuralCoordinator::originals(const LifeSnapshot& snap,
         out[0] == out[1] || out[0] == out[2] || out[1] == out[2])
         return false;
 
-    if (count_ == WidgetKinds && !word(snap.parents[0] + 0x64, out[3])) return false;
+    if (count_ >= 4 && !word(snap.parents[0] + 0x64, out[3])) return false;
+    if (count_ >= 5 && !word(snap.parents[0] + 0x3C, out[4])) return false;
     for (u32 i = 0; i < count_; ++i) {
         if (!out[i]) return false;
         for (u32 j=0;j<i;++j) if (out[i]==out[j]) return false;

@@ -1,7 +1,7 @@
 # Estado actual del cooperativo local
 
 27/09/2026. Rama técnica: `research/script-member-serial-validation`.
-PR28 integrado: `f99702b580191bccf445a90dd4bf891af6ec772a`, 19 workflows PASS.
+PR29 integrado: `a9f53e92e34d6125977d150a36a2d10cc1e7da0e`, 19 workflows PASS.
 
 **El cooperativo completo sigue en desarrollo. El juego no se ha ejecutado.**
 El propietario prohíbe abrirlo y hará personalmente las pruebas jugando.
@@ -14,7 +14,7 @@ El propietario prohíbe abrirlo y hará personalmente las pruebas jugando.
 | Cámaras | View0 TOP y View1 BOTTOM, targets separados; cutscenes pendientes |
 | Inventario | Pack gameplay propio; menú global muestra Sub0 con owner J2 |
 | Pausa | Una pausa global; abrir/navegar/confirmar/cancelar por owner; lifetime y nested 6/7 implementados |
-| HUD | Clones de Reticle, MainEquipment, MapHerb y SubEquipment; faltan otros widgets e iconos |
+| HUD | Clones de Reticle, MainEquipment, MapHerb, SubEquipment y Damage; faltan curación, asfixia, Genesis y otros widgets |
 | Recursos HUD | Grafo completo conectado, selección desde sIDCockpit, lifetimes y retirada |
 | Pickup/puertas | ActionIcon2D por miembro/vista; prioridad y parada del bucle por miembro; otros gates y prompts completos pendientes |
 | Guiones | Dos callbacks PcsSub con owner+serial; cobertura QTE parcial |
@@ -57,3 +57,5 @@ PR28 pasó 19 workflows: [prioridad del bucle por miembro](docs/55-action-priori
 Nuevo bloque: [dibujo inmediato local](docs/56-local-draw-scheduling.md).
 Persisten gates/flags globales, historial y productores 3D por completar.
 El juego no se ha ejecutado.
+
+Indicador de daño separado: [alimentación por actor](docs/57-damage-hud.md).

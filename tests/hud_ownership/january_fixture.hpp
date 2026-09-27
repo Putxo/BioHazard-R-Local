@@ -15,6 +15,8 @@ struct Fake {
     u32 original[WidgetKinds]={0x100000,0x120000,0x140000,0};
     Session session{true,1,{0x300000,1,0,1},{0x320000,1,1,1}};
     u32 next=0x600000,context=0x400000,ctor_count=0,init_count=0;
+    u32 damage_unit=0,damage_actor=0,damage_calls=0;
+    bool damage_ok=true;
     u32 allocation_override=0,attached=0,reader_fail=0,write_fail=0;
     int no_alloc=-1,no_init=-1,bad_ctor=-1;
     bool admission=true,fresh=true,unit_available=true,draw_admission=true;
@@ -23,7 +25,8 @@ struct Fake {
     Lifecycle* life=nullptr;
     Fake(u32 count=LegacyWidgetKinds){
         if(!valid_widget_count(count))count=LegacyWidgetKinds;
-        if(count==WidgetKinds)original[3]=0x160000;
+        if(count>=4)original[3]=0x160000;
+        if(count>=5)original[4]=0x180000;
         for(u32 i=0;i<2;++i){m[p[i]]=manager_vtable(static_cast<ManagerKind>(i));m[p[i]+0x1C]=i?0x3F000000:0x3F800000;}
         for(u32 i=0;i<count;++i){
             const auto k=static_cast<WidgetKind>(i);plain(original[i],k);tree(original[i],k);
@@ -103,6 +106,12 @@ struct Fake {
     static u32 contains(void* c,u32 t,u32 s,u32 u) noexcept {
         auto& f=*static_cast<Fake*>(c);C(t==0x0326AA90);C(s==0x700000);f.membership.push_back(u);return f.attached==u;
     }
+    static bool damage(void* c,u32 unit,u32 actor) noexcept {
+        auto& f=*static_cast<Fake*>(c);++f.damage_calls;f.damage_unit=unit;f.damage_actor=actor;
+        C(f.m[unit]==kind_info(WidgetKind::Damage)->vtable);
+        if(f.stop_in_phase && f.life)f.life->stop();
+        return f.damage_ok;
+    }
     JanuaryHost host(){return {{this,read},write,permit,freshly};}
-    JanuaryCalls calls(){return {this,alloc,ctor,method0,method1,singleton,contains};}
+    JanuaryCalls calls(){return {this,alloc,ctor,method0,method1,singleton,contains,damage};}
 };

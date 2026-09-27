@@ -35,9 +35,9 @@ extern "C" int test_main() {
     const auto cockpit=r.open_manager(0x30000000,0x04DE5C14,ManagerKind::Cockpit);
     const auto mini=r.open_manager(0x30010000,0x04DE86FC,ManagerKind::MiniMap);
     check(cockpit.valid() && mini.valid());
-    void (*bridges[WidgetKinds])()={rev_hud_reticle_self,rev_hud_equipment_self,rev_hud_herb_self,rev_hud_subequipment_self};
-    Token members[WidgetKinds];
-    for (u32 i=0;i<WidgetKinds;++i) {
+    void (*bridges[4])()={rev_hud_reticle_self,rev_hud_equipment_self,rev_hud_herb_self,rev_hud_subequipment_self};
+    Token members[4];
+    for (u32 i=0;i<4;++i) {
         const auto kind=static_cast<WidgetKind>(i);const auto* info=kind_info(kind);
         members[i]=r.bind_widget(i==2 ? mini : cockpit,0x40000000+i*0x1000,
                                 info->vtable,kind,1,sub,1);
@@ -51,10 +51,10 @@ extern "C" int test_main() {
     test(0x50000000,bridges[0],self.address,false);
     test(0x40000000,bridges[2],0,false); // wrong class must not read another layout
     session.active=false;r.set_session(session);
-    for (u32 i=0;i<WidgetKinds;++i) test(0x40000000+i*0x1000,bridges[i],0,false);
+    for (u32 i=0;i<4;++i) test(0x40000000+i*0x1000,bridges[i],0,false);
     test(0x50000000,bridges[0],0x11110000,true);
     session.active=true;r.set_session(session);
-    for (u32 i=0;i<WidgetKinds;++i) test(0x40000000+i*0x1000,bridges[i],0,false); // latched
+    for (u32 i=0;i<4;++i) test(0x40000000+i*0x1000,bridges[i],0,false); // latched
     check(r.invalidate_manager(cockpit));
     test(0x50000000,bridges[0],0,false); // never call stock on invalidated owner
     check(scenarios==20);
