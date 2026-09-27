@@ -3,6 +3,9 @@ from pathlib import Path
 import argparse,json
 from audit_genesis_progress import Image
 WITNESSES=[
+    (0x0281F560,"558bec81eccc000000","Focus getter exact displaced prologue"),
+    (0x02823220,"558bec81eccc000000","Position getter exact displaced prologue"),
+    (0x0281F58F,"c3","Focus getter ret0"),
     (0x023CEA44,"e888027fff","Detector caller preserves its target-list owner"),
     (0x023D4449,"e883a87eff","Detector caller preserves its target-list owner"),
     (0x027EBD87,"e8452f3dff","Detector caller preserves its target-list owner"),

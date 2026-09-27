@@ -2,9 +2,9 @@
   "schema_version": 4,
   "canonical_branch": "research/script-member-serial-validation",
   "checkpoint": {
-    "merged_pr": 35,
-    "merge_sha": "c79545ffa16d043656bacf18a525de7ed7db8b62",
-    "tested_head": "1e3c7189d6b4db8731597612687811eefbbcf2c8",
+    "merged_pr": 36,
+    "merge_sha": "63853fcef194e08dedd8af644bee679efe861bdd",
+    "tested_head": "b54ed532407808abb0804f9302e52c2bf48bc9e0",
     "ci": "20 workflows PASS"
   },
   "user_constraints": {
@@ -25,7 +25,7 @@
   },
   "runtime": {
     "composition_root": true,
-    "hud_menu_hook_count": 93,
+    "hud_menu_hook_count": 95,
     "local_views_use_native_immediate_draw": true,
     "action_loop_priority_per_member": true,
     "action_loop_stop_per_member": true,
@@ -57,7 +57,8 @@
     "genesis_target_lifetime_observer_connected": true,
     "genesis_target_removal_connected": false,
     "genesis_target_view_store_composed": true,
-    "genesis_target_view_native_gateways_connected": false
+    "genesis_target_view_native_gateways_connected": true,
+    "genesis_target_producer_gateway_connected": false
   },
   "pending": [
     "full HUD and interaction prompts",
@@ -83,6 +84,7 @@
     "docs/61-scanner-clone.md",
     "docs/62-genesis-camera-producers.md",
     "docs/63-genesis-target-lifetime.md",
-    "docs/64-genesis-target-view-state.md"
+    "docs/64-genesis-target-view-state.md",
+    "docs/65-genesis-target-consumers.md"
   ]
 }

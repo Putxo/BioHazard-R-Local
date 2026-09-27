@@ -194,6 +194,8 @@ bool JanuaryBackend::phase(u32 u,WidgetKind k,u32 phase,u32 context) {
         u32 view=0;
         if (!field(context,0x158,view) || (view&255)!=1) return fail(NativeFault::Layout);
         if (!view_allowed(flags,1)) return true;
+        if(k==WidgetKind::Scanner && (!events_.scanner_begin || !events_.scanner_end ||
+           !events_.scanner_begin(events_.context,u)))return fail(NativeFault::Permit);
         calls_.method1(calls_.context,t->draw,u,context);
     } else {
         if (phase==8) {
@@ -204,7 +206,12 @@ bool JanuaryBackend::phase(u32 u,WidgetKind k,u32 phase,u32 context) {
             if ((scale&0x80000000u) || (scale&0x7F800000u)==0x7F800000u) return fail(NativeFault::Layout);
             if (!write(u+0x1C,scale)) return false;
         }
+        if(k==WidgetKind::Scanner && (!events_.scanner_begin || !events_.scanner_end ||
+           !events_.scanner_begin(events_.context,u)))return fail(NativeFault::Permit);
         calls_.method0(calls_.context,phase==8?t->phase8:t->phase9,u);
+    }
+    if(k==WidgetKind::Scanner && !events_.scanner_end(events_.context,u)){
+        e.quarantine=true;return fail(NativeFault::Permit);
     }
     // A phase can enqueue work or reenter the host; do not treat a changed
     // ownership/driver admission as a successful detached callback.

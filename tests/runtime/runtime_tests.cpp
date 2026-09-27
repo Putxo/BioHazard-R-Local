@@ -52,6 +52,47 @@ struct Fixture {
     void prepare(){start();births();begin();C(f.allocations.empty());end();C(r.lifecycle().state()==LifeState::Live);C(f.allocations.size()==(f.original[6]?7u:f.original[5]?6u:f.original[4]?5u:f.original[3]?4u:LegacyWidgetKinds));}
 };
 int main(){
+    {Fixture x(7);x.prepare();x.begin();constexpr u32 target=0xEF0000,dest=0xEF1000;
+     x.f.m[target]=0x04DA8570;x.f.m[target+0x24]=1;x.f.m[target+0x10]=0x40400000;
+     for(u32 i=0;i<4;++i)x.f.m[dest+i*4]=0xCCCCCCCC;
+     C(x.r.genesis_targets().event(0x0281AE26,target));const auto key=x.r.genesis_targets().capture(target);
+     const u32 widget=x.r.lifecycle().unit(6);rev_genesis::ViewSample sample{{0x3F800000,0xC0000000,0},3};
+     C(x.r.genesis_target_views().publish(widget,key,sample)==Mode::Local);
+     u32 focus=99;C(x.r.genesis_target_focus(target,&focus)==Mode::Stock);C(focus==99);
+     C(x.r.genesis_target_position(target,dest)==Mode::Stock);C(x.f.m[dest]==0xCCCCCCCC);
+     x.f.phase_observer_context=&x;x.f.phase_observer=[](void* p,u32,u32 unit) noexcept {
+         auto& z=*static_cast<Fixture*>(p);if(unit!=z.r.lifecycle().unit(6))return;
+         u32 v=99;C(z.r.genesis_target_focus(0xEF0000u,&v)==Mode::Local);C(v==3);
+         C(z.r.genesis_target_position(0xEF0000u,0xEF1000u)==Mode::Local);
+         C(z.f.m[0xEF1000u]==0x3F800000);C(z.f.m[0xEF1000u+4]==0xC0000000);C(z.f.m[0xEF1000u+8]==0);C(z.f.m[0xEF1000u+12]==0);
+         C(z.f.m[0xEF0000u+0x24]==1);C(z.f.m[0xEF0000u+0x10]==0x40400000);
+     };
+     C(x.r.driver().event(0x02B497CA,x.f.p[0],0));C(x.r.driver().event(0x02B49C5B,x.f.p[0],0));
+     C(x.r.driver().event(0x02B49DE3,x.f.p[0],x.f.context));
+     focus=99;C(x.r.genesis_target_focus(target,&focus)==Mode::Stock);C(focus==99);
+     x.f.phase_observer=nullptr;x.end();++scenarios;}
+    {Fixture x(7);x.prepare();x.begin();constexpr u32 dest=0xEF1000;
+     for(u32 i=0;i<4;++i)x.f.m[dest+i*4]=0xCCCCCCCC;
+     x.f.phase_observer_context=&x;x.f.phase_observer=[](void* p,u32,u32 unit) noexcept {
+         auto& z=*static_cast<Fixture*>(p);if(unit!=z.r.lifecycle().unit(6))return;
+         u32 v=99;C(z.r.genesis_target_focus(0xEF0000u,&v)==Mode::Hidden);C(v==0);
+         C(z.r.genesis_target_position(0xEF0000u,0xEF1000u)==Mode::Hidden);
+         for(u32 i=0;i<4;++i)C(z.f.m[0xEF1000u+i*4]==0);
+     };
+     C(x.r.driver().event(0x02B49C5B,x.f.p[0],0));x.f.phase_observer=nullptr;x.end();++scenarios;}
+    {Fixture x(7);x.prepare();x.begin();constexpr u32 target=0xEF0000,dest=0xEF1000;
+     for(u32 i=0;i<4;++i)x.f.m[dest+i*4]=0xCCCCCCCC;
+     x.f.write_fail=dest+8;x.f.phase_observer_context=&x;x.f.phase_observer=[](void* p,u32,u32 unit) noexcept {
+         auto& z=*static_cast<Fixture*>(p);if(unit!=z.r.lifecycle().unit(6))return;
+         C(z.r.genesis_target_position(0xEF0000u,0xEF1000u)==Mode::Hidden);
+         for(u32 i=0;i<4;++i)C(z.f.m[0xEF1000u+i*4]==0xCCCCCCCC);
+     };
+     C(!x.r.driver().event(0x02B49C5B,x.f.p[0],0));x.f.phase_observer=nullptr;x.f.write_fail=0;
+     u32 v=99;C(x.r.genesis_target_focus(target,&v)==Mode::Stock);C(v==99);
+     C(x.r.clock().event(PipelineEnd,0xC00000,0xD00000));
+     C(!x.r.window().event(PipelineEnd,0xC00000,0xD00000));
+     C(x.r.lifecycle().state()==LifeState::Quarantined);++scenarios;}
+
     {Fixture x(7);x.prepare();x.begin();constexpr u32 target=0xEF0000;x.f.m[target]=0x04DA8570;
      C(x.r.genesis_targets().event(0x0281AE26,target));const auto key=x.r.genesis_targets().capture(target);
      const u32 widget=x.r.lifecycle().unit(6);rev_genesis::ViewSample sample{{0x3F800000,0,0},2},out{};

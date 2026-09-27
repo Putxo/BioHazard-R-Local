@@ -65,6 +65,8 @@ def read_module(data):
 
 def hook_sites():
     out=[(0x01EB73A0,bytes.fromhex('558bec81ecfc000000'),'rev_action_draw_gate',0xE9)]
+    out.append((0x0281F560,bytes.fromhex('558bec81eccc000000'),'rev_genesis_target_focus_gate',0xE9))
+    out.append((0x02823220,bytes.fromhex('558bec81eccc000000'),'rev_genesis_target_position_gate',0xE9))
     out.append((0x02B25D8B,rel(0x02B25D8B,0x01C5741D),'rev_genesis_camera_gate',0xE8))
     out.append((0x0281AE26,bytes.fromhex('8b45f85f5e'),'rev_genesis_target_born_gate',0xE9))
     out.append((0x02823A53,bytes.fromhex('8b45f8c7007085da04'),'rev_genesis_target_dying_gate',0xE9))
