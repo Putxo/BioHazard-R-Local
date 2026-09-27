@@ -42,3 +42,9 @@ jobs:
           gcc -m32 -c tests/hud_ownership/january_abi.S -o "$RUNNER_TEMP/native-start.o"
           ld -m elf_i386 "$RUNNER_TEMP/native-start.o" "$RUNNER_TEMP/native-cases.o" "$RUNNER_TEMP/native-calls.o" "$RUNNER_TEMP/native-bridges.o" -o "$RUNNER_TEMP/native-abi"
           "$RUNNER_TEMP/native-abi"
+      - name: Damage feed ABI, synthetic health and state getters only
+        run: |
+          as --32 patches/hud_ownership/damage_feed.S -o "$RUNNER_TEMP/damage-feed.o"
+          as --32 tests/hud_ownership/damage_abi.S -o "$RUNNER_TEMP/damage-cases.o"
+          ld -m elf_i386 "$RUNNER_TEMP/damage-feed.o" "$RUNNER_TEMP/damage-cases.o" -o "$RUNNER_TEMP/damage-abi"
+          "$RUNNER_TEMP/damage-abi"

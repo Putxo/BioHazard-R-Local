@@ -25,7 +25,8 @@ struct Fixture {
         f.m[0x055623C4]=OWNER;f.m[OWNER+0x28]=f.p[0];f.m[OWNER+0x2C]=f.p[1];
         f.m[f.p[0]+0x90]=f.original[0];f.m[f.p[0]+0x5C]=f.original[1];
         f.m[f.p[1]+0x30]=f.m[f.p[1]+0x40]=f.original[2];
-        if(count==WidgetKinds) f.m[f.p[0]+0x64]=f.original[3];
+        if(count>=4) f.m[f.p[0]+0x64]=f.original[3];
+        if(count>=5) f.m[f.p[0]+0x3C]=f.original[4];
         f.m[MAIN]=0x04E1642C;f.m[SUB]=0x04E1649C;
         f.m[MAIN+0x44]=f.session.self.address;f.m[SUB+0x44]=f.session.sub0.address;
         f.m[0x057D9188]=1;f.m[0x057D9184]=f.session.sub0.address;
@@ -46,9 +47,29 @@ struct Fixture {
     }
     void begin(){C(r.clock().event(PipelineBegin,0xC00000,0xD00000));C(r.activator().event(PipelineBegin,0xC00000,0xD00000));}
     void end(){C(r.clock().event(PipelineEnd,0xC00000,0xD00000));C(r.window().event(PipelineEnd,0xC00000,0xD00000));}
-    void prepare(){start();births();begin();C(f.allocations.empty());end();C(r.lifecycle().state()==LifeState::Live);C(f.allocations.size()==(f.original[3]?WidgetKinds:LegacyWidgetKinds));}
+    void prepare(){start();births();begin();C(f.allocations.empty());end();C(r.lifecycle().state()==LifeState::Live);C(f.allocations.size()==(f.original[4]?5u:f.original[3]?4u:LegacyWidgetKinds));}
 };
 int main(){
+    {Fixture x(5);x.prepare();x.begin();const auto original=x.f.m;
+     const u32 unit=x.r.lifecycle().unit(4);C(unit!=0);
+     C(x.registry.resolve(unit,WidgetKind::Damage).actor==x.f.session.sub0.address);
+     C(x.r.driver().event(0x02B497CA,x.f.p[0],0));
+     C(x.f.damage_calls==1);C(x.f.damage_unit==unit);C(x.f.damage_actor==x.f.session.sub0.address);
+     C(x.r.driver().event(0x02B49C5B,x.f.p[0],0));
+     C(x.r.driver().event(0x02B49DE3,x.f.p[0],x.f.context));C(x.f.damage_calls==1);
+     for(u32 u:x.f.original)C(x.f.m[u+0xC]==original.at(u+0xC));
+     C(!x.r.driver().event(0x02B497CA,x.f.p[0],0));C(x.f.damage_calls==1);
+     x.f.m[0x055623C4]=0;x.end();C(x.f.deleted.size()==5);++scenarios;}
+    {Fixture x(5);x.prepare();x.begin();x.f.damage_ok=false;
+     C(!x.r.driver().event(0x02B497CA,x.f.p[0],0));C(x.f.damage_calls==1);
+     C(!x.r.driver().event(0x02B49DE3,x.f.p[0],x.f.context));
+     x.end();++scenarios;}
+    {Fixture x(5);x.prepare();x.begin();x.thread=8;
+     C(!x.r.driver().event(0x02B497CA,x.f.p[0],0));C(x.f.damage_calls==0);
+     x.thread=7;C(x.r.source().event(0x0277DC70,x.f.session.sub0.address));
+     C(!x.r.driver().event(0x02B497CA,x.f.p[0],0));C(x.f.damage_calls==0);
+     x.end();++scenarios;}
+
     {Fixture x;x.prepare();C(x.r.draw_schedule(x.f.context,0)==0);x.begin();
      for(u32 view:{0u,1u}){x.f.m[x.f.context+0x158]=view;C(x.r.draw_schedule(x.f.context,0)==1);}
      x.f.m[x.f.context+0x158]=2;C(x.r.draw_schedule(x.f.context,0)==0);
@@ -105,7 +126,7 @@ int main(){
      x.f.m[x.f.session.sub0.address+0xE3C]=1;x.f.m[x.f.session.sub0.address+0xE40]=1;
      C(x.r.menu().submenu_open_word(pad)==1);C(x.r.menu().owner()==1);
      C(x.r.menu().submenu_actor(x.f.session.self.address)==x.f.session.sub0.address);++scenarios;}
-    {Fixture x(WidgetKinds);x.prepare();x.begin();
+    {Fixture x(4);x.prepare();x.begin();
      C(x.r.driver().event(0x02B497CA,x.f.p[0],0));
      C(x.r.driver().event(0x02B49C5B,x.f.p[0],0));
      C(x.r.driver().event(0x02B49DE3,x.f.p[0],x.f.context));
@@ -113,10 +134,10 @@ int main(){
      C(x.registry.resolve(u,WidgetKind::SubEquipment).actor==x.f.session.sub0.address);
      C(x.f.events.size()==13);x.f.m[0x055623C4]=0;x.end();
      C(x.f.deleted.size()==4);C(x.registry.widget_count()==0);++scenarios;}
-    {Fixture x(WidgetKinds);x.start();x.births();x.f.m[x.f.p[0]+0x64]=x.f.original[1];
+    {Fixture x(4);x.start();x.births();x.f.m[x.f.p[0]+0x64]=x.f.original[1];
      x.begin();C(x.r.clock().event(PipelineEnd,0xC00000,0xD00000));
      C(!x.r.window().event(PipelineEnd,0xC00000,0xD00000));C(x.f.allocations.empty());++scenarios;}
-    {Fixture x(WidgetKinds);x.start();x.births();x.f.no_init=3;x.begin();
+    {Fixture x(4);x.start();x.births();x.f.no_init=3;x.begin();
      C(x.r.clock().event(PipelineEnd,0xC00000,0xD00000));
      C(!x.r.window().event(PipelineEnd,0xC00000,0xD00000));
      C(x.f.deleted.size()==4);C(x.registry.widget_count()==0);++scenarios;}

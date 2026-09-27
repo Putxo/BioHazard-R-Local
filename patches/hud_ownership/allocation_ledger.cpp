@@ -6,6 +6,7 @@ constexpr AllocationSpec Specs[] = {
     {WidgetKind::MainEquipment, 0x370,0x01C15775,0x01B7D1F0,0x01C0C74C},
     {WidgetKind::MapHerb,       0x2C0,0x01C7855A,0x01C6392A,0x01BAB4F6},
     {WidgetKind::SubEquipment, 0x370,0x01B8BCE6,0x01C39C88,0x01C32956},
+    {WidgetKind::Damage,       0x2B0,0x01B8DD52,0x01BB72E2,0x01C2CA29},
 };
 struct Busy {
     bool& v; explicit Busy(bool& b):v(b){v=true;} ~Busy(){v=false;}
@@ -153,6 +154,13 @@ JanuaryCalls JanuaryAllocationLedger::callbacks() noexcept {
     };
     c.contains=[](void* p,u32 t,u32 s,u32 u) noexcept {
         return static_cast<JanuaryAllocationLedger*>(p)->contains(t,s,u);
+    };
+    c.damage=[](void* p,u32 unit,u32 actor) noexcept {
+        auto& l=*static_cast<JanuaryAllocationLedger*>(p);
+        const auto* record=l.find(unit);
+        return record && record->state==AllocationState::Certified &&
+            record->kind==WidgetKind::Damage && l.native_.damage &&
+            l.native_.damage(l.native_.context,unit,actor);
     };
     return c;
 }

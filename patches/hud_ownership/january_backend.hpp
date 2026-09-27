@@ -17,6 +17,8 @@ struct JanuaryCalls {
     void (*method1)(void*, u32 target, u32 self, u32 argument) noexcept = nullptr;
     u32 (*singleton)(void*, u32 target) noexcept = nullptr;
     u32 (*contains)(void*, u32 target, u32 self, u32 unit) noexcept = nullptr;
+    // Feed only the admitted detached damage widget from its bound live actor.
+    bool (*damage)(void*, u32 unit, u32 actor) noexcept = nullptr;
 };
 // On non-i386 builds returns an empty table, never silently casts 64-bit calls.
 JanuaryCalls january_native_calls();
@@ -35,8 +37,8 @@ struct JanuaryHost {
 };
 class JanuaryBackend {
 public:
-    JanuaryBackend(JanuaryHost host, JanuaryCalls calls, u32 count=LegacyWidgetKinds)
-        : host_(host), calls_(calls), count_(count) {}
+    JanuaryBackend(JanuaryHost host, JanuaryCalls calls, u32 count=LegacyWidgetKinds, Registry* owners=nullptr)
+        : host_(host), calls_(calls), count_(count), owners_(owners) {}
     // Bind the same borrowed parents/originals passed to Lifecycle::prepare.
     // Must remain alive throughout preparation/publication. No live reconfigure.
     bool configure(const u32 parents[2], const u32 originals[WidgetKinds]);
@@ -47,6 +49,7 @@ private:
     struct Entry { u32 unit = 0; bool constructed = false, ready = false, quarantine = false; };
     JanuaryHost host_; JanuaryCalls calls_;
     const u32 count_;
+    Registry* owners_;
     Entry entries_[WidgetKinds]{};
     u32 parents_[2]{}, originals_[WidgetKinds]{};
     bool configured_ = false, busy_ = false;

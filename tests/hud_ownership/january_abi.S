@@ -92,3 +92,13 @@ start_sp: .skip 4
 report: .ascii "{\"status\":\"PASS\",\"abi_invocations\":30,\"native_i386\":true,\"exact_production_invoker_table\":true,\"synthetic_callees\":true,\"gameplay_executed\":false}\n"
 report_end:
 .section .note.GNU-stack,"",@progbits
+
+.text
+.global rev_january_damage
+rev_january_damage:
+ cmp dword ptr [esp+4],0x12340000
+ jne failed
+ cmp dword ptr [esp+8],0x56780000
+ jne failed
+ mov eax,1
+ ret

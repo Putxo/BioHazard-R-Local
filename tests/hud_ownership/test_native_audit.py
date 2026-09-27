@@ -45,7 +45,7 @@ class NativeAuditTests(unittest.TestCase):
         name=os.environ.get('REV_JANUARY_ORIGINAL')
         if not name:self.skipTest('private original intentionally not available in CI')
         path=Path(name);before=path.read_bytes();report=audit.audit(before)
-        self.assertEqual(report['checks'],85);self.assertEqual(report['input_sha256'],audit.SHA)
+        self.assertEqual(report['checks'],100);self.assertEqual(report['input_sha256'],audit.SHA)
         self.assertFalse(report['gameplay_executed']);self.assertFalse(report['game_image_written'])
         with self.assertRaises(ValueError):audit.audit(before[:-1])
         modified=bytearray(before);modified[100]^=1

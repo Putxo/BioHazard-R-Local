@@ -8,6 +8,7 @@ static u32 address(void(*p)()) { return reinterpret_cast<u32>(p); }
 extern "C" int january_abi_cases() {
     auto c=rev_hud::january_native_calls();
     if(!c.allocate || !c.construct || !c.method0 || !c.method1 || !c.singleton || !c.contains)return 1;
+    if(!c.damage || !c.damage(nullptr,0x12340000,0x56780000))return 7;
     const u32 values[]={1,0x12345678,0x80000000,0xFFFFFFFF,0x00500000};
     for(u32 v:values) {
         if(c.singleton(nullptr,address(abi_global))!=0x13579BDF || abi_kind!=0)return 2;

@@ -6,6 +6,7 @@ constexpr KindInfo Kinds[] = {
     {0x04DE4C3C, ManagerKind::Cockpit, 8},
     {0x04DE810C, ManagerKind::MiniMap, 8},
     {0x04DE57B4, ManagerKind::Cockpit, 8},
+    {0x04DE357C, ManagerKind::Cockpit, 8},
 };
 bool usable(const Actor& a) {
     return a.address && a.lifetime && a.serial >= 0 && a.think_mode == 1;

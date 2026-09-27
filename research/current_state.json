@@ -2,9 +2,9 @@
   "schema_version": 4,
   "canonical_branch": "research/script-member-serial-validation",
   "checkpoint": {
-    "merged_pr": 28,
-    "merge_sha": "f99702b580191bccf445a90dd4bf891af6ec772a",
-    "tested_head": "e679d5d8ab72bb7526fdf080c2c36f0fe264403e",
+    "merged_pr": 29,
+    "merge_sha": "a9f53e92e34d6125977d150a36a2d10cc1e7da0e",
+    "tested_head": "2bd99ebbaf6471f355a72d3a2b4a528f81eed13c",
     "ci": "19 workflows PASS"
   },
   "user_constraints": {
@@ -38,11 +38,13 @@
       "Reticle",
       "MainEquipment",
       "MapHerb",
-      "SubEquipment"
+      "SubEquipment",
+      "Damage"
     ],
     "single_pause": true,
     "menu_owner_pad1": true,
-    "menu_owner_lifetime": true
+    "menu_owner_lifetime": true,
+    "damage_hud_health_owner": 1
   },
   "pending": [
     "full HUD and interaction prompts",
@@ -60,6 +62,7 @@
     "docs/53-action-icon-findings.md",
     "docs/54-action-icon-view-routing.md",
     "docs/55-action-priority-loop.md",
-    "docs/56-local-draw-scheduling.md"
+    "docs/56-local-draw-scheduling.md",
+    "docs/57-damage-hud.md"
   ]
 }

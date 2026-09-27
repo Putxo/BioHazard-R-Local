@@ -12,7 +12,7 @@ Runtime::Runtime(Registry& registry,Host host,u32 count) noexcept
       ledger_(structural_allocation_gate(window_),host.native),
       allocation_(structural_allocation_gate(window_),ledger_,services()),
       admission_(gate(),allocation_.callbacks()),
-      backend_(admission_.callbacks(),ledger_.callbacks(),count),
+      backend_(admission_.callbacks(),ledger_.callbacks(),count,&registry),
       lifecycle_(registry,backend_.callbacks(),count),
       frames_(clock_,source_,view_.services()),
       driver_(lifecycle_,frames_.callbacks()),
@@ -86,7 +86,7 @@ bool Runtime::start() noexcept {
     const auto& n=host_.native;
     if(!valid_widget_count(count_) || !host_.memory.word || !host_.write || !host_.thread || !host_.image ||
        !host_.self || !n.allocate || !n.construct || !n.method0 || !n.method1 ||
-       !n.singleton || !n.contains || !host_.image(host_.memory.context))return false;
+       !n.singleton || !n.contains || (count_>4 && !n.damage) || !host_.image(host_.memory.context))return false;
     const u32 thread=host_.thread(host_.memory.context);
     thread_=thread;
     started_=thread && source_.start(thread) && clock_.start(thread) &&
