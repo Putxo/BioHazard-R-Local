@@ -11,6 +11,8 @@
 .extern rev_menu_submenu_word_1a0
 .extern rev_menu_submenu_actor
 .extern rev_menu_stock_self
+.extern rev_menu_observe_state
+.extern rev_menu_state_commit_continue
 
 # Original ABI at sPad wrapper calls: ECX=sPad, one dummy DWORD argument,
 # callee cleans 4 bytes. The bridge converts to cdecl and keeps ret 4.
@@ -40,4 +42,23 @@ rev_menu_gate_submenu_actor:
     add esp,4
     ret
 .size rev_menu_gate_submenu_actor,.-rev_menu_gate_submenu_actor
+
+# Inline JMP at 02CDD415 replaces nine bytes. Replay loads/store, then
+# preserve GPRs/flags across notification. Continuation is before pop edi.
+.global rev_menu_gate_state_commit
+.type rev_menu_gate_state_commit,@function
+rev_menu_gate_state_commit:
+    mov eax,[ebp-8]
+    mov ecx,[ebp+8]
+    mov [eax+0x24],ecx
+    pushfd
+    pushad
+    push ecx
+    push eax
+    call rev_menu_observe_state
+    add esp,8
+    popad
+    popfd
+    jmp rev_menu_state_commit_continue
+.size rev_menu_gate_state_commit,.-rev_menu_gate_state_commit
 .section .note.GNU-stack,"",@progbits

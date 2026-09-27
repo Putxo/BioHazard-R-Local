@@ -51,3 +51,32 @@ Análisis estático sobre el EXE original; no se ejecutó el juego ni se
 instalaron hooks. Estos cuatro sitios cubren lista y confirmación de
 PauseHD; no prueban cobertura completa de las pantallas de opciones.
 La instalación conjunta del cooperativo y la campaña siguen pendientes.
+
+## Implementación añadida
+
+- `MenuOwnerRouter` captura puntero y serial exactos de Sub0 al abrir.
+  Cada lectura valida ambos, ThinkMode Pad y modo local activo; al fallar
+  borra owner/surface de forma permanente hasta otra apertura.
+- Owner0 local usa Pad0 aunque mStartPadNo apunte a otro pad. Fuera del
+  scope local, el fallback conserva el selector original del juego.
+- Fallar una lectura del pad propietario también revoca ownership.
+- Se rechazan direcciones cuyo cálculo de campos desbordaría PE32.
+- `rev_menu_gate_state_commit` reproduce los nueve bytes originales,
+  notifica el estado confirmado y vuelve a `0x02CDD41E`. Conserva registros
+  enteros y flags. Es un JMP inline, no un callsite `ret 4`.
+- `observe_state` limpia al salir de 5/8, en cambios de cockpit y ante
+  Sub0 inválido. Un caller alternativo sin opener no crea owner=J2.
+- `rev_menu_reset_session()` permite limpiar también reutilización de las
+  mismas direcciones/seriales; **falta conectar este callback al teardown
+  real del runtime**. Sin esa conexión no se declara resuelto el cambio
+  de sesión con direcciones idénticas.
+
+Validación local: componente Win32 MSVC `/W4 /WX`, **42 escenarios y 161
+aserciones PASS**; 3 tests Python PASS, incluido original privado; auditor
+exacto **19 comprobaciones PASS**. El test ABI i386 ahora comprueba ocho
+gateways, balance de pila, flags, registros y que el store precede al
+callback. Su ejecución Linux y sanitizers se comprueban en CI por separado.
+
+Pendiente inmediato: continuidad de owner en 8/6 y state7, opciones,
+teardown real y escrituras de estado fuera de la función auditada. Mantener
+explícitamente `gameplay_executed=false` hasta probarlo dentro del juego.

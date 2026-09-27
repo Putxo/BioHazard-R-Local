@@ -1,0 +1,88 @@
+{
+  "status": "PASS_READ_ONLY_EVIDENCE",
+  "sha256": "9124bb92d6c54a047ade47dacc8429221b18f9910b504f0e87718d5151013f69",
+  "checks": 19,
+  "records": [
+    {
+      "va": "0x02C31836",
+      "bytes": "6a008b4de0e8179cf6fe8945d46a008b4de0e8cb86fafe",
+      "label": "Pause list reads +1A0 and +1AC"
+    },
+    {
+      "va": "0x02C31FD7",
+      "bytes": "6a008b4dece87694f6fe8945e06a008b4dece82a7ffafe",
+      "label": "Pause confirmation reads +1A0 and +1AC"
+    },
+    {
+      "va": "0x01BD9F18",
+      "bytes": "e973920d00",
+      "label": "repeat wrapper thunk"
+    },
+    {
+      "va": "0x01CB31B3",
+      "bytes": "8b45f88b8870090000518b4df8e8bb5ef3ff",
+      "label": "repeat wrapper selects mStartPadNo"
+    },
+    {
+      "va": "0x01BE9080",
+      "bytes": "e96ba10c00",
+      "label": "direct repeat getter thunk"
+    },
+    {
+      "va": "0x01CB3213",
+      "bytes": "8b450869c0f80200008b4df88b8401ac010000",
+      "label": "repeat getter indexes Pad[index]+1AC"
+    },
+    {
+      "va": "0x01CB322C",
+      "bytes": "c20400",
+      "label": "direct getter callee cleanup"
+    },
+    {
+      "va": "0x01CB31D8",
+      "bytes": "c20400",
+      "label": "wrapper callee cleanup"
+    },
+    {
+      "va": "0x02C31A3C",
+      "bytes": "83c8082345d4",
+      "label": "cancel/start consumes +1A0"
+    },
+    {
+      "va": "0x02C31B15",
+      "bytes": "2345d4",
+      "label": "confirm consumes +1A0"
+    },
+    {
+      "va": "0x02C31B6D",
+      "bytes": "8b45c82510000100",
+      "label": "up consumes +1AC"
+    },
+    {
+      "va": "0x02C31BC8",
+      "bytes": "8b45c82540000400",
+      "label": "down consumes +1AC"
+    },
+    {
+      "va": "0x02CDD415",
+      "bytes": "8b45f88b4d08894824",
+      "label": "common cockpit state commit: this+24=state"
+    },
+    {
+      "va": "0x02CDD37C",
+      "bytes": "8b45f883782408740b",
+      "label": "state6 tests previous state8"
+    },
+    {
+      "va": "0x02CDD3E1",
+      "bytes": "8b45f883782406740b",
+      "label": "state8 tests previous state6"
+    }
+  ],
+  "gameplay_executed": false,
+  "game_image_modified": false,
+  "limits": [
+    "Options widgets and nested state6/7 input remain unaudited.",
+    "Common commit gateway is source-only; runtime installation is pending."
+  ]
+}

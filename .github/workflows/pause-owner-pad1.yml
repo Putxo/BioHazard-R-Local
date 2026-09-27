@@ -1,7 +1,7 @@
 name: Pause owner Pad1
 on:
   push:
-    branches: [research/pause-owner-pad1]
+    branches: [research/pause-owner-pad1, research/pause-owner-lifetime-audit]
   pull_request:
 permissions:
   contents: read
@@ -24,13 +24,14 @@ jobs:
         run: |
           python tests/menu_routing/test_menu_owner_audit.py
           python -m py_compile scripts/audit_pause_owner_input.py
+          python tests/menu_routing/test_pause_lifetime_audit.py
       - name: Freestanding i386 syntax
         run: g++ -m32 -std=c++17 -Wall -Wextra -Werror -ffreestanding -fno-exceptions -fno-rtti -fsyntax-only patches/menu_routing/menu_owner.cpp
   gateways:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-      - name: Execute seven source gateways against synthetic callbacks
+      - name: Execute eight gateways and verify state-store ABI
         shell: bash
         run: |
           FLAGS="-m32 -std=c++17 -O2 -Wall -Wextra -Werror -ffreestanding -fno-exceptions -fno-rtti -fno-stack-protector -fno-pie"
