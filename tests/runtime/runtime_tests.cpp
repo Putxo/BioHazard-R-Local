@@ -28,6 +28,7 @@ struct Fixture {
         if(count>=4) f.m[f.p[0]+0x64]=f.original[3];
         if(count>=5) f.m[f.p[0]+0x3C]=f.original[4];
         if(count>=6) f.m[f.p[0]+0x44]=f.original[5];
+        if(count>=7) f.m[f.p[0]+0x48]=f.original[6];
         f.m[MAIN]=0x04E1642C;f.m[SUB]=0x04E1649C;
         f.m[MAIN+0x44]=f.session.self.address;f.m[SUB+0x44]=f.session.sub0.address;
         f.m[0x057D9188]=1;f.m[0x057D9184]=f.session.sub0.address;
@@ -48,7 +49,7 @@ struct Fixture {
     }
     void begin(){C(r.clock().event(PipelineBegin,0xC00000,0xD00000));C(r.activator().event(PipelineBegin,0xC00000,0xD00000));}
     void end(){C(r.clock().event(PipelineEnd,0xC00000,0xD00000));C(r.window().event(PipelineEnd,0xC00000,0xD00000));}
-    void prepare(){start();births();begin();C(f.allocations.empty());end();C(r.lifecycle().state()==LifeState::Live);C(f.allocations.size()==(f.original[5]?6u:f.original[4]?5u:f.original[3]?4u:LegacyWidgetKinds));}
+    void prepare(){start();births();begin();C(f.allocations.empty());end();C(r.lifecycle().state()==LifeState::Live);C(f.allocations.size()==(f.original[6]?7u:f.original[5]?6u:f.original[4]?5u:f.original[3]?4u:LegacyWidgetKinds));}
 };
 int main(){
     {Fixture x(6);x.prepare();x.begin();const u32 p2=x.f.session.sub0.address;
@@ -164,5 +165,26 @@ int main(){
      C(!x.r.window().event(PipelineEnd,0xC00000,0xD00000));
      C(x.f.deleted.size()==4);C(x.registry.widget_count()==0);++scenarios;}
     {Fixture x(WidgetKinds+1);C(!x.r.start());C(x.f.allocations.empty());++scenarios;}
+    {Fixture x(7);x.prepare();x.begin();
+     const u32 scanner=x.r.lifecycle().unit(6);C(scanner!=0);
+     C(x.registry.resolve(scanner,WidgetKind::Scanner).actor==x.f.session.sub0.address);
+     using O=rev_genesis::Operation;u32 v=0;
+     C(x.r.genesis_progress().access(scanner,O::Add,38,&v)==Mode::Local);C(v==38);
+     C(x.r.genesis_progress().access(x.f.original[6],O::Set,0,&v)==Mode::Stock);
+     C(x.r.driver().event(0x02B497CA,x.f.p[0],0));
+     C(x.r.driver().event(0x02B49C5B,x.f.p[0],0));
+     C(x.r.driver().event(0x02B49DE3,x.f.p[0],x.f.context));
+     x.thread=8;C(x.r.genesis_progress().access(scanner,O::Add,1,&v)==Mode::Hidden);
+     x.thread=7;C(x.r.genesis_progress().access(scanner,O::Read,0,&v)==Mode::Local);C(v==38);
+     C(x.r.source().event(0x0277DC70,x.f.session.sub0.address));
+     C(x.r.genesis_progress().access(scanner,O::Read,0,&v)==Mode::Hidden);
+     x.end();C(x.f.deleted.size()==7);++scenarios;}
+    {Fixture x(7);x.prepare();x.begin();const u32 scanner=x.r.lifecycle().unit(6);
+     x.f.m[scanner+0x3b8]=x.f.m[x.f.original[6]+0x3b8];
+     const auto before=x.f.events.size();C(!x.r.driver().event(0x02B49C5B,x.f.p[0],0));
+     for(size_t i=before;i<x.f.events.size();++i)C(x.f.events[i].self!=scanner);
+     C(x.r.clock().event(PipelineEnd,0xC00000,0xD00000));
+     C(!x.r.window().event(PipelineEnd,0xC00000,0xD00000));
+     C(x.r.lifecycle().state()==LifeState::Quarantined);++scenarios;}
     std::printf("{\"status\":\"PASS\",\"scenarios\":%u,\"assertions\":%u,\"engine_calls_mocked\":true,\"gameplay_executed\":false}\n",scenarios,checks);
 }

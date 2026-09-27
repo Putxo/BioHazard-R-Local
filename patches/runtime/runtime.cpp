@@ -2,7 +2,7 @@
 namespace rev_runtime {
 namespace {Runtime* HealSink=nullptr;}
 Runtime::Runtime(Registry& registry,Host host,u32 count) noexcept
-    : host_(host), count_(count),
+    : host_(host), registry_(registry), genesis_(genesis_host()), count_(count),
       source_(registry,{host.memory.context,host.memory.word,host.thread,host.self}),
       clock_({host.memory.context,host.thread}),
       view_({host.memory,host.thread}),
@@ -31,6 +31,19 @@ Runtime::Runtime(Registry& registry,Host host,u32 count) noexcept
           u32 v=0;return static_cast<Runtime*>(p)->word(0x057D9184,v)?v:0;
       }}), priority_(priority_host()), action_(action_host()) {}
 
+rev_genesis::ProgressHost Runtime::genesis_host() noexcept {
+    return {this,[](void* p,u32 widget,rev_genesis::Owner* out) noexcept {
+        auto& r=*static_cast<Runtime*>(p);
+        const auto route=r.registry_.resolve(widget,WidgetKind::Scanner);
+        if(route.mode!=Mode::Local)return route.mode;
+        auto h=r.action_host();rev_action::Frame f{};
+        if(!out || r.count_<7 || r.lifecycle_.state()!=LifeState::Live ||
+           widget!=r.lifecycle_.unit(6) || route.member!=1 || route.view!=1 ||
+           h.snapshot(h.memory.context,&f)!=rev_action::SnapshotMode::Local ||
+           route.actor!=f.session.sub0.address)return Mode::Hidden;
+        *out={f.session,route.actor};return Mode::Local;
+    }};
+}
 bool Runtime::heal_event(u32 actor) noexcept {
     auto h=action_host();rev_action::Frame f{};
     const auto mode=h.snapshot(h.memory.context,&f);
@@ -121,6 +134,7 @@ bool Runtime::bind() noexcept {
     // remain alive even on failure: some process-lifetime sinks may be bound.
     if(HealSink)return false;
     HealSink=this;
+    if(!rev_genesis::bind_progress(genesis_))return false;
     return bind_lifetime_sink(source_) && bind_pipeline_sink(clock_) &&
         bind_structural_sink(window_) && bind_manager_sink(driver_) &&
         bind_begin_activator_sink(activator_) && bind_p1_mask_sink(mask_) &&

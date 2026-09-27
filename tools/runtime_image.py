@@ -77,6 +77,16 @@ def hook_sites():
         out.append((va,rel(va,target),'rev_priority_'+name+'_gate',0xE8))
     for va in (0x0279900E,0x0279907A,0x027999CF,0x027ACE72,0x027B211C,0x027B21E9):
         out.append((va,rel(va,0x01C88B6C),'rev_hud_heal_gate',0xE8))
+    for va in (0x02B1FDAA,0x02B20DF8,0x02B21038,0x02B211EF,0x02B212B8,0x02B216DC,0x02B217BC,0x02B218DC,0x02B21F91,0x02B21FC4,0x02B22360,0x02B260B1,0x02B269A9,0x02B2788C,0x02B27A2F,0x02B27AEE,0x02B27C06,0x02B27C72,0x02B28C41):
+        out.append((va,rel(va,0x01B82362),'rev_genesis_read',0xE8))
+    for va in (0x02B212A7,0x02B27C6A,0x02B28C39):
+        out.append((va,rel(va,0x01BFA407),'rev_genesis_set',0xE8))
+    for va in (0x02B268DB,0x02B2699E,0x02B26A42,0x02B26A79):
+        out.append((va,rel(va,0x01BB2404),'rev_genesis_add',0xE8))
+    for va in (0x02B214B8,0x02B2203D,0x02B2246B,0x02B225BB,0x02B27905,0x02B27C3D):
+        out.append((va,rel(va,0x01C2C7F4),'rev_hud_scanner_self',0xE8))
+    for va in (0x02B21003,0x02B21244,0x02B2178B,0x02B218AB,0x02B224A5,0x02B28C88):
+        out.append((va,rel(va,0x01C07341),'rev_genesis_selected_actor',0xE8))
     for name,va,old,_ in LIFE_SITES:out.append((va,bytes.fromhex(old),'rev_life_gate_'+name,0xE9))
     for va,family,phase,old in MANAGER_SITES:out.append((va,bytes.fromhex(old),f'rev_hud_gate_{family}{phase}',0xE9))
     for (va,old,_),name in zip(PIPELINE_SITES,('begin','end')):out.append((va,bytes.fromhex(old),'rev_pipeline_gate_'+name,0xE9))

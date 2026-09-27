@@ -1,5 +1,6 @@
 #pragma once
 #include "january_backend.hpp"
+#include "../genesis/resource_fixture.hpp"
 #include <map>
 #include <vector>
 #include <cstdio>
@@ -29,6 +30,7 @@ struct Fake {
         if(count>=4)original[3]=0x160000;
         if(count>=5)original[4]=0x180000;
         if(count>=6)original[5]=0x1A0000;
+        if(count>=7)original[6]=0x1C0000;
         for(u32 i=0;i<2;++i){m[p[i]]=manager_vtable(static_cast<ManagerKind>(i));m[p[i]+0x1C]=i?0x3F000000:0x3F800000;}
         for(u32 i=0;i<count;++i){
             const auto k=static_cast<WidgetKind>(i);plain(original[i],k);tree(original[i],k);
@@ -45,6 +47,7 @@ struct Fake {
     }
     void tree(u32 u,WidgetKind k){
         u32 r=0x500000+static_cast<u32>(k)*0x10000;
+        if(k==WidgetKind::Scanner){scanner_fixture::populate(m,u,r);return;}
         m[u+0xF0]=r;m[u+0xF4]=u+0x1000;m[u+0xF8]=u+0x2000;
         m[r+0x68]=r+0x100;m[r+0x144]=2;m[u+0x106C]=u;
         for(u32 i=0;i<2;++i){m[u+0x2000+i*4]=u+0x3000+i*0x100;m[u+0x306C+i*0x100]=u;}

@@ -9,8 +9,8 @@ static_assert(sizeof(u32) == 4 && sizeof(i32) == 4, "PE32 integer widths");
 constexpr u32 Invalid = ~u32(0);
 constexpr u32 ViewBits = 0x03FF0000u;
 enum class ManagerKind : u32 { Cockpit, MiniMap };
-enum class WidgetKind : u32 { Reticle, MainEquipment, MapHerb, SubEquipment, Damage, Heal };
-constexpr u32 WidgetKinds = 6;
+enum class WidgetKind : u32 { Reticle, MainEquipment, MapHerb, SubEquipment, Damage, Heal, Scanner };
+constexpr u32 WidgetKinds = 7;
 constexpr u32 LegacyWidgetKinds = 3;
 constexpr bool valid_widget_count(u32 n) { return n >= LegacyWidgetKinds && n <= WidgetKinds; }
 enum class Mode : u32 { Stock, Local, Hidden };

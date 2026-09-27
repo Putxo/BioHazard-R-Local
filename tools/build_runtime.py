@@ -13,7 +13,9 @@ ROOT=Path(__file__).resolve().parents[1]
 
 def sources():
     return sorted((ROOT/'patches/hud_ownership').glob('*.cpp')) + sorted(
-        (ROOT/'patches/hud_ownership').glob('*.S')) + [
+        (ROOT/'patches/hud_ownership').glob('*.S')) + sorted(
+        (ROOT/'patches/genesis').glob('*.cpp')) + sorted(
+        (ROOT/'patches/genesis').glob('*.S')) + [
         ROOT/'patches/menu_routing/menu_owner.cpp',
         ROOT/'patches/menu_routing/menu_gateways.S',
         ROOT/'patches/action_icons/router.cpp', ROOT/'patches/action_icons/gateway.S',

@@ -1,4 +1,5 @@
 #pragma once
+#include "../genesis/resources.hpp"
 #include "lifecycle.hpp"
 // Exact January engine operations. Still opt-in source: no installer or hooks.
 namespace rev_hud {
@@ -50,6 +51,8 @@ public:
     NativeFault fault() const { return fault_; }
     u32 retained(WidgetKind k) const;
 private:
+    rev_genesis::Resources scanner_original_{},scanner_owned_{};
+    bool scanner_valid(u32 unit) noexcept;
     struct Entry { u32 unit = 0; bool constructed = false, ready = false, quarantine = false; };
     JanuaryHost host_; JanuaryCalls calls_;
     const u32 count_;
