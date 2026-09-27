@@ -45,6 +45,8 @@ def audit(d):
   (0x02B50C93,'8b45f88b887009000051','aux wrapper 65C passes mStartPadNo'),
   (0x02B50CF3,'8b45f88b805c060000','aux direct 65C ignores index')]: ex(a,h,l)
  # Two hard-coded Self -> own cBioItemPack paths in submenu data rebuild.
+ ex(0x01CB74B9,'c20400','stock finder consumes one predicate stack argument')
+ ex(0x01CB747D,'8b4d08','stock finder reads predicate from first argument')
  ex(0x02B6DE8F,'8bc8e85ee90bff8945ec','submenu primary Self finder')
  ex(0x02B6DEA4,'8b4dece87be405ff8945e0','submenu primary actor pack')
  ex(0x02B6EFDC,'8bc8e811d80bff8945ec','submenu secondary Self finder')

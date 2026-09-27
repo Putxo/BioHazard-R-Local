@@ -1,0 +1,59 @@
+#pragma once
+#include "../hud_ownership/begin_activator.hpp"
+#include "../hud_ownership/p1_view_mask.hpp"
+#include "../menu_routing/menu_owner.hpp"
+
+namespace rev_runtime {
+using namespace rev_hud;
+struct Host {
+    Reader memory{};
+    bool (*write)(void*,u32,u32) noexcept = nullptr;
+    u32 (*thread)(void*) noexcept = nullptr;
+    bool (*image)(void*) noexcept = nullptr;
+    u32 (*self)(void*) noexcept = nullptr;
+    JanuaryCalls native{};
+};
+// One process-lifetime graph. Construct and start before ANY installed gateway
+// is reachable. No callback is invoked during member construction.
+class Runtime {
+public:
+    Runtime(Registry&, Host) noexcept;
+    Runtime(const Runtime&) = delete;
+    Runtime& operator=(const Runtime&) = delete;
+    bool start() noexcept;
+    bool bind() noexcept;
+    bool started() const noexcept { return started_; }
+    bool structural(u32 frame,u32 owner,u32 frame_base) noexcept;
+    LifetimeSource& source() noexcept { return source_; }
+    PipelineClock& clock() noexcept { return clock_; }
+    StructuralWindow& window() noexcept { return window_; }
+    Lifecycle& lifecycle() noexcept { return lifecycle_; }
+    BeginActivator& activator() noexcept { return activator_; }
+    ManagerDriver& driver() noexcept { return driver_; }
+    rev_menu::MenuOwnerRouter& menu() noexcept { return menu_; }
+private:
+    Host host_;
+    bool attempted_=false,started_=false,bind_attempted_=false;
+    LifetimeSource source_;
+    PipelineClock clock_;
+    NativeViewScope view_;
+    StructuralWindow window_;
+    JanuaryAllocationLedger ledger_;
+    AllocationAdmissionBridge allocation_;
+    JanuaryAdmission admission_;
+    JanuaryBackend backend_;
+    Lifecycle lifecycle_;
+    PipelineFrameProvider frames_;
+    ManagerDriver driver_;
+    NativeCoordinatorBindings coordinator_bindings_;
+    StructuralCoordinator coordinator_;
+    NativeBeginBindings begin_bindings_;
+    BeginActivator activator_;
+    P1ViewMask mask_;
+    rev_menu::MenuOwnerRouter menu_;
+    AdmissionGate gate() noexcept;
+    AdmissionServices services() noexcept;
+    bool select_managers() noexcept;
+    bool word(u32,u32&) noexcept;
+};
+}

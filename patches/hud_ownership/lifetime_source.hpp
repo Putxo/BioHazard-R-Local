@@ -35,6 +35,7 @@ public:
     // Parents must have observed constructor events. Does not read pointers or
     // promote a first-seen phase callback to a birth event.
     bool select_managers(u32 cockpit, u32 minimap);
+    bool clear_managers();
     bool capture(LifeSnapshot* out);
     SourceFault fault() const { return fault_; }
     u32 epoch() const { return epoch_; }

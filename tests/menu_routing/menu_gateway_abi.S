@@ -26,8 +26,11 @@ call_pad_gate:
 call_actor_gate:
     push ebp
     mov ebp,esp
+    mov [stack_before],esp
+    push dword ptr [ebp+12]
     mov ecx,[ebp+8]
     call rev_menu_gate_submenu_actor
+    mov [stack_after],esp
     mov esp,ebp
     pop ebp
     ret
@@ -50,8 +53,11 @@ call_state_gate:
 
 .global rev_menu_stock_self
 rev_menu_stock_self:
+    mov [seen_finder_this],ecx
+    mov eax,[esp+4]
+    mov [seen_predicate],eax
     mov eax,0x33330000
-    ret
+    ret 4
 
 .global rev_menu_stock_state_transition
 rev_menu_stock_state_transition:
@@ -96,6 +102,9 @@ rev_menu_state_transition:
     ret
 
 .bss
+.global seen_finder_this,seen_predicate
+seen_finder_this:.skip 4
+seen_predicate:.skip 4
 .global seen_pad,seen_actor,seen_state_this,seen_state,seen_flag,seen_observed_state
 seen_pad:.skip 4
 seen_actor:.skip 4
