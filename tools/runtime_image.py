@@ -70,7 +70,7 @@ def hook_sites():
     for (va,old,_),name in zip(PIPELINE_SITES,('begin','end')):out.append((va,bytes.fromhex(old),'rev_pipeline_gate_'+name,0xE9))
     for va,old,name in ((0x02B49E5C,'8b4df8e846f310ff','cockpit11'),(0x02B687F0,'5f5e5b81c40c010000','minimap11')):
         out.append((va,bytes.fromhex(old),'rev_hud_mask_exit_'+name,0xE9))
-    for va,name in ((0x02B404C6,'reticle'),(0x02B3B6C8,'equipment'),(0x02B61F3C,'herb')):
+    for va,name in ((0x02B404C6,'reticle'),(0x02B3B6C8,'equipment'),(0x02B61F3C,'herb'),(0x02B42FA6,'subequipment')):
         out.append((va,rel(va,0x01C2C7F4),'rev_hud_'+name+'_self',0xE8))
     menu=json.loads((ROOT/'patches/menu_routing/menu_sites.json').read_text())
     for site in menu['sites']:

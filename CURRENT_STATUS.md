@@ -1,7 +1,7 @@
 # Estado actual del cooperativo local
 
 27/09/2026. Rama técnica: `research/script-member-serial-validation`.
-PR24 integrado: `7f1f3029ea2d63dac8527834eac51c4496381ac3`, 19 workflows PASS.
+PR25 integrado: `6a7144f513f93b9128af7606c45a016973cf833d`, 19 workflows PASS.
 
 **El cooperativo completo sigue en desarrollo. El juego no se ha ejecutado.**
 El propietario prohíbe abrirlo y hará personalmente las pruebas jugando.
@@ -14,13 +14,13 @@ El propietario prohíbe abrirlo y hará personalmente las pruebas jugando.
 | Cámaras | View0 TOP y View1 BOTTOM, targets separados; cutscenes pendientes |
 | Inventario | Pack gameplay propio; menú global muestra Sub0 con owner J2 |
 | Pausa | Una pausa global; abrir/navegar/confirmar/cancelar por owner; lifetime y nested 6/7 implementados |
-| HUD | Clones de Reticle, MainEquipment y MapHerb; faltan otros widgets e iconos |
+| HUD | Clones de Reticle, MainEquipment, MapHerb y SubEquipment; faltan otros widgets e iconos |
 | Recursos HUD | Grafo completo conectado, selección desde sIDCockpit, lifetimes y retirada |
 | Pickup/puertas | Correcciones existentes conservadas; arbitraje y prompts no están completos |
 | Guiones | Dos callbacks PcsSub con owner+serial; cobertura QTE parcial |
 | Rescate | Routing parcial existente; muerte/checkpoints pendientes |
 
-La compilación acumulativa nueva conecta 35 hooks HUD/menú sobre la base de
+La compilación acumulativa nueva conecta 36 hooks HUD/menú sobre la base de
 input, cámara, pickup, puertas y serial de guion. Se ha generado y verificado
 estáticamente una copia local de trabajo. No se ha instalado en Steam ni abierto.
 No constituye una entrega final.
@@ -45,3 +45,6 @@ La compatibilidad trabajada es January 30 2013; no atribuirla a retail/Feb/May.
 Seguir publicando avances verificables; nunca subir EXE, assets o símbolos del juego.
 
 Detalle: [runtime](docs/50-runtime-composition.md), [instalador](docs/51-runtime-installer.md).
+
+
+Panel de subarmas y rollback de máscaras: [detalle](docs/52-subweapon-hud.md).

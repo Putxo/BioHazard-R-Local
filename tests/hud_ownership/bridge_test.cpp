@@ -1,7 +1,13 @@
 #include "ownership.hpp"
 using namespace rev_hud;
+extern "C" void* memcpy(void* d,const void* s,__SIZE_TYPE__ n) {
+    auto* out=static_cast<volatile unsigned char*>(d);
+    const auto* in=static_cast<const unsigned char*>(s);
+    for(__SIZE_TYPE__ i=0;i<n;++i)out[i]=in[i];
+    return d;
+}
 extern "C" {
-void rev_hud_reticle_self();void rev_hud_equipment_self();void rev_hud_herb_self();
+void rev_hud_reticle_self();void rev_hud_equipment_self();void rev_hud_herb_self();void rev_hud_subequipment_self();
 void invoke_bridge(u32 widget, void (*bridge)(), u32* result);
 u32 stock_calls=0, mock_errors=0;
 }
@@ -29,9 +35,9 @@ extern "C" int test_main() {
     const auto cockpit=r.open_manager(0x30000000,0x04DE5C14,ManagerKind::Cockpit);
     const auto mini=r.open_manager(0x30010000,0x04DE86FC,ManagerKind::MiniMap);
     check(cockpit.valid() && mini.valid());
-    void (*bridges[3])()={rev_hud_reticle_self,rev_hud_equipment_self,rev_hud_herb_self};
-    Token members[3];
-    for (u32 i=0;i<3;++i) {
+    void (*bridges[WidgetKinds])()={rev_hud_reticle_self,rev_hud_equipment_self,rev_hud_herb_self,rev_hud_subequipment_self};
+    Token members[WidgetKinds];
+    for (u32 i=0;i<WidgetKinds;++i) {
         const auto kind=static_cast<WidgetKind>(i);const auto* info=kind_info(kind);
         members[i]=r.bind_widget(i==2 ? mini : cockpit,0x40000000+i*0x1000,
                                 info->vtable,kind,1,sub,1);
@@ -45,17 +51,20 @@ extern "C" int test_main() {
     test(0x50000000,bridges[0],self.address,false);
     test(0x40000000,bridges[2],0,false); // wrong class must not read another layout
     session.active=false;r.set_session(session);
-    for (u32 i=0;i<3;++i) test(0x40000000+i*0x1000,bridges[i],0,false);
+    for (u32 i=0;i<WidgetKinds;++i) test(0x40000000+i*0x1000,bridges[i],0,false);
     test(0x50000000,bridges[0],0x11110000,true);
     session.active=true;r.set_session(session);
-    for (u32 i=0;i<3;++i) test(0x40000000+i*0x1000,bridges[i],0,false); // latched
+    for (u32 i=0;i<WidgetKinds;++i) test(0x40000000+i*0x1000,bridges[i],0,false); // latched
     check(r.invalidate_manager(cockpit));
     test(0x50000000,bridges[0],0,false); // never call stock on invalidated owner
-    check(scenarios==16);
+    check(scenarios==20);
     if (failed) {
         constexpr char message[]="{\"status\":\"FAIL\",\"native_i386\":true,\"engine_code_executed\":false}\n";
         output(message,sizeof(message)-1);return 1;
     }
-    constexpr char message[]="{\"status\":\"PASS\",\"bridge_scenarios\":16,\"native_i386\":true,\"actual_registry_executed\":true,\"stock_finder_mocked\":true,\"gameplay_executed\":false,\"engine_code_executed\":false}\n";
+    constexpr char message[]="{\"status\":\"PASS\",\"bridge_scenarios\":20,\"native_i386\":true,\"actual_registry_executed\":true,\"stock_finder_mocked\":true,\"gameplay_executed\":false,\"engine_code_executed\":false}\n";
     output(message,sizeof(message)-1);return 0;
 }
+
+
+

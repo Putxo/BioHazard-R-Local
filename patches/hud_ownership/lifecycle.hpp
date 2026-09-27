@@ -43,10 +43,11 @@ enum class LifeError : u32 { None, Busy, UnsafePoint, BadInput, Construct,
     Resources, Alias, Registration, Stale, Memory, UnsupportedPhase };
 class Lifecycle {
 public:
-    explicit Lifecycle(Registry& registry, Backend backend) : registry_(registry), backend_(backend) {}
-    // All three originals are borrowed P1 units. Parent addresses order:
+    explicit Lifecycle(Registry& registry, Backend backend, u32 count=LegacyWidgetKinds)
+        : registry_(registry), backend_(backend), count_(count) {}
+    // All enabled originals are borrowed P1 units. Parent addresses order:
     // cockpit, minimap. No pointers are installed in their native slot arrays.
-    u32 prepare(const Session&, const u32 parents[2], const u32 originals[3]);
+    u32 prepare(const Session&, const u32 parents[2], const u32 originals[WidgetKinds]);
     bool publish(u32 ticket, const Session& current);
     // Stops are latched immediately, including reentrant requests from phase().
     void stop();
@@ -69,18 +70,19 @@ public:
     }
     LifeState state() const { return state_; }
     LifeError error() const { return error_; }
-    u32 unit(u32 index) const { return index < 3 ? units_[index] : 0; }
+    u32 unit(u32 index) const { return index < count_ && index < WidgetKinds ? units_[index] : 0; }
 private:
     Registry& registry_;
     Backend backend_;
+    const u32 count_;
     LifeState state_ = LifeState::Empty;
     LifeError error_ = LifeError::None;
     bool busy_ = false;
     u32 ticket_ = 0, frame_ = 0, phases_ = 0;
-    u32 parents_[2]{}, originals_[3]{}, units_[3]{};
-    bool quarantine_[3]{};
-    Token managers_[2]{}, widgets_[3]{};
-    GuiTree trees_[3]{}, stocks_[3]{};
+    u32 parents_[2]{}, originals_[WidgetKinds]{}, units_[WidgetKinds]{};
+    bool quarantine_[WidgetKinds]{};
+    Token managers_[2]{}, widgets_[WidgetKinds]{};
+    GuiTree trees_[WidgetKinds]{}, stocks_[WidgetKinds]{};
     bool dispatch_scope(u32 ticket, const Session&, u32 frame, u32 phase,
                         u32 view, u32 context, u32 manager_mask);
     bool valid_backend() const;

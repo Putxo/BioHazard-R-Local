@@ -15,11 +15,12 @@ struct Fixture {
         [](void* p) noexcept {return static_cast<Fixture*>(p)->image;},
         [](void* p) noexcept {return static_cast<Fixture*>(p)->f.session.self.address;},f.calls()};
     }
-    Fixture():r(registry,host()) {
+    Fixture(u32 count=LegacyWidgetKinds):f(count),r(registry,host(),count) {
         f.life=&r.lifecycle();
         f.m[0x055623C4]=OWNER;f.m[OWNER+0x28]=f.p[0];f.m[OWNER+0x2C]=f.p[1];
         f.m[f.p[0]+0x90]=f.original[0];f.m[f.p[0]+0x5C]=f.original[1];
         f.m[f.p[1]+0x30]=f.m[f.p[1]+0x40]=f.original[2];
+        if(count==WidgetKinds) f.m[f.p[0]+0x64]=f.original[3];
         f.m[MAIN]=0x04E1642C;f.m[SUB]=0x04E1649C;
         f.m[MAIN+0x44]=f.session.self.address;f.m[SUB+0x44]=f.session.sub0.address;
         f.m[0x057D9188]=1;f.m[0x057D9184]=f.session.sub0.address;
@@ -40,7 +41,7 @@ struct Fixture {
     }
     void begin(){C(r.clock().event(PipelineBegin,0xC00000,0xD00000));C(r.activator().event(PipelineBegin,0xC00000,0xD00000));}
     void end(){C(r.clock().event(PipelineEnd,0xC00000,0xD00000));C(r.window().event(PipelineEnd,0xC00000,0xD00000));}
-    void prepare(){start();births();begin();C(f.allocations.empty());end();C(r.lifecycle().state()==LifeState::Live);C(f.allocations.size()==3);}
+    void prepare(){start();births();begin();C(f.allocations.empty());end();C(r.lifecycle().state()==LifeState::Live);C(f.allocations.size()==(f.original[3]?WidgetKinds:LegacyWidgetKinds));}
 };
 int main(){
     {Fixture x;x.image=false;C(!x.r.start());C(!x.r.bind());C(x.f.allocations.empty());++scenarios;}
@@ -55,7 +56,7 @@ int main(){
      C(x.f.events.size()==12);
      for(u32 i=0;i<3;++i){const u32 unit=x.r.lifecycle().unit(i);C(x.registry.resolve(unit,static_cast<WidgetKind>(i)).actor==x.f.session.sub0.address);
          C(draw_view(x.f.m[unit+0xC])==draw_view(original.at(unit+0xC)));}
-     for(u32 u:x.f.original)C(x.f.m[u+0xC]==original.at(u+0xC));
+     for(u32 u:x.f.original)if(u)C(x.f.m[u+0xC]==original.at(u+0xC));
      x.end();C(x.f.allocations.size()==3);++scenarios;}
     {Fixture x;x.prepare();x.begin();x.f.m[0x055623C4]=0;x.end();C(x.r.lifecycle().state()==LifeState::Empty);
      C(x.f.deleted.size()==3);C(x.registry.widget_count()==0);x.f.m[0x055623C4]=OWNER;x.begin();x.end();
@@ -71,5 +72,21 @@ int main(){
      x.f.m[x.f.session.sub0.address+0xE3C]=1;x.f.m[x.f.session.sub0.address+0xE40]=1;
      C(x.r.menu().submenu_open_word(pad)==1);C(x.r.menu().owner()==1);
      C(x.r.menu().submenu_actor(x.f.session.self.address)==x.f.session.sub0.address);++scenarios;}
+    {Fixture x(WidgetKinds);x.prepare();x.begin();
+     C(x.r.driver().event(0x02B497CA,x.f.p[0],0));
+     C(x.r.driver().event(0x02B49C5B,x.f.p[0],0));
+     C(x.r.driver().event(0x02B49DE3,x.f.p[0],x.f.context));
+     const u32 u=x.r.lifecycle().unit(3);C(u!=0);
+     C(x.registry.resolve(u,WidgetKind::SubEquipment).actor==x.f.session.sub0.address);
+     C(x.f.events.size()==13);x.f.m[0x055623C4]=0;x.end();
+     C(x.f.deleted.size()==4);C(x.registry.widget_count()==0);++scenarios;}
+    {Fixture x(WidgetKinds);x.start();x.births();x.f.m[x.f.p[0]+0x64]=x.f.original[1];
+     x.begin();C(x.r.clock().event(PipelineEnd,0xC00000,0xD00000));
+     C(!x.r.window().event(PipelineEnd,0xC00000,0xD00000));C(x.f.allocations.empty());++scenarios;}
+    {Fixture x(WidgetKinds);x.start();x.births();x.f.no_init=3;x.begin();
+     C(x.r.clock().event(PipelineEnd,0xC00000,0xD00000));
+     C(!x.r.window().event(PipelineEnd,0xC00000,0xD00000));
+     C(x.f.deleted.size()==4);C(x.registry.widget_count()==0);++scenarios;}
+    {Fixture x(WidgetKinds+1);C(!x.r.start());C(x.f.allocations.empty());++scenarios;}
     std::printf("{\"status\":\"PASS\",\"scenarios\":%u,\"assertions\":%u,\"engine_calls_mocked\":true,\"gameplay_executed\":false}\n",scenarios,checks);
 }

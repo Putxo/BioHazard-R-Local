@@ -59,7 +59,7 @@ bool Lifecycle::valid_backend() const {
         (backend_.phase || backend_.checked_phase) && backend_.write_word;
 }
 bool Lifecycle::live_routes() const {
-    for (u32 i = 0; i < 3; ++i) {
+    for (u32 i = 0; i < count_; ++i) {
         const Route r = registry_.resolve(units_[i], kind(i));
         if (!units_[i] || r.mode != Mode::Local || r.member != 1 || r.view != 1) return false;
     }
@@ -79,12 +79,12 @@ void Lifecycle::parent_destroying(u32 a) {
     if (a && (parents_[0] == a || parents_[1] == a)) stop();
 }
 bool Lifecycle::verify_graphs() {
-    GuiTree fresh[3]{};
-    for (u32 i = 0; i < 3; ++i) {
+    GuiTree fresh[WidgetKinds]{};
+    for (u32 i = 0; i < count_; ++i) {
         if (!capture_tree(backend_.memory, units_[i], kind(i), &fresh[i])) {
             fail(LifeError::Resources); return false;
         }
-        for (u32 j = 0; j < 3; ++j) {
+        for (u32 j = 0; j < count_; ++j) {
             GuiTree stock{};
             if (!capture_tree(backend_.memory, originals_[j], kind(j), &stock)) {
                 fail(LifeError::Resources); return false;
@@ -97,12 +97,12 @@ bool Lifecycle::verify_graphs() {
             quarantine_[i] = quarantine_[j] = true; fail(LifeError::Alias); return false;
         }
     }
-    for (u32 i = 0; i < 3; ++i) trees_[i] = fresh[i];
+    for (u32 i = 0; i < count_; ++i) trees_[i] = fresh[i];
     return true;
 }
-u32 Lifecycle::prepare(const Session& s, const u32 p[2], const u32 originals[3]) {
+u32 Lifecycle::prepare(const Session& s, const u32 p[2], const u32 originals[WidgetKinds]) {
     if (busy_ || state_ != LifeState::Empty) { error_ = LifeError::Busy; return 0; }
-    if (!valid_backend() || !p || !originals || !s.active || !s.epoch || !s.self.address || !s.sub0.address ||
+    if (!valid_widget_count(count_) || !valid_backend() || !p || !originals || !s.active || !s.epoch || !s.self.address || !s.sub0.address ||
         !s.self.lifetime || !s.sub0.lifetime || s.self.serial < 0 || s.sub0.serial < 0 ||
         s.self.think_mode != 1 || s.sub0.think_mode != 1 ||
         s.self.address == s.sub0.address || s.self.serial == s.sub0.serial || ticket_ == Invalid) {
@@ -113,7 +113,7 @@ u32 Lifecycle::prepare(const Session& s, const u32 p[2], const u32 originals[3])
     for (auto& tree : trees_) tree = {};
     for (auto& flag : quarantine_) flag = false;
     // Validate borrowed originals before allocating anything.
-    for (u32 i = 0; i < 3; ++i) {
+    for (u32 i = 0; i < count_; ++i) {
         GuiTree g{};
         if (!capture_tree(backend_.memory, originals[i], kind(i), &g)) { error_ = LifeError::Resources; return 0; }
         originals_[i] = originals[i]; stocks_[i] = g;
@@ -125,11 +125,11 @@ u32 Lifecycle::prepare(const Session& s, const u32 p[2], const u32 originals[3])
         managers_[i] = registry_.open_manager(p[i], vt, static_cast<ManagerKind>(i));
         if (!managers_[i].valid()) { fail(LifeError::Registration); break; }
     }
-    for (u32 i = 0; i < 3 && state_ == LifeState::Preparing; ++i) {
+    for (u32 i = 0; i < count_ && state_ == LifeState::Preparing; ++i) {
         const u32 unit = backend_.construct(backend_.memory.context, kind(i));
         if (!unit) { fail(LifeError::Construct); break; }
         bool alias = false;
-        for (u32 j = 0; j < 3; ++j) if (unit == originals_[j] || unit == units_[j]) alias = true;
+        for (u32 j = 0; j < count_; ++j) if (unit == originals_[j] || unit == units_[j]) alias = true;
         for (u32 j = 0; j < 2; ++j) if (unit == parents_[j]) alias = true;
         // Backend contract violation: never initialize or destroy the borrowed
         // address. Its alleged second allocation is not a second owned unit.
@@ -187,7 +187,7 @@ bool Lifecycle::can_destroy(u32 i) const {
     if (now.unit != old.unit || now.resource != old.resource || now.root != old.root ||
         now.table != old.table || now.count != old.count) return false;
     for (u32 n = 0; n < now.count; ++n) if (now.nodes[n] != old.nodes[n]) return false;
-    for (const auto& stock : stocks_) if (!disjoint_trees(now, stock)) return false;
+    for (u32 j=0;j<count_;++j) if (!disjoint_trees(now, stocks_[j])) return false;
     return true;
 }
 bool Lifecycle::collect() {
@@ -195,7 +195,7 @@ bool Lifecycle::collect() {
     if (!backend_.safe_point(backend_.memory.context)) { error_ = LifeError::UnsafePoint; return false; }
     busy_ = true; bool quarantine = false;
     // All registry entries remain tombstones during ALL native destructors.
-    for (u32 i = 3; i-- > 0;) {
+    for (u32 i = count_; i-- > 0;) {
         if (units_[i] && !can_destroy(i)) quarantine_[i] = true;
         if (quarantine_[i]) { quarantine = true; continue; }
         if (units_[i]) {
@@ -248,7 +248,7 @@ bool Lifecycle::dispatch_scope(u32 ticket, const Session& current, u32 frame,
     if (phases_ & bit) return false;
     if (!live_routes()) { fail(LifeError::Stale); return false; }
     busy_ = true; phases_ |= bit;
-    for (u32 i = 0; i < 3 && state_ == LifeState::Live; ++i) {
+    for (u32 i = 0; i < count_ && state_ == LifeState::Live; ++i) {
         const u32 owner_bit = kind_info(kind(i))->manager == ManagerKind::Cockpit ? 1 : 2;
         if (!(manager_mask & owner_bit)) continue;
         u32 old = 0, scoped = 0, now = 0;

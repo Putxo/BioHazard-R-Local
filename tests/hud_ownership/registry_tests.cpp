@@ -28,7 +28,7 @@ void test_classes_and_phases() {
     CHECK(kind_info(WidgetKind::Reticle)->actor_phase == 9);
     CHECK(kind_info(WidgetKind::MainEquipment)->actor_phase == 8);
     CHECK(kind_info(WidgetKind::MapHerb)->manager == ManagerKind::MiniMap);
-    CHECK(!kind_info(static_cast<WidgetKind>(3)));
+    CHECK(!kind_info(static_cast<WidgetKind>(WidgetKinds)));
     CHECK(!manager_vtable(static_cast<ManagerKind>(99)));
 }
 void test_independent_widgets() {

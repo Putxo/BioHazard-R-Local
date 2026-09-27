@@ -5,6 +5,7 @@ constexpr JanuaryType Types[] = {
     {0x2E0,0x01C11706,0x01C19CCB,0x01C40C04,0x01B94A7B,0x01C7272C,0x01C7E437,0x01C6EF7D},
     {0x370,0x01C15775,0x01B7D1F0,0x01C0C74C,0x01B96D58,0x01C65A9A,0x01BF295F,0x01C6445B},
     {0x2C0,0x01C7855A,0x01C6392A,0x01BAB4F6,0x01C33D4C,0x01C28CAD,0x01BF295F,0x01C67381},
+    {0x370,0x01B8BCE6,0x01C39C88,0x01C32956,0x01C7FD6E,0x01BA1E2E,0x01BF295F,0x01C8373E},
 };
 constexpr u32 GetUnit = 0x01C8C27B, Contains = 0x0326AA90;
 struct Busy { bool& flag; explicit Busy(bool& f):flag(f){flag=true;} ~Busy(){flag=false;} };
@@ -13,7 +14,7 @@ bool overlap(u32 a,u32 n,u32 b,u32 m) {
 }
 }
 const JanuaryType* january_type(WidgetKind k) {
-    const u32 i=static_cast<u32>(k); return i<3 ? &Types[i] : nullptr;
+    const u32 i=static_cast<u32>(k); return i<WidgetKinds ? &Types[i] : nullptr;
 }
 bool JanuaryBackend::allow(NativeOp op,WidgetKind k,u32 u,u32 phase,u32 context) {
     return (host_.permit && host_.permit(host_.memory.context,op,k,u,phase,context)) || fail(NativeFault::Permit);
@@ -27,7 +28,7 @@ bool JanuaryBackend::field(u32 u,u32 off,u32& v) {
 }
 bool JanuaryBackend::write(u32 a,u32 v) {
     // Only flags and time scale inside our exclusively owned, constructed units.
-    for (u32 i=0;i<3;++i) if (entries_[i].unit && entries_[i].constructed &&
+    for (u32 i=0;i<count_;++i) if (entries_[i].unit && entries_[i].constructed &&
         !entries_[i].quarantine && (a==entries_[i].unit+0xC || a==entries_[i].unit+0x1C))
         return (allow(NativeOp::Write,static_cast<WidgetKind>(i),entries_[i].unit) &&
             targets(static_cast<WidgetKind>(i)) && detached(entries_[i].unit,static_cast<WidgetKind>(i)) &&
@@ -45,7 +46,7 @@ bool JanuaryBackend::targets(WidgetKind k) {
 }
 bool JanuaryBackend::borrowed_or_overlap(u32 u,u32 size) const {
     if (!u || u>Invalid-size) return true;
-    for (u32 i=0;i<3;++i) {
+    for (u32 i=0;i<count_;++i) {
         if (overlap(u,size,originals_[i],Types[i].size)) return true;
         if (overlap(u,size,entries_[i].unit,Types[i].size)) return true;
     }
@@ -66,11 +67,11 @@ bool JanuaryBackend::detached(u32 u,WidgetKind k) {
     if (found!=0) return fail(NativeFault::Attached);
     return true;
 }
-bool JanuaryBackend::configure(const u32 p[2],const u32 originals[3]) {
+bool JanuaryBackend::configure(const u32 p[2],const u32 originals[WidgetKinds]) {
     if (busy_) return fail(NativeFault::Reentrant);
     for (const auto& e:entries_) if (e.unit) return fail(NativeFault::Quarantined);
     configured_=false;
-    if (!p || !originals || !host_.write || !host_.fresh_allocation || !host_.memory.word ||
+    if (!valid_widget_count(count_) || !p || !originals || !host_.write || !host_.fresh_allocation || !host_.memory.word ||
         !calls_.allocate || !calls_.construct || !calls_.method0 || !calls_.method1 ||
         !calls_.singleton || !calls_.contains) return fail(NativeFault::Layout);
     Busy lock(busy_);
@@ -79,26 +80,26 @@ bool JanuaryBackend::configure(const u32 p[2],const u32 originals[3]) {
         u32 vt=0; if (!field(p[i],0,vt) || vt!=manager_vtable(static_cast<ManagerKind>(i))) return fail(NativeFault::Layout);
     }
     if (p[0]==p[1]) return fail(NativeFault::Borrowed);
-    GuiTree trees[3]{};
-    for (u32 i=0;i<3;++i) {
+    GuiTree trees[WidgetKinds]{};
+    for (u32 i=0;i<count_;++i) {
         const auto k=static_cast<WidgetKind>(i);
         if (!targets(k) || !capture_tree(host_.memory,originals[i],k,&trees[i])) return fail(NativeFault::Resources);
         for (u32 j=0;j<i;++j) if (!disjoint_trees(trees[i],trees[j])) return fail(NativeFault::Borrowed);
         if (originals[i]==p[0] || originals[i]==p[1]) return fail(NativeFault::Borrowed);
     }
     for(u32 i=0;i<2;++i) parents_[i]=p[i];
-    for(u32 i=0;i<3;++i) originals_[i]=originals[i];
+    for(u32 i=0;i<count_;++i) originals_[i]=originals[i];
     fault_=NativeFault::None; configured_=true; return true;
 }
 bool JanuaryBackend::safe() {
     return !busy_ && configured_ && allow(NativeOp::Structural,WidgetKind::Reticle);
 }
 u32 JanuaryBackend::retained(WidgetKind k) const {
-    const u32 i=static_cast<u32>(k); return i<3 ? entries_[i].unit : 0;
+    const u32 i=static_cast<u32>(k); return i<count_ && i<WidgetKinds ? entries_[i].unit : 0;
 }
 u32 JanuaryBackend::create(WidgetKind k) {
     const auto* t=january_type(k);
-    if (busy_ || !configured_ || !t) { fail(NativeFault::Reentrant);return 0; }
+    if (busy_ || !configured_ || !t || static_cast<u32>(k)>=count_) { fail(NativeFault::Reentrant);return 0; }
     auto& e=entries_[static_cast<u32>(k)];
     if(e.unit) {fail(NativeFault::Quarantined);return 0;}
     Busy lock(busy_);
@@ -189,3 +190,4 @@ Backend JanuaryBackend::callbacks() {
     return b;
 }
 }
+

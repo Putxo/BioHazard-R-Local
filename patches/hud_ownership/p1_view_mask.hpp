@@ -1,7 +1,7 @@
 #pragma once
 #include "lifecycle.hpp"
 namespace rev_hud {
-// Temporary masking of only the three stock P1 widgets that have an independent
+// Temporary masking of only the enabled stock P1 widgets that have an independent
 // P2 clone. Shared cockpit/minimap widgets are never modified by this component.
 struct P1MaskAccess {
     Reader memory{};
@@ -13,7 +13,8 @@ const P1MaskSite* p1_mask_entry(u32 address);
 const P1MaskSite* p1_mask_exit(u32 address);
 class P1ViewMask {
 public:
-    explicit P1ViewMask(P1MaskAccess access) : access_(access) {}
+    explicit P1ViewMask(P1MaskAccess access, u32 count=LegacyWidgetKinds)
+        : access_(access), widget_count_(count) {}
     P1ViewMask(const P1ViewMask&) = delete;
     P1ViewMask& operator=(const P1ViewMask&) = delete;
     // Begin is called only after the P2 manual draw succeeded for view 1.
@@ -26,14 +27,15 @@ public:
     P1MaskFault fault() const noexcept { return fault_; }
 private:
     P1MaskAccess access_{};
+    const u32 widget_count_;
     u32 manager_ = 0, count_ = 0;
     ManagerKind kind_ = ManagerKind::Cockpit;
-    u32 units_[2]{}, slots_[2]{}, masks_[2]{};
+    u32 units_[WidgetKinds]{}, slots_[WidgetKinds]{}, masks_[WidgetKinds]{};
     bool active_ = false;
     P1MaskFault fault_ = P1MaskFault::None;
     bool word(u32 address, u32& value) const noexcept;
     bool write(u32 address, u32 value) const noexcept;
-    bool collect(u32 manager, ManagerKind kind, u32 units[2], u32 slots[2],
+    bool collect(u32 manager, ManagerKind kind, u32 units[WidgetKinds], u32 slots[WidgetKinds],
                  u32* count) const noexcept;
     bool restore_one(u32 index) noexcept;
     bool fail(P1MaskFault fault) noexcept { fault_ = fault; return false; }

@@ -11,7 +11,8 @@ struct Event { u32 target,self,arg,arity; };
 struct Fake {
     std::map<u32,u32> m;std::vector<Event> events;std::vector<u32> deleted;
     std::vector<u32> allocations,writes,membership;
-    u32 p[2]={0x200000,0x220000},original[3]={0x100000,0x120000,0x140000};
+    u32 p[2]={0x200000,0x220000};
+    u32 original[WidgetKinds]={0x100000,0x120000,0x140000,0};
     Session session{true,1,{0x300000,1,0,1},{0x320000,1,1,1}};
     u32 next=0x600000,context=0x400000,ctor_count=0,init_count=0;
     u32 allocation_override=0,attached=0,reader_fail=0,write_fail=0;
@@ -20,9 +21,11 @@ struct Fake {
     bool deny_destroy=false,deny_init=false,stop_in_phase=false,stop_in_init=false;
     bool stop_in_construct=false,alias_tree=false,attach_in_phase=false;
     Lifecycle* life=nullptr;
-    Fake(){
+    Fake(u32 count=LegacyWidgetKinds){
+        if(!valid_widget_count(count))count=LegacyWidgetKinds;
+        if(count==WidgetKinds)original[3]=0x160000;
         for(u32 i=0;i<2;++i){m[p[i]]=manager_vtable(static_cast<ManagerKind>(i));m[p[i]+0x1C]=i?0x3F000000:0x3F800000;}
-        for(u32 i=0;i<3;++i){
+        for(u32 i=0;i<count;++i){
             const auto k=static_cast<WidgetKind>(i);plain(original[i],k);tree(original[i],k);
             const auto* t=january_type(k);const u32 vt=kind_info(k)->vtable;
             for(auto s: {0u,5u,8u,9u,11u})m[vt+s*4]=s==0?t->destroy:s==5?t->initialize:s==8?t->phase8:s==9?t->phase9:t->draw;
@@ -58,23 +61,23 @@ struct Fake {
     static bool freshly(void* c,u32,u32) noexcept {return static_cast<Fake*>(c)->fresh;}
     static u32 alloc(void* c,u32 target,u32 size,u32 align) noexcept {
         auto& f=*static_cast<Fake*>(c);C(align==16);
-        u32 index=3;for(u32 i=0;i<3;++i)if(january_type(static_cast<WidgetKind>(i))->allocator==target)index=i;
-        C(index<3);C(size==january_type(static_cast<WidgetKind>(index))->size);
+        u32 index=WidgetKinds;for(u32 i=0;i<WidgetKinds;++i)if(january_type(static_cast<WidgetKind>(i))->allocator==target)index=i;
+        C(index<WidgetKinds);C(size==january_type(static_cast<WidgetKind>(index))->size);
         if(static_cast<int>(index)==f.no_alloc)return 0;
         const u32 u=f.allocation_override?f.allocation_override:f.next;f.next+=0x10000;f.allocations.push_back(u);return u;
     }
     static u32 ctor(void* c,u32 target,u32 self) noexcept {
-        auto& f=*static_cast<Fake*>(c);u32 i=3;
-        for(u32 j=0;j<3;++j)if(january_type(static_cast<WidgetKind>(j))->constructor==target)i=j;
-        C(i<3);++f.ctor_count;f.plain(self,static_cast<WidgetKind>(i));
+        auto& f=*static_cast<Fake*>(c);u32 i=WidgetKinds;
+        for(u32 j=0;j<WidgetKinds;++j)if(january_type(static_cast<WidgetKind>(j))->constructor==target)i=j;
+        C(i<WidgetKinds);++f.ctor_count;f.plain(self,static_cast<WidgetKind>(i));
         if(f.stop_in_construct && f.life)f.life->stop();
         if(static_cast<int>(i)==f.bad_ctor)f.m[self]=0;
         return self;
     }
     static void method0(void* c,u32 target,u32 self) noexcept {
         auto& f=*static_cast<Fake*>(c);f.events.push_back({target,self,0,0});
-        u32 i=3;for(u32 j=0;j<3;++j)if(kind_info(static_cast<WidgetKind>(j))->vtable==f.m[self])i=j;
-        C(i<3);const auto k=static_cast<WidgetKind>(i);const auto* t=january_type(k);
+        u32 i=WidgetKinds;for(u32 j=0;j<WidgetKinds;++j)if(kind_info(static_cast<WidgetKind>(j))->vtable==f.m[self])i=j;
+        C(i<WidgetKinds);const auto k=static_cast<WidgetKind>(i);const auto* t=january_type(k);
         if(target==t->initialize){
             ++f.init_count;if(static_cast<int>(i)!=f.no_init)f.tree(self,k);
             if(f.alias_tree)f.m[self+0xF8]=f.m[f.original[0]+0xF8];
@@ -87,8 +90,8 @@ struct Fake {
     }
     static void method1(void* c,u32 target,u32 self,u32 arg) noexcept {
         auto& f=*static_cast<Fake*>(c);f.events.push_back({target,self,arg,1});
-        u32 i=3;for(u32 j=0;j<3;++j)if(kind_info(static_cast<WidgetKind>(j))->vtable==f.m[self])i=j;
-        C(i<3);const auto* t=january_type(static_cast<WidgetKind>(i));
+        u32 i=WidgetKinds;for(u32 j=0;j<WidgetKinds;++j)if(kind_info(static_cast<WidgetKind>(j))->vtable==f.m[self])i=j;
+        C(i<WidgetKinds);const auto* t=january_type(static_cast<WidgetKind>(i));
         if(target==t->destroy){
             C(arg==1);for(u32 a:f.original)C(a!=self);for(u32 a:f.deleted)C(a!=self);
             if(f.life)C(!f.life->collect());
