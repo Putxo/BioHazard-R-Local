@@ -105,7 +105,9 @@ def hook_sites():
         out.append((va,rel(va,0x01BFA407),'rev_genesis_set',0xE8))
     for va in (0x02B268DB,0x02B2699E,0x02B26A42,0x02B26A79):
         out.append((va,rel(va,0x01BB2404),'rev_genesis_add',0xE8))
-    for va in (0x02B214B8,0x02B2203D,0x02B2246B,0x02B225BB,0x02B27905,0x02B27C3D):
+    for va in (0x02B214B8,0x02B2203D,0x02B2246B,0x02B225BB,0x02B27905,0x02B27C3D,
+               0x02B2F395,0x02B2F575,0x02B2F755,0x02B2F935,
+               0x02B2FB15,0x02B2FCF5,0x02B2FED5,0x02B300B5):
         out.append((va,rel(va,0x01C2C7F4),'rev_hud_scanner_self',0xE8))
     for va in (0x02B21003,0x02B21244,0x02B2178B,0x02B218AB,0x02B224A5,0x02B28C88):
         out.append((va,rel(va,0x01C07341),'rev_genesis_selected_actor',0xE8))

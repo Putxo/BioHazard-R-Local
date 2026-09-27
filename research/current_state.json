@@ -2,9 +2,9 @@
   "schema_version": 4,
   "canonical_branch": "research/script-member-serial-validation",
   "checkpoint": {
-    "merged_pr": 44,
-    "merge_sha": "d64f55a207a023d8c42fc74e4efaf99207ddea44",
-    "tested_head": "c161a728d53e6ca3bb52c36da90c149b45b481a5",
+    "merged_pr": 45,
+    "merge_sha": "70796c8cb9927ef19cb46ca5ff2a81d52990fb58",
+    "tested_head": "c63cd62fcbb4d50352bd30d231b0768864ab55f2",
     "ci": "21 workflows PASS"
   },
   "user_constraints": {
@@ -25,7 +25,7 @@
   },
   "runtime": {
     "composition_root": true,
-    "hud_menu_hook_count": 115,
+    "hud_menu_hook_count": 123,
     "local_views_use_native_immediate_draw": true,
     "action_loop_priority_per_member": true,
     "action_loop_stop_per_member": true,
@@ -70,7 +70,8 @@
     "scope_actor_and_resources_connected": true,
     "scope_activation_connected": true,
     "genesis_completion_boundary_protected": true,
-    "genesis_general_reentrant_destruction_supported": false
+    "genesis_general_reentrant_destruction_supported": false,
+    "genesis_widget_actor_call_sites": 20
   },
   "pending": [
     "full HUD and interaction prompts",
@@ -105,6 +106,7 @@
     "docs/70-aim-secondary-visibility.md",
     "docs/71-scope-widget.md",
     "docs/72-scope-aim-events.md",
-    "docs/73-genesis-completion-boundary.md"
+    "docs/73-genesis-completion-boundary.md",
+    "docs/74-genesis-state-actor-routing.md"
   ]
 }
