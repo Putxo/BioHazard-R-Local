@@ -76,6 +76,26 @@ bool JanuaryBackend::scanner_valid(u32 unit) noexcept {
         rev_genesis::same_resources(current,scanner_owned_) &&
         rev_genesis::disjoint(current,scanner_original_);
 }
+bool JanuaryBackend::scanner_producer_ready(Reader memory,u32 unit) noexcept {
+    if(busy_ || !configured_ || count_<7 || !unit || unit!=entries_[6].unit ||
+       !entries_[6].constructed || !entries_[6].ready || entries_[6].quarantine ||
+       !memory.word || unit>Invalid-0x400)return false;
+    auto read=[&](u32 a,u32& v) noexcept {return a && a<=Invalid-3 && memory.word(memory.context,a,&v);};
+    u32 vt=0,flags=0,next=0,prev=0,link=0,skip=0;
+    if(!read(unit,vt) || vt!=kind_info(WidgetKind::Scanner)->vtable ||
+       !read(unit+0xC,flags) || !(flags&0x4000) || ((flags>>3)&127)!=127 ||
+       !read(unit+0x14,next) || next || !read(unit+0x18,prev) || prev ||
+       !read(unit+0x290,link) || link || !read(unit+0x294,skip) || (skip&255))return false;
+    const auto* t=january_type(WidgetKind::Scanner);
+    const u32 slots[]={0,5,8,9,11},expected[]={t->destroy,t->initialize,t->phase8,t->phase9,t->draw};
+    for(u32 i=0;i<5;++i){u32 value=0;if(!read(vt+slots[i]*4,value) || value!=expected[i])return false;}
+    const u32 manager=calls_.singleton(calls_.context,GetUnit);
+    if(!manager || calls_.contains(calls_.context,Contains,manager,unit)!=0)return false;
+    rev_genesis::Resources current{};
+    return rev_genesis::capture_resources(memory,unit,&current) &&
+        rev_genesis::same_resources(current,scanner_owned_) &&
+        rev_genesis::disjoint(current,scanner_original_);
+}
 bool JanuaryBackend::configure(const u32 p[2],const u32 originals[WidgetKinds]) {
     if (busy_) return fail(NativeFault::Reentrant);
     for (const auto& e:entries_) if (e.unit) return fail(NativeFault::Quarantined);

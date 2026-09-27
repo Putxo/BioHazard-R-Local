@@ -50,8 +50,92 @@ struct Fixture {
     void begin(){C(r.clock().event(PipelineBegin,0xC00000,0xD00000));C(r.activator().event(PipelineBegin,0xC00000,0xD00000));}
     void end(){C(r.clock().event(PipelineEnd,0xC00000,0xD00000));C(r.window().event(PipelineEnd,0xC00000,0xD00000));}
     void prepare(){start();births();begin();C(f.allocations.empty());end();C(r.lifecycle().state()==LifeState::Live);C(f.allocations.size()==(f.original[6]?7u:f.original[5]?6u:f.original[4]?5u:f.original[3]?4u:LegacyWidgetKinds));}
+    void detector_setup(){
+        prepare();begin();
+        f.m[0xB00000+0xCE0]=0xE20000;f.m[0xB00000+0xCE4]=0xE30000;
+        f.m[0xE30000]=0x04CF2B1C;f.m[0xE30000+0x74]=f.session.sub0.address;
+        f.m[0xEF0000]=0x04DA8570;f.m[0xEF0024]=1;f.m[0xEF0010]=0x40400000;
+        C(r.genesis_targets().event(0x0281AE26,0xEF0000));
+        f.m[0xEF1000]=0x3F800000;f.m[0xEF1004]=0xC0000000;f.m[0xEF1008]=0;
+        // Fake constructors mark widgets active. Native January initialization
+        // leaves Scanner inactive; activation is deliberately a separate task.
+        f.detector_context=this;
+    }
 };
 int main(){
+    {Fixture x(7);x.detector_setup();const auto before=x.f.m;
+     x.f.detector_observer=[](void* p,u32 manager) noexcept {
+         auto& z=*static_cast<Fixture*>(p);C(manager==0xEE0000);u32 v=99;
+         if(z.f.detector_calls==1){
+             C(z.r.genesis_detector_camera(0xB00000,&v)==Mode::Stock);C(v==99);
+             C(z.r.genesis_detector_actor(&v)==Mode::Stock);C(z.r.genesis_detector_widget(&v)==Mode::Stock);
+             C(z.r.genesis_set_position(0xEF0000,0xEF1000)==Mode::Stock);
+             C(z.r.genesis_set_focus(0xEF0000,3)==Mode::Stock);C(z.r.genesis_candidate(0));return;
+         }
+         C(z.f.detector_calls==2);
+         C(z.r.genesis_detector_camera(0xB00000,&v)==Mode::Local);C(v==0xE30000);
+         C(z.r.genesis_detector_actor(&v)==Mode::Local);C(v==z.f.session.sub0.address);
+         C(z.r.genesis_detector_widget(&v)==Mode::Local);C(v==z.r.lifecycle().unit(6));
+         C(!z.r.genesis_candidate(0xEF0000));C(!z.r.genesis_candidate(0xDD0000));
+         C(z.r.genesis_set_position(0xDD0000,0xEF1000)==Mode::Hidden);
+         C(z.r.genesis_set_position(0xEF0000,0xEF1000)==Mode::Local);
+         C(z.r.genesis_target_focus(0xEF0000,&v)==Mode::Local);C(v==0);
+         C(z.r.genesis_set_focus(0xEF0000,3)==Mode::Local);
+         C(z.r.genesis_target_focus(0xEF0000,&v)==Mode::Local);C(v==3);
+         C(z.r.genesis_candidate(0xEF0000));
+         C(z.r.genesis_set_position(0xEF0000,0xEF1000)==Mode::Local);
+         C(z.r.genesis_target_focus(0xEF0000,&v)==Mode::Local);C(v==0);
+         C(z.r.genesis_set_focus(0xEF0000,2)==Mode::Local);
+     };
+     x.r.genesis_detect(0xEE0000);C(x.f.detector_calls==2);C(x.f.m==before);
+     u32 v=99;C(x.r.genesis_target_focus(0xEF0000,&v)==Mode::Stock);C(v==99);
+     rev_genesis::ViewSample out{};
+     C(x.r.genesis_target_views().read(x.r.lifecycle().unit(6),x.r.genesis_targets().capture(0xEF0000),&out)==Mode::Local);
+     C(out.focus==2);C(out.position[0]==0x3F800000);C(out.position[1]==0xC0000000);
+     x.end();++scenarios;}
+    for(u32 fault=0;fault<8;++fault){Fixture x(7);x.detector_setup();const u32 unit=x.r.lifecycle().unit(6);
+     switch(fault){
+     case 0:x.f.m[unit+0xC]&=~0x4000u;break;
+     case 1:x.f.m[0xB00000+0xCE4]=0;break;
+     case 2:x.thread=9;break;
+     case 3:x.image=false;break;
+     case 4:C(!x.r.genesis_targets().event(0x0281AE26,0xEF0000));break;
+     case 5:x.f.m[unit+0x3B8]=x.f.m[x.f.original[6]+0x3B8];break;
+     case 6:x.f.m[unit+0x294]=1;break;
+     case 7:x.end();break;
+     }
+     x.f.detector_observer=[](void* p,u32) noexcept {
+         auto& z=*static_cast<Fixture*>(p);u32 v=99;
+         C(z.r.genesis_detector_actor(&v)==Mode::Stock);C(v==99);
+     };
+     x.r.genesis_detect(0xEE0000);C(x.f.detector_calls==1);++scenarios;
+    }
+    {Fixture x(7);x.detector_setup();
+     x.f.detector_observer=[](void* p,u32) noexcept {
+         auto& z=*static_cast<Fixture*>(p);u32 v=99;
+         if(z.f.detector_calls==2){
+             C(z.r.genesis_set_position(0xEF0000,0xEF1000)==Mode::Local);
+             C(z.r.genesis_set_focus(0xEF0000,3)==Mode::Local);
+             z.r.genesis_detect(0xEE0000);
+             C(z.r.genesis_detector_actor(&v)==Mode::Local);C(v==z.f.session.sub0.address);
+             C(z.r.genesis_target_focus(0xEF0000,&v)==Mode::Local);C(v==3);
+         }else{
+             C(z.r.genesis_detector_actor(&v)==Mode::Stock);C(v==99);
+             C(z.r.genesis_target_focus(0xEF0000,&v)==Mode::Stock);C(v==99);
+         }
+     };
+     x.r.genesis_detect(0xEE0000);C(x.f.detector_calls==3);x.end();++scenarios;}
+    {Fixture x(7);x.detector_setup();
+     x.f.detector_observer=[](void* p,u32) noexcept {
+         auto& z=*static_cast<Fixture*>(p);if(z.f.detector_calls==1)return;
+         C(z.r.genesis_set_position(0xEF0000,0xEF1000)==Mode::Local);
+         C(z.r.genesis_set_position(0xEF0000,0xFFFFFFFF)==Mode::Hidden);
+         u32 v=99;C(z.r.genesis_detector_widget(&v)==Mode::Hidden);C(v==0);
+         C(!z.r.genesis_candidate(0xEF0000));
+         C(z.r.genesis_set_focus(0xEF0000,2)==Mode::Hidden);
+     };
+     x.r.genesis_detect(0xEE0000);C(x.f.detector_calls==2);C(x.r.lifecycle().state()!=LifeState::Live);
+     x.end();++scenarios;}
     {Fixture x(7);x.prepare();x.begin();constexpr u32 target=0xEF0000,dest=0xEF1000;
      x.f.m[target]=0x04DA8570;x.f.m[target+0x24]=1;x.f.m[target+0x10]=0x40400000;
      for(u32 i=0;i<4;++i)x.f.m[dest+i*4]=0xCCCCCCCC;

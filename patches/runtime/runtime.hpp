@@ -48,6 +48,13 @@ public:
     rev_genesis::TargetViews& genesis_target_views() noexcept {return target_views_;}
     Mode genesis_target_focus(u32 target,u32* out) noexcept;
     Mode genesis_target_position(u32 target,u32 destination) noexcept;
+    void genesis_detect(u32 manager) noexcept;
+    Mode genesis_detector_camera(u32 manager,u32* out) noexcept;
+    Mode genesis_detector_actor(u32* out) noexcept;
+    Mode genesis_detector_widget(u32* out) noexcept;
+    bool genesis_candidate(u32 target) noexcept;
+    Mode genesis_set_focus(u32 target,u32 value) noexcept;
+    Mode genesis_set_position(u32 target,u32 source) noexcept;
     Mode genesis_camera(u32 widget,u32 manager,u32* out) noexcept {
         return rev_genesis::camera(genesis_host(),host_.memory,widget,manager,out);
     }
@@ -67,6 +74,8 @@ private:
     u32 scanner_scope_=0;
     rev_genesis::ViewFrame scanner_frame_{};
     bool scanner_copy_failed_=false;
+    bool detector_busy_=false,detector_producing_=false;
+    Mode detector_mode() noexcept;
     bool scanner_begin(u32) noexcept;
     bool scanner_end(u32) noexcept;
     bool scanner_current() noexcept;

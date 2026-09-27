@@ -64,3 +64,9 @@ jobs:
           as --32 tests/genesis/target_consumers_abi.S -o "$RUNNER_TEMP/target-consumers-abi.o"
           ld -m elf_i386 "$RUNNER_TEMP/target-consumers.o" "$RUNNER_TEMP/target-consumers-abi.o" -o "$RUNNER_TEMP/target-consumers-abi"
           "$RUNNER_TEMP/target-consumers-abi"
+      - name: Detector scope and setter x86 ABI
+        run: |
+          as --32 patches/genesis/detector_gateways.S -o "$RUNNER_TEMP/detector-gates.o"
+          as --32 tests/genesis/detector_abi.S -o "$RUNNER_TEMP/detector-abi.o"
+          ld -m elf_i386 "$RUNNER_TEMP/detector-gates.o" "$RUNNER_TEMP/detector-abi.o" -o "$RUNNER_TEMP/detector-abi"
+          "$RUNNER_TEMP/detector-abi"

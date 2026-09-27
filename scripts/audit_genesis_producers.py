@@ -3,6 +3,16 @@ from pathlib import Path
 import argparse,json
 from audit_genesis_progress import Image
 WITNESSES=[
+    (0x0281F510,"558bec81eccc000000","Focus setter displaced prologue"),
+    (0x0281DDE0,"558bec81eccc000000","Position setter displaced prologue"),
+    (0x0281F542,"c20400","Focus setter ret4"),
+    (0x0281DE25,"c20400","Position setter ret4"),
+    (0x0281FB92,"837dec007505e9300c0000","Detector permits absent camera before locals are constructed"),
+    (0x028206F5,"e8795b36ff","Candidate scanner getter"),
+    (0x02820738,"e8365b36ff","Status scanner getter"),
+    (0x02820700,"83bde0fcffff007412","Candidate feed has scanner null guard"),
+    (0x02820743,"83bdd4fcffff007476","Status feed has scanner null guard"),
+    (0x0281FCD5,"6a046a00e82a0a39ff83c404","Shared filter keeps singleton index zero and bit four"),
     (0x0281F560,"558bec81eccc000000","Focus getter exact displaced prologue"),
     (0x02823220,"558bec81eccc000000","Position getter exact displaced prologue"),
     (0x0281F58F,"c3","Focus getter ret0"),
