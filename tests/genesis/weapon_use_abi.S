@@ -71,13 +71,13 @@ command_entry:
     stc
     call rev_genesis_weapon_command_gate
     nop
-    call model_getter
+    call sound_getter
     mov ecx,eax
-    call model_command
+    call sound_command
     jnc fail
     # Both paths arrive here with the pending arguments removed.
     ret
-model_getter:
+sound_getter:
     jnc fail
     cmp ecx,0xED1000
     jne fail
@@ -88,7 +88,7 @@ model_getter:
     inc dword ptr [getters]
     mov eax,0xED8000
     ret
-model_command:
+sound_command:
     cmp ecx,0xED8000
     jne fail
     cmp dword ptr [esp+4],0

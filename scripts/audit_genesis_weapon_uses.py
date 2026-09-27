@@ -4,7 +4,7 @@ from pathlib import Path
 from audit_hud_native_ops import Image
 
 # Two push imm8 arguments, MOV EAX,[EBP-8], then the six-byte retained load.
-# Getter has no stack arguments; each model command removes eight bytes.
+# Getter has no stack arguments; each sound command removes eight bytes.
 SITES=(
     (0x02B20FD0,'6a016a008b45f8','8b88fc020000e8c1b20eff8bc8e86a410cff'),
     (0x02B2144C,'6a046a008b45f8','8b88fc020000e845ae0eff8bc8e8b3c216ff'),
@@ -62,20 +62,32 @@ def audit(data):
         (0x02B20D23,'8b45f88b88fc020000518b5508528b4df8','reactivation wrapper arguments'),
         (0x02B20D39,'5f5e5b81c4cc000000','wrapper normal epilogue'),
         (0x02B20D4C,'c20400','wrapper ret4'),
-        (0x020F3476,'81c1c40e0000','weapon model member'),
-        (0x020F3494,'c3','model getter no-argument return'),
-        (0x020F3512,'8b45f88b00','model smart-reference pointer load'),
+        (0x020F3476,'81c1c40e0000','weapon sound member'),
+        (0x04E311B8,'301f3905','sound vtable complete-object locator'),
+        (0x05391F3C,'60964e05','sound RTTI type descriptor'),
+        (0x054E9668,'2e3f41567542696f536f756e644d6f74696f6e536540736f756e644067616d6540617070404000','uBioSoundMotionSe RTTI name'),
+        (0x02EE1FFE,'c700bc11e304','sound constructor vtable store'),
+        (0x027EA6AB,'6a106818010000','sound aligned allocation size 118'),
+        (0x027EA6C9,'8b8d0cfeffff','constructed sound allocation receiver'),
+        (0x027EA6D4,'898568fdffff','save constructed sound'),
+        (0x027EA6E6,'8b8568fdffff508b4df881c1c40e0000','assign sound to weapon EC4 reference'),
+        (0x020F3494,'c3','sound getter no-argument return'),
+        (0x020F3512,'8b45f88b00','sound smart-reference pointer load'),
         (0x020F352A,'c3','reference getter no-argument return'),
-        (0x02EE30BF,'c20800','first model command ret8'),
-        (0x02EE3771,'c20800','second model command ret8'),
+        (0x02EE30BF,'c20800','first sound command ret8'),
+        (0x02EE3771,'c20800','second sound command ret8'),
     ):exact(at,raw,label)
     for at,target,opcode in (
         (0x01C0C29C,0x020F3450,0xE9),(0x020F347C,0x01C561E9,0xE8),
+        (0x027EA6CF,0x01BFEB2E,0xE8),(0x01BFEB2E,0x02EE1FD0,0xE9),
+        (0x027EA6F6,0x01B92FE1,0xE8),(0x01B92FE1,0x027F5DD0,0xE9),
+        (0x02487316,0x01BA460B,0xE8),(0x01BA460B,0x02484CF0,0xE9),
+        (0x02484D16,0x01BDA67A,0xE8),(0x01BDA67A,0x0249D990,0xE9),
         (0x01C561E9,0x020F34B0,0xE9),(0x01BE514C,0x02EE3010,0xE9),
         (0x01C8D711,0x02EE36E0,0xE9),(0x02B20D34,0x01B9E86E,0xE8),
     ):exact(at,(bytes([opcode])+struct.pack('<i',target-at-5)).hex(),'native call or thunk')
     return {'status':'PASS_STATIC_EVIDENCE_ONLY','checks':count,'command_uses':len(SITES),
-            'reactivation_wrappers':1,'storage_pinned_through_callbacks':False,'gameplay_executed':False}
+            'retained_component':'app::game::sound::uBioSoundMotionSe','reactivation_wrappers':1,'storage_pinned_through_callbacks':False,'gameplay_executed':False}
 if __name__=='__main__':
     p=argparse.ArgumentParser(description=__doc__);p.add_argument('image',type=Path)
     print(json.dumps(audit(p.parse_args().image.read_bytes()),indent=2))

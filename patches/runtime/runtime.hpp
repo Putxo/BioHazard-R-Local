@@ -59,7 +59,7 @@ public:
     rev_genesis::EffectLifetime& genesis_effects() noexcept {return effects_;}
     rev_genesis::WeaponLifetime& genesis_weapons() noexcept {return weapons_;}
     bool genesis_weapon_retain(u32 widget,u32 weapon) noexcept;
-    bool genesis_weapon_use(u32 widget,bool model_required) noexcept;
+    bool genesis_weapon_use(u32 widget,bool sound_required) noexcept;
     bool genesis_effect_toggle(u32 widget,bool enabled) noexcept;
     rev_genesis::TargetViews& genesis_target_views() noexcept {return target_views_;}
     Mode genesis_target_focus(u32 target,u32* out) noexcept;
