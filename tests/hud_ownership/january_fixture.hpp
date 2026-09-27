@@ -31,6 +31,8 @@ struct Fake {
     u32 detector_calls=0;
     u32 removal_calls=0,removal_unit=0;
     bool removal_noop=false;
+    u32 notification_calls=0;
+    void (*notification_observer)(void*,u32) noexcept=nullptr;
     Lifecycle* life=nullptr;
     Fake(u32 count=LegacyWidgetKinds){
         if(!valid_widget_count(count))count=LegacyWidgetKinds;
@@ -91,6 +93,11 @@ struct Fake {
     }
     static void method0(void* c,u32 target,u32 self) noexcept {
         auto& f=*static_cast<Fake*>(c);f.events.push_back({target,self,0,0});
+        if(target==0x01C315EC){
+            ++f.notification_calls;
+            if(f.notification_observer)f.notification_observer(f.detector_context,self);
+            return;
+        }
         if(target==0x01BBECD1){
             ++f.detector_calls;
             if(f.detector_observer)f.detector_observer(f.detector_context,self);

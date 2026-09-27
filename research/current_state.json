@@ -2,9 +2,9 @@
   "schema_version": 4,
   "canonical_branch": "research/script-member-serial-validation",
   "checkpoint": {
-    "merged_pr": 38,
-    "merge_sha": "1fb102ad8ddbbbd9fbc57ddd84288971a8c91bc6",
-    "tested_head": "fad489876006b9ada5aae4255cfade6b7c5fe39f",
+    "merged_pr": 39,
+    "merge_sha": "b6e60e1fa0d28ed1e4259b4faeca52fc5d4e343c",
+    "tested_head": "620aeaab1411d9210865045392878b9137f63627",
     "ci": "21 workflows PASS"
   },
   "user_constraints": {
@@ -25,7 +25,7 @@
   },
   "runtime": {
     "composition_root": true,
-    "hud_menu_hook_count": 109,
+    "hud_menu_hook_count": 110,
     "local_views_use_native_immediate_draw": true,
     "action_loop_priority_per_member": true,
     "action_loop_stop_per_member": true,
@@ -60,7 +60,9 @@
     "genesis_target_view_native_gateways_connected": true,
     "genesis_target_producer_gateway_connected": true,
     "genesis_native_activation_connected": false,
-    "genesis_target_removal_reentrant_phase_supported": false
+    "genesis_target_removal_reentrant_phase_supported": false,
+    "genesis_detector_callback_scope_isolated": true,
+    "genesis_detector_callback_pair_deduplication": true
   },
   "pending": [
     "full HUD and interaction prompts",
@@ -89,6 +91,7 @@
     "docs/64-genesis-target-view-state.md",
     "docs/65-genesis-target-consumers.md",
     "docs/66-genesis-detector-routing.md",
-    "docs/67-genesis-target-removal.md"
+    "docs/67-genesis-target-removal.md",
+    "docs/68-genesis-world-notifications.md"
   ]
 }
