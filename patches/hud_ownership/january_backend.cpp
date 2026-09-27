@@ -9,6 +9,7 @@ constexpr JanuaryType Types[] = {
     {0x2B0,0x01B8DD52,0x01BB72E2,0x01C2CA29,0x01B98D2E,0x01C6E591,0x01BBEFAB,0x01BB9E75},
     {0x2B0,0x01C461C2,0x01BEA78C,0x01C490C5,0x01C3D28E,0x01C774C5,0x01BF295F,0x01BFF67D},
     {0x400,0x01B97C8A,0x01C802C8,0x01BED6A3,0x01C73AA5,0x01C7272C,0x01C54FB0,0x01C6E55F},
+    {0x2B0,0x01BFFD76,0x01B83C3F,0x01C2F97C,0x01C0937B,0x01C8C799,0x01BF295F,0x01C2D0E6},
 };
 constexpr u32 GetUnit = 0x01C8C27B, Contains = 0x0326AA90;
 struct Busy { bool& flag; explicit Busy(bool& f):flag(f){flag=true;} ~Busy(){flag=false;} };
@@ -69,6 +70,12 @@ bool JanuaryBackend::detached(u32 u,WidgetKind k) {
     const u32 found=calls_.contains(calls_.context,Contains,manager,u);
     if (found!=0) return fail(NativeFault::Attached);
     return true;
+}
+bool JanuaryBackend::scope_valid(u32 unit) noexcept {
+    ScopeResources current{},stock{};
+    return capture_scope(host_.memory,unit,&current) && same_scope(current,scope_owned_) &&
+        capture_scope(host_.memory,originals_[7],&stock) && same_scope(stock,scope_original_) &&
+        disjoint_scopes(current,stock);
 }
 bool JanuaryBackend::scanner_valid(u32 unit) noexcept {
     rev_genesis::Resources current{};
@@ -160,6 +167,8 @@ bool JanuaryBackend::configure(const u32 p[2],const u32 originals[WidgetKinds]) 
     }
     if(count_>=7 && !rev_genesis::capture_resources(host_.memory,originals[6],&scanner_original_))
         return fail(NativeFault::Resources);
+    if(count_>=8 && !capture_scope(host_.memory,originals[7],&scope_original_))
+        return fail(NativeFault::Resources);
     for(u32 i=0;i<2;++i) parents_[i]=p[i];
     for(u32 i=0;i<count_;++i) originals_[i]=originals[i];
     fault_=NativeFault::None; configured_=true; return true;
@@ -205,6 +214,8 @@ bool JanuaryBackend::init(u32 u,WidgetKind k) {
     if(k==WidgetKind::Scanner &&
         (!rev_genesis::capture_resources(host_.memory,u,&scanner_owned_) ||
          !rev_genesis::disjoint(scanner_owned_,scanner_original_)))return fail(NativeFault::Resources);
+    if(k==WidgetKind::Scope && (!capture_scope(host_.memory,u,&scope_owned_) ||
+       !scope_valid(u)))return fail(NativeFault::Resources);
     e.ready=true;return true;
 }
 bool JanuaryBackend::destroy(u32 u,WidgetKind k) {
@@ -214,6 +225,7 @@ bool JanuaryBackend::destroy(u32 u,WidgetKind k) {
     Busy lock(busy_);
     if (!allow(NativeOp::Destroy,k,u) || !targets(k) || !detached(u,k)) return false;
     if(k==WidgetKind::Scanner && !scanner_valid(u))return fail(NativeFault::Resources);
+    if(k==WidgetKind::Scope && !scope_valid(u))return fail(NativeFault::Resources);
     calls_.method1(calls_.context,january_type(k)->destroy,u,1);
     e={}; return true; // no memory read after scalar deleting destructor
 }
@@ -224,6 +236,7 @@ bool JanuaryBackend::phase(u32 u,WidgetKind k,u32 phase,u32 context) {
     Busy lock(busy_);
     if (!allow(NativeOp::Phase,k,u,phase,context) || !targets(k) || !detached(u,k)) return false;
     if(k==WidgetKind::Scanner && !scanner_valid(u))return fail(NativeFault::Resources);
+    if(k==WidgetKind::Scope && !scope_valid(u))return fail(NativeFault::Resources);
     if (k==WidgetKind::Damage && phase==8) {
         const Route route=owners_?owners_->resolve(u,k):Route{};
         if (route.mode!=Mode::Local || route.member!=1 || route.view!=1 ||
@@ -278,7 +291,8 @@ bool JanuaryBackend::phase(u32 u,WidgetKind k,u32 phase,u32 context) {
     // A phase can enqueue work or reenter the host; do not treat a changed
     // ownership/driver admission as a successful detached callback.
     if (!allow(NativeOp::Phase,k,u,phase,context) || !detached(u,k) ||
-        (k==WidgetKind::Scanner && !scanner_valid(u))) {
+        (k==WidgetKind::Scanner && !scanner_valid(u)) ||
+        (k==WidgetKind::Scope && !scope_valid(u))) {
         e.quarantine=true; return false;
     }
     return true;

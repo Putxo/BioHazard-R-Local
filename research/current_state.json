@@ -2,9 +2,9 @@
   "schema_version": 4,
   "canonical_branch": "research/script-member-serial-validation",
   "checkpoint": {
-    "merged_pr": 41,
-    "merge_sha": "96e26d20f346d7096b8c0d039a4c4e3b6737540b",
-    "tested_head": "4cbc7c04fdc5eb0fb8bf9cb2c6640cf7954b584d",
+    "merged_pr": 42,
+    "merge_sha": "04ac45ba60ee6882f1662d181ddc76053c610aa7",
+    "tested_head": "925bc0fcb330dec2a12b58234da3be54f5458da7",
     "ci": "20 applicable workflows PASS"
   },
   "user_constraints": {
@@ -25,7 +25,7 @@
   },
   "runtime": {
     "composition_root": true,
-    "hud_menu_hook_count": 111,
+    "hud_menu_hook_count": 112,
     "local_views_use_native_immediate_draw": true,
     "action_loop_priority_per_member": true,
     "action_loop_stop_per_member": true,
@@ -41,7 +41,8 @@
       "SubEquipment",
       "Damage",
       "Heal",
-      "Scanner"
+      "Scanner",
+      "Scope"
     ],
     "single_pause": true,
     "menu_owner_pad1": true,
@@ -65,7 +66,9 @@
     "genesis_detector_callback_pair_deduplication": true,
     "genesis_retained_weapon_inventory_guard": true,
     "genesis_weapon_lifetime_pinned": false,
-    "aim_secondary_camera_visibility": true
+    "aim_secondary_camera_visibility": true,
+    "scope_actor_and_resources_connected": true,
+    "scope_activation_connected": false
   },
   "pending": [
     "full HUD and interaction prompts",
@@ -97,6 +100,7 @@
     "docs/67-genesis-target-removal.md",
     "docs/68-genesis-world-notifications.md",
     "docs/69-genesis-equipped-weapon.md",
-    "docs/70-aim-secondary-visibility.md"
+    "docs/70-aim-secondary-visibility.md",
+    "docs/71-scope-widget.md"
   ]
 }

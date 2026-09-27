@@ -19,7 +19,7 @@ jobs:
         run: |
           FLAGS="-std=c++17 -O1 -g -Wall -Wextra -Werror"
           if [ "${{ matrix.mode }}" = sanitized ]; then FLAGS="$FLAGS -fsanitize=address,undefined -fno-omit-frame-pointer"; fi
-          g++ $FLAGS -Ipatches/hud_ownership             patches/hud_ownership/{ownership,lifecycle,january_backend,january_admission,allocation_ledger,lifetime_source,manager_driver,pipeline_clock,structural_window,structural_coordinator}.cpp             patches/genesis/resources.cpp tests/hud_ownership/structural_coordinator_tests.cpp             -o "$RUNNER_TEMP/coordinator"
+          g++ $FLAGS -Ipatches/hud_ownership             patches/hud_ownership/{ownership,lifecycle,january_backend,scope_resources,january_admission,allocation_ledger,lifetime_source,manager_driver,pipeline_clock,structural_window,structural_coordinator}.cpp             patches/genesis/resources.cpp tests/hud_ownership/structural_coordinator_tests.cpp             -o "$RUNNER_TEMP/coordinator"
           "$RUNNER_TEMP/coordinator"
       - name: Source contract
         run: python tests/hud_ownership/test_structural_coordinator.py

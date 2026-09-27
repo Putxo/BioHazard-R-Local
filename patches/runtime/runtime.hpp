@@ -61,6 +61,7 @@ public:
     void genesis_remove_target(u32 target) noexcept;
     bool genesis_notify(u32 target,u32 world_owner,u32 delegate) noexcept;
     void aim_visibility(u32 actor,u32 hide) noexcept;
+    Mode scope_actor(u32 widget,u32* out) noexcept;
     Mode genesis_camera(u32 widget,u32 manager,u32* out) noexcept {
         return rev_genesis::camera(genesis_host(),host_.memory,widget,manager,out);
     }

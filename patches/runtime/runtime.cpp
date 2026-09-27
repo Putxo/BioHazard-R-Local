@@ -60,6 +60,17 @@ rev_genesis::TargetViewHost Runtime::target_view_host() noexcept {
         *out={owner,stamp.frame};return Mode::Local;
     }};
 }
+Mode Runtime::scope_actor(u32 widget,u32* out) noexcept {
+    const auto route=registry_.resolve(widget,WidgetKind::Scope);
+    if(route.mode==Mode::Stock)return Mode::Stock;
+    if(out)*out=0;
+    auto h=action_host();rev_action::Frame f{};
+    if(!out || count_<8 || lifecycle_.state()!=LifeState::Live ||
+       widget!=lifecycle_.unit(7) || route.mode!=Mode::Local || route.member!=1 || route.view!=1 ||
+       !gate().unit(this,WidgetKind::Scope,widget) ||
+       h.snapshot(h.memory.context,&f)!=rev_action::SnapshotMode::Local || route.actor!=f.session.sub0.address)return Mode::Hidden;
+    *out=route.actor;return Mode::Local;
+}
 void Runtime::aim_visibility(u32 actor,u32 hide) noexcept {
     auto vh=target_view_host();
     if(!vh.on_thread(vh.context))return;
@@ -459,4 +470,7 @@ extern "C" unsigned int rev_genesis_notify(unsigned int target,unsigned int owne
 }
 extern "C" void rev_aim_visibility(unsigned int actor,unsigned int hide) noexcept {
     if(rev_runtime::HealSink)rev_runtime::HealSink->aim_visibility(actor,hide);
+}
+extern "C" unsigned int rev_scope_actor(unsigned int widget,unsigned int* out) noexcept {
+    return rev_runtime::HealSink?static_cast<unsigned int>(rev_runtime::HealSink->scope_actor(widget,out)):0;
 }

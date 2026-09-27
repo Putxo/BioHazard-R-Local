@@ -2,7 +2,7 @@
 
 Actualización: 27/09/2026. Rama canónica: research/script-member-serial-validation.
 
-PR41 integrado: 96e26d20f346d7096b8c0d039a4c4e3b6737540b, 20 workflows aplicables PASS.
+PR42 integrado: 04ac45ba60ee6882f1662d181ddc76053c610aa7, 20 workflows aplicables PASS.
 
 Leer CURRENT_STATUS.md, docs/50-runtime-composition.md,
 
@@ -12,7 +12,7 @@ Leer también docs/54-action-icon-view-routing.md, docs/55-action-priority-loop.
 
 y docs/56-local-draw-scheduling.md. Prioridad y parada del bucle por miembro;
 
-selector de dibujo inmediato local integrado: 111 hooks. No confundirlo
+selector de dibujo inmediato local integrado: 112 hooks. No confundirlo
 
 con cobertura completa de ActionCommand ni con validación jugando.
 
@@ -65,3 +65,5 @@ Genesis: [notificaciones del mundo y reentrada del detector](docs/68-genesis-wor
 Genesis: [arma equipada, retención y límites de activación](docs/69-genesis-equipped-weapon.md).
 
 Apuntar: [visibilidad de personaje y arma en la segunda cámara](docs/70-aim-secondary-visibility.md).
+
+Visor de arma: [octavo widget, recursos y actor propios](docs/71-scope-widget.md).

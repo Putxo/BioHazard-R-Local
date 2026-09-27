@@ -18,15 +18,21 @@ jobs:
         run: |
           FLAGS="-std=c++17 -O1 -g -Wall -Wextra -Werror"
           if [ "${{ matrix.mode }}" = sanitized ]; then FLAGS="$FLAGS -fsanitize=address,undefined -fno-omit-frame-pointer"; fi
-          g++ $FLAGS -Ipatches/hud_ownership patches/hud_ownership/{ownership,lifecycle,january_backend,january_calls}.cpp patches/genesis/resources.cpp tests/hud_ownership/january_tests.cpp -o "$RUNNER_TEMP/january-tests"
+          g++ $FLAGS -Ipatches/hud_ownership patches/hud_ownership/{ownership,lifecycle,january_backend,scope_resources,january_calls}.cpp patches/genesis/resources.cpp tests/hud_ownership/january_tests.cpp -o "$RUNNER_TEMP/january-tests"
           "$RUNNER_TEMP/january-tests"
           g++ $FLAGS -Ipatches/hud_ownership patches/hud_ownership/{ownership,lifecycle}.cpp tests/hud_ownership/lifecycle_tests.cpp -o "$RUNNER_TEMP/lifecycle-regression"
           "$RUNNER_TEMP/lifecycle-regression"
       - name: Read-only audit tests; private original test explicitly skipped
         run: python tests/hud_ownership/test_native_audit.py
+      - name: Independent scope resources
+        run: |
+          FLAGS="-std=c++17 -O1 -g -Wall -Wextra -Werror"
+          if [ "${{ matrix.mode }}" = sanitized ]; then FLAGS="$FLAGS -fsanitize=address,undefined -fno-omit-frame-pointer"; fi
+          g++ $FLAGS patches/hud_ownership/{ownership,lifecycle,scope_resources}.cpp tests/hud_ownership/scope_resources_tests.cpp -o "$RUNNER_TEMP/scope-resources"
+          "$RUNNER_TEMP/scope-resources"
       - name: Compile freestanding i386 backend sources without a game image
         run: |
-          for f in patches/hud_ownership/{ownership,lifecycle,january_backend,january_calls}.cpp; do
+          for f in patches/hud_ownership/{ownership,lifecycle,january_backend,scope_resources,january_calls}.cpp; do
             g++ -m32 -std=c++17 -Wall -Wextra -Werror -ffreestanding -fno-exceptions -fno-rtti -fsyntax-only "$f"
           done
   native-call-abi:
@@ -48,3 +54,9 @@ jobs:
           as --32 tests/hud_ownership/damage_abi.S -o "$RUNNER_TEMP/damage-cases.o"
           ld -m elf_i386 "$RUNNER_TEMP/damage-feed.o" "$RUNNER_TEMP/damage-cases.o" -o "$RUNNER_TEMP/damage-abi"
           "$RUNNER_TEMP/damage-abi"
+      - name: Scope actor routing and revoked-owner epilogue ABI
+        run: |
+          as --32 patches/hud_ownership/scope_gateway.S -o "$RUNNER_TEMP/scope-gate.o"
+          as --32 tests/hud_ownership/scope_abi.S -o "$RUNNER_TEMP/scope-abi.o"
+          ld -m elf_i386 "$RUNNER_TEMP/scope-gate.o" "$RUNNER_TEMP/scope-abi.o" -o "$RUNNER_TEMP/scope-abi"
+          "$RUNNER_TEMP/scope-abi"
