@@ -93,6 +93,10 @@ def hook_sites():
                        (0x0293559E,0x04DB833C,'noise_born'),(0x02935816,0x04DB833C,'noise_dying'),
                        (0x037DD309,0x04F9A7F4,'outline_born'),(0x037DD4A2,0x04F9A7F4,'outline_dying')):
         out.append((va,b'\xc7\x00'+struct.pack('<I',vt),'rev_genesis_effect_'+name+'_gate',0xE9))
+    for va,old,name in ((0x02933B20,'558bec81ece4000000','filter'),
+                        (0x02935660,'558bec81eccc000000','noise'),
+                        (0x037DE560,'538bdc83ec08','outline')):
+        out.append((va,bytes.fromhex(old),'rev_genesis_'+name+'_draw_gate',0xE9))
     out.append((0x0326862E,rel(0x0326862E,0x01BCD42A),'rev_runtime_draw_schedule_gate',0xE8))
     for va in (0x03268708,0x03268918):
         out.append((va,rel(va,0x01BE2D20),'rev_action_mask_gate',0xE8))

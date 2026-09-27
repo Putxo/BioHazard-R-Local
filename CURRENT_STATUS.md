@@ -1,7 +1,7 @@
 # Estado actual del cooperativo local
 
 27/09/2026. Rama técnica: `research/script-member-serial-validation`.
-PR50 integrado: `38380faeb6b8fdec31f8a06ef297b8da4dabb14a`, 21 workflows PASS.
+PR51 integrado: `326f9079ff63886a33c1f86f6851ca18d717105a`, 20 workflows PASS.
 
 **El cooperativo completo sigue en desarrollo. El juego no se ha ejecutado.**
 El propietario prohíbe abrirlo y hará personalmente las pruebas jugando.
@@ -20,7 +20,7 @@ El propietario prohíbe abrirlo y hará personalmente las pruebas jugando.
 | Guiones | Dos callbacks PcsSub con owner+serial; cobertura QTE parcial |
 | Rescate | Routing parcial existente; muerte/checkpoints pendientes |
 
-La compilación acumulativa nueva conecta 131 hooks HUD/menú/ActionIcon sobre la base de
+La compilación acumulativa nueva conecta 134 hooks HUD/menú/ActionIcon sobre la base de
 input, cámara, pickup, puertas y serial de guion. Se ha generado y verificado
 estáticamente una copia local de trabajo. No se ha instalado en Steam ni abierto.
 No constituye una entrega final.
@@ -101,3 +101,5 @@ Genesis: [pertenencia de auxiliares y máscaras View1](docs/77-genesis-effect-ow
 Genesis: [retirada de los tres auxiliares antes del Scanner](docs/78-genesis-effect-retirement.md).
 
 Genesis: [filtro de efectos por vista en sUnit](docs/79-genesis-effect-views.md).
+
+Genesis: [contexto nativo de dibujo](docs/80-genesis-effect-draw-scope.md) y [gestores compartidos de activación](docs/81-genesis-activation-globals.md).
