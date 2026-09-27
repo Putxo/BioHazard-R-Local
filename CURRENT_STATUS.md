@@ -1,7 +1,7 @@
 # Estado actual del cooperativo local
 
 27/09/2026. Rama técnica: `research/script-member-serial-validation`.
-PR30 integrado: `ace0e0fd993eb4bf562e2f439be87a3f861cbc41`, 20 workflows PASS.
+PR31 integrado: `1bada8feab8abafc2ca1fc17abb430a2c771dd3a`, 20 workflows PASS.
 
 **El cooperativo completo sigue en desarrollo. El juego no se ha ejecutado.**
 El propietario prohíbe abrirlo y hará personalmente las pruebas jugando.
@@ -63,3 +63,5 @@ Indicador de daño separado: [alimentación por actor](docs/57-damage-hud.md).
 Genesis: [progreso global, productores y recompensa](docs/58-genesis-ownership-boundaries.md).
 
 Curación por actor: [seis productores y cola por lifetime](docs/59-heal-hud.md).
+
+Genesis: [contador fuente y gateways; integración pendiente](docs/60-genesis-progress.md).
