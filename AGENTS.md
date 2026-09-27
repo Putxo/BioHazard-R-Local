@@ -2,7 +2,7 @@
 
 Actualización: 27/09/2026. Rama canónica: research/script-member-serial-validation.
 
-PR49 integrado: 2ee12d6a327eeb739f04d3be1b73e980c2dcbc12, 21 workflows PASS.
+PR50 integrado: 38380faeb6b8fdec31f8a06ef297b8da4dabb14a, 21 workflows PASS.
 
 Leer CURRENT_STATUS.md, docs/50-runtime-composition.md,
 
@@ -81,3 +81,5 @@ Genesis: [vida observada de los tres efectos auxiliares](docs/76-genesis-effect-
 Genesis: [pertenencia de auxiliares y máscaras View1](docs/77-genesis-effect-ownership.md).
 
 Genesis: [retirada de los tres auxiliares antes del Scanner](docs/78-genesis-effect-retirement.md).
+
+Genesis: [filtro de efectos por vista en sUnit](docs/79-genesis-effect-views.md).

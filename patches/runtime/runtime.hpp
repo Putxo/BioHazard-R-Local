@@ -72,6 +72,7 @@ public:
     void aim_visibility(u32 actor,u32 hide,u32 flag=0) noexcept;
     Mode scope_actor(u32 widget,u32* out) noexcept;
     u32 genesis_filter_loaded(u32 widget,u32 resource) noexcept;
+    u32 unit_mask(u32 unit,u32 original) noexcept;
     Mode genesis_camera(u32 widget,u32 manager,u32* out) noexcept {
         return rev_genesis::camera(genesis_host(),host_.memory,widget,manager,out);
     }
@@ -88,6 +89,7 @@ private:
     rev_genesis::TargetLifetime targets_;
     rev_genesis::EffectLifetime effects_;
     rev_genesis::Effects effects_owned_{},effects_stock_{};
+    bool effect_mask_busy_=false;
     bool scanner_effects(u32 unit,u32 stock,bool prepare) noexcept;
     bool scanner_retire(u32 unit,u32 stock) noexcept;
     rev_genesis::TargetViews target_views_;

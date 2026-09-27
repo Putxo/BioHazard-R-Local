@@ -61,8 +61,8 @@ rev_action_stock_mask:
     xor ecx,ecx
     mov eax,1
     ret
-.global rev_action_mask
-rev_action_mask:
+.global rev_runtime_unit_mask
+rev_runtime_unit_mask:
     cmp dword ptr [esp+4],0xABCD5000
     jne fail
     cmp dword ptr [esp+8],1
