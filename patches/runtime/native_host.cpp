@@ -94,6 +94,7 @@ extern "C" u32 rev_runtime_initialize() noexcept {
     h.aim_weapon_hidden=aim_weapon_hidden;
     h.weapon_class=weapon_class;
     h.scope_activate=scope_activate;
+    h.filter_copy=rev_genesis::january_filter_copy_host(h.memory);
     auto* r=new(storage) rev_runtime::Runtime(rev_hud::registry(),h,rev_hud::WidgetKinds);
     if(!r->start() || !r->bind()){accepted=false;return 0;}
     return 1;

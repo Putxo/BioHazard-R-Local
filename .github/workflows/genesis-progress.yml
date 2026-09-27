@@ -6,6 +6,23 @@ on:
 permissions:
   contents: read
 jobs:
+  filter-copy:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        mode: [native, sanitized]
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Private mutable filter resources and failure paths
+        run: |
+          FLAGS="-std=c++17 -O1 -g -Wall -Wextra -Werror"
+          if [ "${{ matrix.mode }}" = sanitized ]; then FLAGS="$FLAGS -fsanitize=address,undefined -fno-omit-frame-pointer"; fi
+          g++ $FLAGS patches/genesis/filter_resource.cpp tests/genesis/filter_resource_tests.cpp -o "$RUNNER_TEMP/filter-resource"
+          "$RUNNER_TEMP/filter-resource"
+          as --32 patches/genesis/filter_gateway.S -o "$RUNNER_TEMP/filter-gate.o"
+          as --32 tests/genesis/filter_abi.S -o "$RUNNER_TEMP/filter-abi.o"
+          ld -m elf_i386 "$RUNNER_TEMP/filter-gate.o" "$RUNNER_TEMP/filter-abi.o" -o "$RUNNER_TEMP/filter-abi"
+          "$RUNNER_TEMP/filter-abi"
   completion-abi:
     runs-on: ubuntu-latest
     steps:

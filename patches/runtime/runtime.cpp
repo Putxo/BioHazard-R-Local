@@ -61,6 +61,22 @@ rev_genesis::TargetViewHost Runtime::target_view_host() noexcept {
         *out={owner,stamp.frame};return Mode::Local;
     }};
 }
+u32 Runtime::genesis_filter_loaded(u32 widget,u32 resource) noexcept {
+    if(!widget || widget!=backend_.retained(WidgetKind::Scanner))return resource;
+    auto h=target_view_host();
+    if(!h.on_thread(h.context))return 0;
+    const bool admitted=lifecycle_.state()==LifeState::Preparing && backend_.scanner_loading(widget) && host_.image &&
+        host_.image(host_.memory.context) && host_.native.method0;
+    const u32 copy=admitted && resource?rev_genesis::copy_filter_resource(host_.filter_copy,resource):0;
+    // The loader has returned one cached reference. It must never reach
+    // uFilterSet::setResource on J2, which initializes every mutable child.
+    if(resource && host_.native.method0)host_.native.method0(host_.native.context,0x01C3C159,resource);
+    if(!copy || lifecycle_.state()!=LifeState::Preparing || !backend_.scanner_loading(widget) ||
+       !host_.image(host_.memory.context)) {
+        backend_.quarantine_scanner();return 0;
+    }
+    return copy;
+}
 Mode Runtime::scope_actor(u32 widget,u32* out) noexcept {
     const auto route=registry_.resolve(widget,WidgetKind::Scope);
     if(route.mode==Mode::Stock)return Mode::Stock;
@@ -573,4 +589,7 @@ extern "C" void rev_aim_visibility(unsigned int actor,unsigned int hide,unsigned
 }
 extern "C" unsigned int rev_scope_actor(unsigned int widget,unsigned int* out) noexcept {
     return rev_runtime::HealSink?static_cast<unsigned int>(rev_runtime::HealSink->scope_actor(widget,out)):0;
+}
+extern "C" unsigned int rev_genesis_filter_loaded(unsigned int widget,unsigned int resource) noexcept {
+    return rev_runtime::HealSink?rev_runtime::HealSink->genesis_filter_loaded(widget,resource):resource;
 }

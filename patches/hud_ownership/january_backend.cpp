@@ -215,14 +215,22 @@ u32 JanuaryBackend::create(WidgetKind k) {
     if (!allow(NativeOp::Structural,k,u) || !detached(u,k)) return 0;
     e.quarantine=false;return u;
 }
+bool JanuaryBackend::scanner_loading(u32 unit) noexcept {
+    return unit && count_>=7 && busy_ && scanner_initializing_==unit &&
+        entries_[6].unit==unit && entries_[6].constructed && !entries_[6].ready &&
+        !entries_[6].quarantine && allow(NativeOp::Initialize,WidgetKind::Scanner,unit) &&
+        targets(WidgetKind::Scanner) && detached(unit,WidgetKind::Scanner);
+}
 bool JanuaryBackend::init(u32 u,WidgetKind k) {
     if (busy_ || !january_type(k)) return fail(NativeFault::Reentrant);
     auto& e=entries_[static_cast<u32>(k)];
     if (!u || u!=e.unit || !e.constructed || e.quarantine || e.ready) return fail(NativeFault::Layout);
     Busy lock(busy_);
     if (!allow(NativeOp::Initialize,k,u) || !targets(k) || !detached(u,k)) return false;
+    if(k==WidgetKind::Scanner)scanner_initializing_=u;
     calls_.method0(calls_.context,january_type(k)->initialize,u); // void, EAX ignored
-    if (!allow(NativeOp::Initialize,k,u) || !detached(u,k)) { e.quarantine=true;return false; }
+    scanner_initializing_=0;
+    if (e.quarantine || !allow(NativeOp::Initialize,k,u) || !detached(u,k)) { e.quarantine=true;return false; }
     GuiTree tree{};
     if (!capture_tree(host_.memory,u,k,&tree)) return fail(NativeFault::Resources);
     if(k==WidgetKind::Scanner &&

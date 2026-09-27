@@ -33,7 +33,9 @@ struct Fake {
     bool removal_noop=false;
     u32 completion_calls=0;
     void (*completion_observer)(void*,u32) noexcept=nullptr;
-    u32 notification_calls=0;
+    u32 notification_calls=0,resource_releases=0;
+    void* init_observer_context=nullptr;
+    void (*init_observer)(void*,u32) noexcept=nullptr;
     void (*notification_observer)(void*,u32) noexcept=nullptr;
     Lifecycle* life=nullptr;
     Fake(u32 count=LegacyWidgetKinds){
@@ -101,6 +103,7 @@ struct Fake {
     }
     static void method0(void* c,u32 target,u32 self) noexcept {
         auto& f=*static_cast<Fake*>(c);f.events.push_back({target,self,0,0});
+        if(target==0x01C3C159){++f.resource_releases;return;}
         if(target==0x01C7F35A || target==0x01C359C1 || target==0x01C392BF || target==0x01C19CA8 || target==0x01B880C8){
             ++f.completion_calls;
             if(f.completion_observer)f.completion_observer(f.detector_context,self);
@@ -121,6 +124,7 @@ struct Fake {
         if(target==0x01C88B6C){C(k==WidgetKind::Heal);++f.heal_calls;f.heal_unit=self;}
         else if(target==t->initialize){
             ++f.init_count;if(static_cast<int>(i)!=f.no_init)f.tree(self,k);
+            if(k==WidgetKind::Scanner && f.init_observer)f.init_observer(f.init_observer_context,self);
             if(f.alias_tree)f.m[self+0xF8]=f.m[f.original[0]+0xF8];
             if(f.stop_in_init && f.life)f.life->stop();
         }else{
