@@ -17,7 +17,9 @@ struct F {
     }
     static bool read(void* p,u32 a,u32* v) noexcept {
         auto& f=*static_cast<F*>(p); auto i=f.m.find(a);
-        if(i==f.m.end())return false;*v=i->second;return true;
+        if(i==f.m.end()) return false;
+        *v=i->second;
+        return true;
     }
     static u32 active_cb(void* p) noexcept {return static_cast<F*>(p)->active;}
     static u32 sub_cb(void* p) noexcept {return static_cast<F*>(p)->sub;}
