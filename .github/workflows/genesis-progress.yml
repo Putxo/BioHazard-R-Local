@@ -6,6 +6,16 @@ on:
 permissions:
   contents: read
 jobs:
+  completion-abi:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Target completion and aligned native frame exit
+        run: |
+          as --32 patches/genesis/completion_gateway.S -o "$RUNNER_TEMP/completion-gate.o"
+          as --32 tests/genesis/completion_abi.S -o "$RUNNER_TEMP/completion-abi.o"
+          ld -m elf_i386 "$RUNNER_TEMP/completion-gate.o" "$RUNNER_TEMP/completion-abi.o" -o "$RUNNER_TEMP/completion-abi"
+          "$RUNNER_TEMP/completion-abi"
   counter:
     runs-on: ubuntu-latest
     strategy:

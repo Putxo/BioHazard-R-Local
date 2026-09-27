@@ -173,7 +173,7 @@ bool Runtime::scanner_begin(u32 widget) noexcept {
     if(!h.on_thread(h.context) || !targets_.healthy() || scanner_scope_ || !gate().unit(this,WidgetKind::Scanner,widget))return false;
     rev_genesis::ViewFrame f{};
     if(h.resolve(h.context,widget,&f)!=Mode::Local || !scanner_weapon_current(widget))return false;
-    scanner_scope_=widget;scanner_frame_=f;scanner_copy_failed_=false;return true;
+    scanner_scope_=widget;scanner_frame_=f;scanner_copy_failed_=false;scanner_abort_=0;return true;
 }
 bool Runtime::scanner_current() noexcept {
     auto h=target_view_host();rev_genesis::ViewFrame f{};
@@ -191,7 +191,7 @@ bool Runtime::scanner_end(u32 widget) noexcept {
     auto h=target_view_host();
     if(!h.on_thread(h.context))return false;
     const bool ok=widget==scanner_scope_ && !scanner_copy_failed_ && scanner_current() && scanner_weapon_current(widget);
-    scanner_scope_=0;scanner_frame_={};scanner_copy_failed_=false;return ok;
+    scanner_scope_=0;scanner_frame_={};scanner_copy_failed_=false;scanner_abort_=0;return ok;
 }
 Mode Runtime::scanner_sample(u32 target,rev_genesis::ViewSample* out) noexcept {
     auto h=target_view_host();
@@ -318,10 +318,56 @@ void Runtime::genesis_remove_target(u32 target) noexcept {
     // The earlier lifetime observer poisons admission for off-thread deaths.
     // Never access owner-thread clone state from that thread.
     if(!h.on_thread(h.context))return;
+    if(completion_busy_)completion_removed_=true;
     if(!host_.image || !host_.image(host_.memory.context) ||
        !backend_.scanner_remove_target(host_.memory,target)){
         backend_.quarantine_scanner();lifecycle_.stop();scanner_copy_failed_=true;
     }
+}
+Mode Runtime::genesis_complete(u32 widget,u32 target) noexcept {
+    auto vh=target_view_host();
+    if(!vh.on_thread(vh.context))return Mode::Stock;
+    const auto route=registry_.resolve(widget,WidgetKind::Scanner);
+    if(route.mode==Mode::Stock)return Mode::Stock;
+    const auto reject=[&]() noexcept {
+        scanner_abort_=widget;
+        backend_.quarantine_scanner();scanner_copy_failed_=true;lifecycle_.stop();return Mode::Hidden;
+    };
+    if(route.mode!=Mode::Local || completion_busy_ || detector_producing_ ||
+       widget!=scanner_scope_ || !scanner_current() || !scanner_weapon_current(widget) ||
+       !host_.native.method0)return reject();
+    const auto key=targets_.capture(target);u32 vt=0,method=0,owner=0;
+    if(target>Invalid-11 || !targets_.live(key) || !word(target,vt) || !word(target+8,owner) || !owner)return reject();
+    constexpr u32 vtables[]={0x04DA8570,0x04DA8594,0x04DA85B8,0x04DA85DC,0x04DA8600};
+    constexpr u32 methods[]={0x01C7F35A,0x01C359C1,0x01C392BF,0x01C19CA8,0x01B880C8};
+    bool known=false;
+    for(u32 i=0;i<5;++i)if(vt==vtables[i] && word(vt+0x14,method) && method==methods[i])known=true;
+    rev_genesis::Collections collection{};bool listed=false;
+    if(!known || !rev_genesis::capture_collections(host_.memory,widget,&collection))return reject();
+    for(u32 value:collection.targets)if(value==target)listed=true;
+    if(!listed || !backend_.scanner_completion_begin(widget))return reject();
+    const auto frame=scanner_frame_;const bool failed=scanner_copy_failed_;
+    completion_busy_=true;completion_removed_=false;
+    // World completion must not inherit per-view target getter overrides.
+    scanner_scope_=0;scanner_frame_={};scanner_copy_failed_=false;
+    host_.native.method0(host_.native.context,method,target);
+    const bool removed=completion_removed_;
+    completion_busy_=false;completion_removed_=false;
+    scanner_scope_=widget;scanner_frame_=frame;scanner_copy_failed_=scanner_copy_failed_ || failed;
+    const bool ended=backend_.scanner_completion_end(widget);
+    if(!ended || !targets_.healthy() || scanner_copy_failed_ || !scanner_current() || !scanner_weapon_current(widget) ||
+       (!removed && !targets_.live(key)))return reject();
+    if(targets_.live(key)) {
+        u32 next_vt=0,next_owner=0;
+        if(!word(target,next_vt) || next_vt!=vt || !word(target+8,next_owner) || next_owner!=owner)return reject();
+    }
+    // A removed list node may still be cached in the native caller's frame.
+    // The gateway abandons that frame through its original epilogue.
+    if(removed)scanner_abort_=widget;
+    return removed?Mode::Hidden:Mode::Local;
+}
+bool Runtime::genesis_scan_aborted(u32 widget) noexcept {
+    auto h=target_view_host();return h.on_thread(h.context) && widget && widget==scanner_abort_;
 }
 bool Runtime::genesis_notify(u32 target,u32 world_owner,u32 delegate) noexcept {
     auto h=target_view_host();
@@ -509,6 +555,12 @@ extern "C" unsigned int rev_genesis_set_focus(unsigned int target,unsigned int v
 }
 extern "C" unsigned int rev_genesis_set_position(unsigned int target,unsigned int source) noexcept {
     return rev_runtime::HealSink?static_cast<unsigned int>(rev_runtime::HealSink->genesis_set_position(target,source)):0;
+}
+extern "C" unsigned int rev_genesis_complete(unsigned int widget,unsigned int target) noexcept {
+    return rev_runtime::HealSink?static_cast<unsigned int>(rev_runtime::HealSink->genesis_complete(widget,target)):0;
+}
+extern "C" unsigned int rev_genesis_scan_aborted(unsigned int widget) noexcept {
+    return rev_runtime::HealSink && rev_runtime::HealSink->genesis_scan_aborted(widget)?1:0;
 }
 extern "C" void rev_genesis_remove_target(unsigned int target) noexcept {
     if(rev_runtime::HealSink)rev_runtime::HealSink->genesis_remove_target(target);

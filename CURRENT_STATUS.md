@@ -1,7 +1,7 @@
 # Estado actual del cooperativo local
 
 27/09/2026. Rama técnica: `research/script-member-serial-validation`.
-PR43 integrado: `a4f0b02c0fd0d36a072ba590c5f1bc3858538f7f`, 21 workflows PASS.
+PR44 integrado: `d64f55a207a023d8c42fc74e4efaf99207ddea44`, 21 workflows PASS.
 
 **El cooperativo completo sigue en desarrollo. El juego no se ha ejecutado.**
 El propietario prohíbe abrirlo y hará personalmente las pruebas jugando.
@@ -20,7 +20,7 @@ El propietario prohíbe abrirlo y hará personalmente las pruebas jugando.
 | Guiones | Dos callbacks PcsSub con owner+serial; cobertura QTE parcial |
 | Rescate | Routing parcial existente; muerte/checkpoints pendientes |
 
-La compilación acumulativa nueva conecta 112 hooks HUD/menú/ActionIcon sobre la base de
+La compilación acumulativa nueva conecta 115 hooks HUD/menú/ActionIcon sobre la base de
 input, cámara, pickup, puertas y serial de guion. Se ha generado y verificado
 estáticamente una copia local de trabajo. No se ha instalado en Steam ni abierto.
 No constituye una entrega final.
@@ -87,3 +87,5 @@ Apuntar: [visibilidad de personaje y arma en la segunda cámara](docs/70-aim-sec
 Visor de arma: [octavo widget, recursos y actor propios](docs/71-scope-widget.md).
 
 Visor de arma: [apertura y cierre al apuntar con J2](docs/72-scope-aim-events.md).
+
+Genesis: [retirada durante la notificación de fin de escaneo](docs/73-genesis-completion-boundary.md).

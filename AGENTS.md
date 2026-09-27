@@ -2,7 +2,7 @@
 
 Actualización: 27/09/2026. Rama canónica: research/script-member-serial-validation.
 
-PR43 integrado: a4f0b02c0fd0d36a072ba590c5f1bc3858538f7f, 21 workflows PASS.
+PR44 integrado: d64f55a207a023d8c42fc74e4efaf99207ddea44, 21 workflows PASS.
 
 Leer CURRENT_STATUS.md, docs/50-runtime-composition.md,
 
@@ -12,7 +12,7 @@ Leer también docs/54-action-icon-view-routing.md, docs/55-action-priority-loop.
 
 y docs/56-local-draw-scheduling.md. Prioridad y parada del bucle por miembro;
 
-selector de dibujo inmediato local integrado: 112 hooks. No confundirlo
+selector de dibujo inmediato local integrado: 115 hooks. No confundirlo
 
 con cobertura completa de ActionCommand ni con validación jugando.
 
@@ -69,3 +69,5 @@ Apuntar: [visibilidad de personaje y arma en la segunda cámara](docs/70-aim-sec
 Visor de arma: [octavo widget, recursos y actor propios](docs/71-scope-widget.md).
 
 Visor de arma: [apertura y cierre al apuntar con J2](docs/72-scope-aim-events.md).
+
+Genesis: [retirada durante la notificación de fin de escaneo](docs/73-genesis-completion-boundary.md).
