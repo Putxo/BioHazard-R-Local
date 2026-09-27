@@ -42,3 +42,13 @@ jobs:
           as --32 tests/genesis/camera_abi.S -o "$RUNNER_TEMP/camera-abi.o"
           ld -m elf_i386 "$RUNNER_TEMP/camera-gate.o" "$RUNNER_TEMP/camera-abi.o" -o "$RUNNER_TEMP/camera-abi"
           "$RUNNER_TEMP/camera-abi"
+      - name: Observed target lifetimes and constructor/destructor ABI
+        run: |
+          FLAGS="-std=c++17 -O1 -g -Wall -Wextra -Werror"
+          if [ "${{ matrix.mode }}" = sanitized ]; then FLAGS="$FLAGS -fsanitize=address,undefined -fno-omit-frame-pointer"; fi
+          g++ $FLAGS patches/genesis/target_lifetime.cpp tests/genesis/target_lifetime_tests.cpp -o "$RUNNER_TEMP/target-lifetime"
+          "$RUNNER_TEMP/target-lifetime"
+          as --32 patches/genesis/target_gateways.S -o "$RUNNER_TEMP/target-gates.o"
+          as --32 tests/genesis/target_abi.S -o "$RUNNER_TEMP/target-abi.o"
+          ld -m elf_i386 "$RUNNER_TEMP/target-gates.o" "$RUNNER_TEMP/target-abi.o" -o "$RUNNER_TEMP/target-abi"
+          "$RUNNER_TEMP/target-abi"

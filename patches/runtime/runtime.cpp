@@ -2,7 +2,8 @@
 namespace rev_runtime {
 namespace {Runtime* HealSink=nullptr;}
 Runtime::Runtime(Registry& registry,Host host,u32 count) noexcept
-    : host_(host), registry_(registry), genesis_(genesis_host()), count_(count),
+    : host_(host), registry_(registry), genesis_(genesis_host()),
+      targets_({host.memory,host.thread}), count_(count),
       source_(registry,{host.memory.context,host.memory.word,host.thread,host.self}),
       clock_({host.memory.context,host.thread}),
       view_({host.memory,host.thread}),
@@ -123,7 +124,7 @@ bool Runtime::start() noexcept {
        !n.singleton || !n.contains || (count_>4 && !n.damage) || !host_.image(host_.memory.context))return false;
     const u32 thread=host_.thread(host_.memory.context);
     thread_=thread;
-    started_=thread && source_.start(thread) && clock_.start(thread) &&
+    started_=thread && targets_.start(thread) && source_.start(thread) && clock_.start(thread) &&
         window_.start(thread) && admission_.start(thread);
     return started_;
 }
@@ -134,7 +135,7 @@ bool Runtime::bind() noexcept {
     // remain alive even on failure: some process-lifetime sinks may be bound.
     if(HealSink)return false;
     HealSink=this;
-    if(!rev_genesis::bind_progress(genesis_))return false;
+    if(!rev_genesis::bind_progress(genesis_) || !rev_genesis::bind_targets(targets_))return false;
     return bind_lifetime_sink(source_) && bind_pipeline_sink(clock_) &&
         bind_structural_sink(window_) && bind_manager_sink(driver_) &&
         bind_begin_activator_sink(activator_) && bind_p1_mask_sink(mask_) &&
