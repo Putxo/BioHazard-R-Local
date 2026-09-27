@@ -7,9 +7,19 @@
     {"va":"0x02B6A491","original":"call 0x01C5C120","bridge":"rev_menu_gate_submenu_198","purpose":"submenu per-pad state +0x198"},
     {"va":"0x02B6A49E","original":"call 0x01B9B457","bridge":"rev_menu_gate_submenu_1a0","purpose":"submenu per-pad state +0x1A0"},
     {"va":"0x02B6DE91","original":"call 0x01C2C7F4","bridge":"rev_menu_gate_submenu_actor","purpose":"submenu list actor"},
-    {"va":"0x02B6EFDE","original":"call 0x01C2C7F4","bridge":"rev_menu_gate_submenu_actor","purpose":"submenu secondary list actor"}
+    {"va":"0x02B6EFDE","original":"call 0x01C2C7F4","bridge":"rev_menu_gate_submenu_actor","purpose":"submenu secondary list actor"},
+    {"va":"0x02C3183B","original":"call 0x01B9B457","bridge":"rev_menu_gate_pause_1a0","purpose":"PauseHD selection path A decision bitfield +0x1A0"},
+    {"va":"0x02C31848","original":"call 0x01BD9F18","bridge":"rev_menu_gate_pause_1ac","purpose":"PauseHD selection path A movement bitfield +0x1AC"},
+    {"va":"0x02C31FDC","original":"call 0x01B9B457","bridge":"rev_menu_gate_pause_1a0","purpose":"PauseHD selection path B decision bitfield +0x1A0"},
+    {"va":"0x02C31FE9","original":"call 0x01BD9F18","bridge":"rev_menu_gate_pause_1ac","purpose":"PauseHD selection path B movement bitfield +0x1AC"}
   ],
-  "stock_pad": {"stride":"0x2F8","start_pad":"0x970","state_198":"0x198","state_1a0":"0x1A0"},
-  "policy": "P1 priority on simultaneous open; P2 only when exact local Sub0 remains ThinkMode::Pad; no global Self or persistent mStartPadNo change",
+  "stock_pad": {
+    "stride":"0x2F8",
+    "start_pad":"0x970",
+    "state_198":"0x198",
+    "state_1a0":"0x1A0",
+    "state_1ac":"0x1AC"
+  },
+  "policy": "P1 priority on simultaneous open; owner1 routes only audited Pause/SubMenu bitfields to Pad1 while exact Sub0 remains ThinkMode::Pad; no global Self or persistent mStartPadNo change",
   "gameplay_executed": false
 }
