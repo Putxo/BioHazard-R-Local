@@ -83,6 +83,6 @@
   "game_image_modified": false,
   "limits": [
     "Options widgets and nested state6/7 input remain unaudited.",
-    "Common commit gateway is source-only; runtime installation is pending."
+    "The common commit is evidence only; upstream uses its entry thunk. Runtime installation is pending."
   ]
 }

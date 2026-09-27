@@ -48,7 +48,7 @@ def audit(data):
             'checks': len(rows) + len(PAUSE_CALLS), 'records': rows,
             'gameplay_executed': False, 'game_image_modified': False,
             'limits': ['Options widgets and nested state6/7 input remain unaudited.',
-                       'Common commit gateway is source-only; runtime installation is pending.']}
+                       'The common commit is evidence only; upstream uses its entry thunk. Runtime installation is pending.']}
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)

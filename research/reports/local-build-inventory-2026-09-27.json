@@ -1,0 +1,30 @@
+{
+  "game_images_modified": false,
+  "builds": [
+    {
+      "file": "BioRevHD 23-Feb-2013 prototipo.exe",
+      "bytes": 16100864,
+      "sha256": "f67742e6f8d0f6ade1defc2dcdc34ba06e9e95d2abdc630a605a7da9b437a041",
+      "matches_january_map": false
+    },
+    {
+      "file": "BioRevHD 30-Enero-2013.exe",
+      "bytes": 60748800,
+      "sha256": "9124bb92d6c54a047ade47dacc8429221b18f9910b504f0e87718d5151013f69",
+      "matches_january_map": true
+    },
+    {
+      "file": "rerev Feb 7, 2024 retail.exe",
+      "bytes": 14260576,
+      "sha256": "1573b79eb921b1e7f571e6deb71c39961c7f1940fad6d19283fc3aea7fca48aa",
+      "matches_january_map": false
+    },
+    {
+      "file": "rerev May 17, 2013 prototipo.exe",
+      "bytes": 16736600,
+      "sha256": "a015f15a92dd4d242404d83d012a5319d677c15195a0fe862091ebb827dafe34",
+      "matches_january_map": false
+    }
+  ],
+  "gameplay_executed": false
+}

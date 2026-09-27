@@ -22,12 +22,10 @@ class PauseLifetimeAudit(unittest.TestCase):
         for address, (bridge, target) in audit.PAUSE_CALLS.items():
             self.assertEqual(sites[address]['bridge'], bridge)
             self.assertEqual(sites[address]['original'].lower(), f'call 0x{target:08x}')
-        commit = sites[0x02CDD415]
-        self.assertEqual(commit['kind'], 'inline_jump')
-        self.assertEqual(commit['overwrite_size'], 9)
-        self.assertEqual(commit['continuation'], '0x02CDD41E')
-        self.assertEqual(commit['original_bytes'], '8b45f88b4d08894824')
-        self.assertEqual(commit['bridge'], 'rev_menu_gate_state_commit')
+        transition = sites[0x01C365BF]
+        self.assertEqual(transition['original'], 'jmp 0x02CDD180')
+        self.assertEqual(transition['bridge'], 'rev_menu_gate_state_transition')
+        self.assertNotIn(0x02CDD415, sites)  # Evidence point, not a second installed hook.
 
     def test_private_image(self):
         path = os.environ.get('RE_REV_JANUARY')

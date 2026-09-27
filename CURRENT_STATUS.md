@@ -1,13 +1,12 @@
 # Estado actual — cooperativo local, menú J2 y handoff canónico
 
-> Avance del 27/09/2026 en `research/pause-owner-lifetime-audit`, basado en
-> `research/pause-owner-pad1` hasta `23109d5`: cuatro entradas PauseHD Pad1
-> preservadas; añadido cierre por estado, identidad actor+serial y reset de
-> sesión en fuente. Win32: 42 escenarios/161 aserciones PASS; auditor exacto:
-> 19 comprobaciones PASS. Detalle: [docs/48-pause-owner-lifetime.md](docs/48-pause-owner-lifetime.md).
-> No está instalado en el juego. Pendientes: nested 6/7, opciones, conexión
-> del reset al teardown real y campaña. El checkpoint histórico siguiente
-> describe la rama canónica antes de integrar este avance.
+> Actualización PR #23, 27/09/2026: el remoto ya integró PR21 (input PauseHD)
+> y PR22 (lifetime con retorno nested), checkpoint `cf472903`.
+> Esta propuesta conserva ambos y corrige lecturas inválidas/desbordamientos
+> y revocación entre superficies. Win32: suites 16/59 y 18/89 PASS.
+> [Detalle y límites](docs/49-menu-owner-read-safety.md).
+> No se ha instalado ni validado en campaña. El bloque inferior conserva
+> el checkpoint histórico PR19; no debe ocultar estos avances posteriores.
 
 27 de septiembre de 2026. Rama técnica canónica: `research/script-member-serial-validation`.
 
