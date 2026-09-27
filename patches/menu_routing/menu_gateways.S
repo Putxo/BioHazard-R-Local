@@ -10,10 +10,10 @@
 .extern rev_menu_submenu_word_198
 .extern rev_menu_submenu_word_1a0
 .extern rev_menu_submenu_actor
+.extern rev_menu_state_transition
 .extern rev_menu_stock_self
+.extern rev_menu_stock_state_transition
 
-# Original ABI at sPad wrapper calls: ECX=sPad, one dummy DWORD argument,
-# callee cleans 4 bytes. The bridge converts to cdecl and keeps ret 4.
 .macro pad_bridge name, target
 .global rev_menu_gate_\name
 .type rev_menu_gate_\name,@function
@@ -40,4 +40,22 @@ rev_menu_gate_submenu_actor:
     add esp,4
     ret
 .size rev_menu_gate_submenu_actor,.-rev_menu_gate_submenu_actor
+
+# Central sIDCockpit transition ABI:
+# ECX=this; stack = return,new_state,flag; original callee ret 8.
+# Observe new_state, restore all incoming registers, then tail-jump to stock body.
+.global rev_menu_gate_state_transition
+.type rev_menu_gate_state_transition,@function
+rev_menu_gate_state_transition:
+    push eax
+    push edx
+    push ecx
+    push dword ptr [esp+16]
+    call rev_menu_state_transition
+    add esp,4
+    pop ecx
+    pop edx
+    pop eax
+    jmp rev_menu_stock_state_transition
+.size rev_menu_gate_state_transition,.-rev_menu_gate_state_transition
 .section .note.GNU-stack,"",@progbits

@@ -11,7 +11,8 @@
     {"va":"0x02C3183B","original":"call 0x01B9B457","bridge":"rev_menu_gate_pause_1a0","purpose":"PauseHD selection path A decision bitfield +0x1A0"},
     {"va":"0x02C31848","original":"call 0x01BD9F18","bridge":"rev_menu_gate_pause_1ac","purpose":"PauseHD selection path A movement bitfield +0x1AC"},
     {"va":"0x02C31FDC","original":"call 0x01B9B457","bridge":"rev_menu_gate_pause_1a0","purpose":"PauseHD selection path B decision bitfield +0x1A0"},
-    {"va":"0x02C31FE9","original":"call 0x01BD9F18","bridge":"rev_menu_gate_pause_1ac","purpose":"PauseHD selection path B movement bitfield +0x1AC"}
+    {"va":"0x02C31FE9","original":"call 0x01BD9F18","bridge":"rev_menu_gate_pause_1ac","purpose":"PauseHD selection path B movement bitfield +0x1AC"},
+    {"va":"0x01C365BF","original":"jmp 0x02CDD180","bridge":"rev_menu_gate_state_transition","purpose":"central sIDCockpit state transition; preserve nested 6/7 and clear stale menu owner"}
   ],
   "stock_pad": {
     "stride":"0x2F8",
@@ -20,6 +21,16 @@
     "state_1a0":"0x1A0",
     "state_1ac":"0x1AC"
   },
-  "policy": "P1 priority on simultaneous open; owner1 routes only audited Pause/SubMenu bitfields to Pad1 while exact Sub0 remains ThinkMode::Pad; no global Self or persistent mStartPadNo change",
+  "state_lifetime": {
+    "state_field":"sIDCockpit+0x24",
+    "transition_body":"0x02CDD180",
+    "transition_thunk":"0x01C365BF",
+    "pause":5,
+    "nested":[6,7],
+    "submenu":8,
+    "state6":"uGUI_InGameFile stores previous state at +0x2B8 and restores it",
+    "policy":"preserve a recorded Pause/SubMenu owner across 6/7; preserve only matching 5 or 8; clear on gameplay/other surface or exact Sub0 identity invalidation"
+  },
+  "policy": "P1 priority; owner1 is bound to exact Sub0 pointer+serial and routes only audited fields to Pad1; no global Self or persistent mStartPadNo change",
   "gameplay_executed": false
 }

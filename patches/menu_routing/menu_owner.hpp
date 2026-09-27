@@ -22,15 +22,22 @@ public:
     u32 submenu_word_198(u32 pad) noexcept;
     u32 submenu_word_1a0(u32 pad) noexcept;
     u32 submenu_actor(u32 stock) noexcept;
+    void state_transition(u32 next_state) noexcept;
     u32 owner() const noexcept { return owner_; }
     Surface surface() const noexcept { return surface_; }
-    void clear() noexcept { owner_=0; surface_=Surface::None; }
+    void clear() noexcept {
+        owner_=0; surface_=Surface::None;
+        owner_actor_=0; owner_serial_=Invalid;
+    }
 private:
     Access access_{};
     u32 owner_=0;
     Surface surface_=Surface::None;
+    u32 owner_actor_=0;
+    u32 owner_serial_=Invalid;
     bool read(u32 address,u32& out) const noexcept;
-    bool valid_sub(u32& out) const noexcept;
+    bool valid_sub(u32& out,u32* serial=nullptr) const noexcept;
+    bool bound_sub_valid() const noexcept;
     bool pad_word(u32 pad,u32 member,u32 offset,u32& out) const noexcept;
     u32 stock_word(u32 pad,u32 offset) const noexcept;
     u32 open_word(u32 pad,u32 mask,Surface surface) noexcept;
@@ -45,3 +52,4 @@ extern "C" unsigned int rev_menu_submenu_open_word(unsigned int pad) noexcept;
 extern "C" unsigned int rev_menu_submenu_word_198(unsigned int pad) noexcept;
 extern "C" unsigned int rev_menu_submenu_word_1a0(unsigned int pad) noexcept;
 extern "C" unsigned int rev_menu_submenu_actor(unsigned int stock) noexcept;
+extern "C" void rev_menu_state_transition(unsigned int next_state) noexcept;

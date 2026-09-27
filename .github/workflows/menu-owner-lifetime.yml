@@ -1,0 +1,41 @@
+name: Menu owner lifetime
+on:
+  push:
+    branches: [research/menu-owner-lifetime]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  component:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        mode: [native, sanitized]
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Execute owner identity and state lifetime tests
+        shell: bash
+        run: |
+          FLAGS="-std=c++17 -O1 -g -Wall -Wextra -Werror"
+          if [ "${{ matrix.mode }}" = sanitized ]; then FLAGS="$FLAGS -fsanitize=address,undefined -fno-omit-frame-pointer"; fi
+          g++ $FLAGS -Ipatches/menu_routing patches/menu_routing/menu_owner.cpp tests/menu_routing/menu_owner_tests.cpp -o "$RUNNER_TEMP/menu-owner"
+          "$RUNNER_TEMP/menu-owner"
+      - name: Audit source map and exact-image script
+        run: |
+          python tests/menu_routing/test_menu_owner_lifetime.py
+          python -m py_compile scripts/audit_menu_owner_lifetime.py
+      - name: Freestanding i386 syntax
+        run: g++ -m32 -std=c++17 -Wall -Wextra -Werror -ffreestanding -fno-exceptions -fno-rtti -fsyntax-only patches/menu_routing/menu_owner.cpp
+  gateways:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Execute eight gateways including central transition
+        shell: bash
+        run: |
+          FLAGS="-m32 -std=c++17 -O2 -Wall -Wextra -Werror -ffreestanding -fno-exceptions -fno-rtti -fno-stack-protector -fno-pie"
+          g++ $FLAGS -c tests/menu_routing/menu_gateway_abi.cpp -o "$RUNNER_TEMP/test.o"
+          as --32 patches/menu_routing/menu_gateways.S -o "$RUNNER_TEMP/gates.o"
+          as --32 tests/menu_routing/menu_gateway_abi.S -o "$RUNNER_TEMP/harness.o"
+          ld -m elf_i386 "$RUNNER_TEMP/gates.o" "$RUNNER_TEMP/test.o" "$RUNNER_TEMP/harness.o" -o "$RUNNER_TEMP/menu-gates"
+          "$RUNNER_TEMP/menu-gates"
