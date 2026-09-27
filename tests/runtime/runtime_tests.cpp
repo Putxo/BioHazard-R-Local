@@ -167,6 +167,27 @@ struct Fixture {
     }
 };
 int main(){
+    {Fixture x(7);x.detector_setup();x.equipment_setup();const u32 scanner=x.r.lifecycle().unit(6);const auto before=x.f.m;
+     C(!x.r.genesis_effect_toggle(x.f.original[6],true));C(x.f.m==before);
+     C(x.r.genesis_effect_toggle(scanner,true));C(x.r.lifecycle().state()==LifeState::Live);
+     for(const auto& kv:before){bool flag=false;for(u32 off:effect_fixture::Offsets)flag|=kv.first==x.f.m[scanner+off]+12;
+         C(x.f.m.at(kv.first)==(flag?kv.second|0x4C00u:kv.second));}
+     x.f.m[0xEC100C]=0xED2000; // Closing does not need the old equipped weapon.
+     C(x.r.genesis_effect_toggle(scanner,false));C(x.r.lifecycle().state()==LifeState::Live);
+     for(u32 off:effect_fixture::Offsets)C(!(x.f.m[x.f.m[scanner+off]+12]&0x4C00));
+     x.end();++scenarios;}
+    for(u32 fault=0;fault<6;++fault){Fixture x(7);x.detector_setup();x.equipment_setup();const u32 scanner=x.r.lifecycle().unit(6);
+     const auto before=x.f.m;const auto owned=x.f.m[scanner+0x2F0];
+     if(fault==0)x.f.m[0xEC100C]=0xED2000;
+     if(fault==1)C(x.r.genesis_effects().event(effect_fixture::Death[0],owned));
+     if(fault==2)x.aim_fail_write=2;
+     if(fault==3)x.image=false;
+     if(fault==4)C(x.r.clock().event(PipelineEnd,0xC00000,0xD00000));
+     if(fault==5)x.r.lifecycle().stop();
+     C(x.r.genesis_effect_toggle(scanner,true));C(x.r.lifecycle().state()!=LifeState::Live);
+     for(u32 off:effect_fixture::Offsets){const u32 stock=x.f.m[x.f.original[6]+off];C(x.f.m[stock+12]==before.at(stock+12));}
+     C(x.r.genesis_effect_toggle(scanner,false));++scenarios;}
+
     {Fixture x(7);x.detector_setup();x.equipment_setup();const u32 scanner=x.r.lifecycle().unit(6);
      const auto before=x.f.m;C(x.r.genesis_weapon_use(scanner,true));C(x.r.genesis_weapon_use(scanner,false));C(x.f.m==before);
      x.thread=8;C(x.r.genesis_weapon_use(x.f.original[6],true));x.thread=7;

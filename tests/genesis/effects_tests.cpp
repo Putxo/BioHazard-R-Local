@@ -31,6 +31,26 @@ struct Fake {
     }
 };
 int main(){
+    {Fake g;Effects e{};
+     for(u32 off:effect_fixture::Offsets){const u32 p=g.m[Local+off];g.m[p+12]=(g.m[p+12]&~0x03FF0000u)|0x20000u;}
+     C(capture_effects(g.reader(),g.life,Local,&e));const auto before=g.m;
+     for(bool enabled:{true,false,true,false}){
+         C(toggle_effects(g.reader(),g.life,e,enabled,Fake::write));
+         for(const auto& kv:before){bool flag=false;for(const auto& k:e.units)flag|=kv.first==k.address+12;
+             C(g.m.at(kv.first)==(flag?(enabled?kv.second|0x4C00u:kv.second&~0x4C00u):kv.second));}
+     }}
+    for(u32 fault=0;fault<7;++fault){Fake g;Effects e{};
+     for(u32 off:effect_fixture::Offsets){const u32 p=g.m[Local+off];g.m[p+12]=(g.m[p+12]&~0x03FF0000u)|0x20000u;}
+     C(capture_effects(g.reader(),g.life,Local,&e));
+     if(fault<3)g.fail_write=fault+1;
+     if(fault==3)g.noop_write=2;
+     if(fault==4)g.death_write=1;
+     if(fault==5)g.m[e.units[0].address+12]|=0x10000;
+     if(fault==6)C(g.life.event(effect_fixture::Death[0],e.units[0].address));
+     C(!toggle_effects(g.reader(),g.life,e,true,Fake::write));
+     if(fault>=5)C(g.writes==0);
+    }
+
     {Fake g;Effects e{};C(capture_effects(g.reader(),g.life,Local,&e));const auto before=g.m;
         C(retire_effects(g.reader(),g.life,e,Fake::write));C(g.writes==7);
         C(g.m[e.units[0].address+0x44]==0);

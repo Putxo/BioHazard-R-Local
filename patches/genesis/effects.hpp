@@ -19,6 +19,11 @@ bool effect_view(Reader,const Effects&,u32 view) noexcept;
 // Disconnects the embedded callback, disables activity, marks native state3,
 // then clears the three parent pointers. Scheduler retains deletion ownership.
 // A partial failure MUST retain/quarantine the Scanner; never run its destructor.
+// Toggle only the three native activity bits of an exclusively owned View1
+// graph. Never touches shared sGameFilters or sHunterManager state.
+// A failed or partial change must quarantine its Scanner.
+bool toggle_effects(Reader,EffectLifetime&,const Effects&,bool enabled,
+                    bool (*write)(void*,u32,u32) noexcept) noexcept;
 bool retire_effects(Reader,EffectLifetime&,const Effects&,
                     bool (*write)(void*,u32,u32) noexcept) noexcept;
 }

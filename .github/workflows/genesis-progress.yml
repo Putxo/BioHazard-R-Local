@@ -166,3 +166,9 @@ jobs:
           as --32 tests/genesis/weapon_use_abi.S -o "$RUNNER_TEMP/weapon-use-abi.o"
           ld -m elf_i386 "$RUNNER_TEMP/weapon-use-gates.o" "$RUNNER_TEMP/weapon-use-abi.o" -o "$RUNNER_TEMP/weapon-use-abi"
           "$RUNNER_TEMP/weapon-use-abi"
+      - name: Private effect toggle handles bool and preserves stock thiscall
+        run: |
+          as --32 patches/genesis/effect_toggle_gateway.S -o "$RUNNER_TEMP/effect-toggle-gate.o"
+          as --32 tests/genesis/effect_toggle_abi.S -o "$RUNNER_TEMP/effect-toggle-abi.o"
+          ld -m elf_i386 "$RUNNER_TEMP/effect-toggle-gate.o" "$RUNNER_TEMP/effect-toggle-abi.o" -o "$RUNNER_TEMP/effect-toggle-abi"
+          "$RUNNER_TEMP/effect-toggle-abi"
