@@ -105,6 +105,8 @@ def hook_sites():
         out.append((va,bytes.fromhex('8b88fc020000'),'rev_genesis_weapon_command_gate',0xE8))
     out.append((0x02B20D26,bytes.fromhex('8b88fc020000'),'rev_genesis_weapon_reactivate_gate',0xE8))
     out.append((0x02B23120,bytes.fromhex('558bec81eccc000000'),'rev_genesis_effect_toggle_gate',0xE9))
+    for va in (0x032686DA,0x032688EE):
+        out.append((va,rel(va,0x01C42635),'rev_genesis_color_draw_enabled_gate',0xE8))
     for va in (0x03268708,0x03268918):
         out.append((va,rel(va,0x01BE2D20),'rev_action_mask_gate',0xE8))
     for va,old,name in ((0x01EA61A7,'8d85e4feffff50','begin'),

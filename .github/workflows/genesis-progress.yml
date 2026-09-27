@@ -172,3 +172,9 @@ jobs:
           as --32 tests/genesis/effect_toggle_abi.S -o "$RUNNER_TEMP/effect-toggle-abi.o"
           ld -m elf_i386 "$RUNNER_TEMP/effect-toggle-gate.o" "$RUNNER_TEMP/effect-toggle-abi.o" -o "$RUNNER_TEMP/effect-toggle-abi"
           "$RUNNER_TEMP/effect-toggle-abi"
+      - name: Shared color draw admission preserves native AL and thiscall
+        run: |
+          as --32 patches/genesis/color_draw_gateway.S -o "$RUNNER_TEMP/color-draw-gate.o"
+          as --32 tests/genesis/color_draw_abi.S -o "$RUNNER_TEMP/color-draw-abi.o"
+          ld -m elf_i386 "$RUNNER_TEMP/color-draw-gate.o" "$RUNNER_TEMP/color-draw-abi.o" -o "$RUNNER_TEMP/color-draw-abi"
+          "$RUNNER_TEMP/color-draw-abi"
