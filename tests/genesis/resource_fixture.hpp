@@ -28,6 +28,7 @@ inline void collections(std::map<u32,u32>& m,u32 u,u32 active=0) {
 }
 inline void populate(std::map<u32,u32>& m,u32 u,u32 resource) {
     m[u]=0x04DE3D6C;
+    m[u+0x2FC]=0; // Native constructor at 02B1EE13.
     m[u+0xf0]=resource;m[u+0xf4]=u+0x1000;m[u+0xf8]=u+0x2000;
     m[resource+0x68]=resource+0x100;m[resource+0x144]=15;m[u+0x106c]=u;
     for(u32 i=0;i<15;++i){m[u+0x2000+i*4]=u+0x3000+i*0x400;m[u+0x306c+i*0x400]=u;}

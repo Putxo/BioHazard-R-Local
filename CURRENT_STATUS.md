@@ -1,7 +1,7 @@
 # Estado actual del cooperativo local
 
 27/09/2026. Rama técnica: `research/script-member-serial-validation`.
-PR39 integrado: `b6e60e1fa0d28ed1e4259b4faeca52fc5d4e343c`, 21 workflows PASS.
+PR40 integrado: `3f7a8e6b5fd6d1880d4f49fb541b2f82ad258725`, 21 workflows PASS.
 
 **El cooperativo completo sigue en desarrollo. El juego no se ha ejecutado.**
 El propietario prohíbe abrirlo y hará personalmente las pruebas jugando.
@@ -79,3 +79,5 @@ Genesis: [productores de detección por propietario](docs/66-genesis-detector-ro
 Genesis: [retirada síncrona y listas privadas](docs/67-genesis-target-removal.md).
 
 Genesis: [notificaciones del mundo y reentrada del detector](docs/68-genesis-world-notifications.md).
+
+Genesis: [arma equipada, retención y límites de activación](docs/69-genesis-equipped-weapon.md).

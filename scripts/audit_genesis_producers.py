@@ -3,6 +3,22 @@ from pathlib import Path
 import argparse,json
 from audit_genesis_progress import Image
 WITNESSES=[
+    (0x01D336C6,"81c124150000","Actor-specific inventory pointer field"),
+    (0x01D36542,"8b45f88b00","Inventory smart-pointer dereference"),
+    (0x02067E98,"8b88d4000000","Selected weapon slot index"),
+    (0x02067EA7,"8b5014ffd2","Current weapon uses virtual slot plus fourteen"),
+    (0x04D2D440,"cdecbf01","January item pack virtual slot getter"),
+    (0x0242C2DA,"837d080f730d","Weapon slot count and null fallback"),
+    (0x0242C2E6,"8b548104","Weapon slot pointer stride"),
+    (0x02B1EE13,"c780fc02000000000000","Scanner initially retains no weapon"),
+    (0x02B20D99,"8988fc020000","Scanner activation retains caller weapon"),
+    (0x0279CFB4,"e864a44bff3bf07405e958010000","Aiming visibility currently admits only primary camera"),
+    (0x0279D1C6,"8b400cc1e81025ff030000","Actor and weapon ten-bit view mask getter"),
+    (0x01EB6156,"25ff030000c1e010","View mask setter retains ten bits"),
+    (0x01EB6164,"81e2ffff00fc0bd0","View mask setter preserves other flags"),
+    (0x02B4A9CF,"8b4a54","Aiming equipment GUI is Cockpit plus fifty-four"),
+    (0x02B4A9D2,"e898f209ff","Aiming equipment GUI receives weapon and flag"),
+
     (0x028206D2,"e8150f41ff","Detector world callback invocation"),
     (0x028206CC,"8d8decfcffff","Delegate lives on detector caller stack"),
     (0x02820682,"898500fdffff","World callback owner local"),

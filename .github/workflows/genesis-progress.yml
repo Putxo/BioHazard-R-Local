@@ -80,6 +80,12 @@ jobs:
           as --32 tests/genesis/removal_abi.S -o "$RUNNER_TEMP/removal-abi.o"
           ld -m elf_i386 "$RUNNER_TEMP/removal-gate.o" "$RUNNER_TEMP/removal-abi.o" -o "$RUNNER_TEMP/removal-abi"
           "$RUNNER_TEMP/removal-abi"
+      - name: Scanner retained weapon belongs to the current owner inventory
+        run: |
+          FLAGS="-std=c++17 -O1 -g -Wall -Wextra -Werror"
+          if [ "${{ matrix.mode }}" = sanitized ]; then FLAGS="$FLAGS -fsanitize=address,undefined -fno-omit-frame-pointer"; fi
+          g++ $FLAGS patches/genesis/equipment.cpp tests/genesis/equipment_tests.cpp -o "$RUNNER_TEMP/equipment"
+          "$RUNNER_TEMP/equipment"
       - name: World callback gate keeps detector locals and thiscall ABI
         run: |
           as --32 patches/genesis/notification_gateway.S -o "$RUNNER_TEMP/notification-gate.o"

@@ -7,6 +7,7 @@
 #include "draw_schedule.hpp"
 #include "../genesis/progress.hpp"
 #include "../genesis/camera.hpp"
+#include "../genesis/equipment.hpp"
 #include "../genesis/target_lifetime.hpp"
 #include "../genesis/target_views.hpp"
 #include "../hud_ownership/heal_queue.hpp"
@@ -83,6 +84,7 @@ private:
     bool scanner_begin(u32) noexcept;
     bool scanner_end(u32) noexcept;
     bool scanner_current() noexcept;
+    bool scanner_weapon_current(u32 widget) noexcept;
     Mode scanner_sample(u32 target,rev_genesis::ViewSample*) noexcept;
     rev_genesis::ProgressHost genesis_host() noexcept;
     const u32 count_;

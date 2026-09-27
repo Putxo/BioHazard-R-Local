@@ -2,9 +2,9 @@
   "schema_version": 4,
   "canonical_branch": "research/script-member-serial-validation",
   "checkpoint": {
-    "merged_pr": 39,
-    "merge_sha": "b6e60e1fa0d28ed1e4259b4faeca52fc5d4e343c",
-    "tested_head": "620aeaab1411d9210865045392878b9137f63627",
+    "merged_pr": 40,
+    "merge_sha": "3f7a8e6b5fd6d1880d4f49fb541b2f82ad258725",
+    "tested_head": "59eb0ee85ad3ae9c3bb0ad7f2b5dc66cf3a4d284",
     "ci": "21 workflows PASS"
   },
   "user_constraints": {
@@ -62,7 +62,9 @@
     "genesis_native_activation_connected": false,
     "genesis_target_removal_reentrant_phase_supported": false,
     "genesis_detector_callback_scope_isolated": true,
-    "genesis_detector_callback_pair_deduplication": true
+    "genesis_detector_callback_pair_deduplication": true,
+    "genesis_retained_weapon_inventory_guard": true,
+    "genesis_weapon_lifetime_pinned": false
   },
   "pending": [
     "full HUD and interaction prompts",
@@ -92,6 +94,7 @@
     "docs/65-genesis-target-consumers.md",
     "docs/66-genesis-detector-routing.md",
     "docs/67-genesis-target-removal.md",
-    "docs/68-genesis-world-notifications.md"
+    "docs/68-genesis-world-notifications.md",
+    "docs/69-genesis-equipped-weapon.md"
   ]
 }

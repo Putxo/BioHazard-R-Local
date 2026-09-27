@@ -60,11 +60,20 @@ rev_genesis::TargetViewHost Runtime::target_view_host() noexcept {
         *out={owner,stamp.frame};return Mode::Local;
     }};
 }
+bool Runtime::scanner_weapon_current(u32 widget) noexcept {
+    u32 retained=0,current=0,again=0;
+    if(!widget || widget>Invalid-0x2FF || !word(widget+0x2FC,retained))return false;
+    // Native allows a scanner without a weapon. Never dereference the retained
+    // pointer merely to decide whether the actor still owns it.
+    if(!retained)return true;
+    return rev_genesis::equipment(genesis_host(),host_.memory,widget,&current)==Mode::Local &&
+        current==retained && word(widget+0x2FC,again) && again==retained;
+}
 bool Runtime::scanner_begin(u32 widget) noexcept {
     auto h=target_view_host();
     if(!h.on_thread(h.context) || !targets_.healthy() || scanner_scope_ || !gate().unit(this,WidgetKind::Scanner,widget))return false;
     rev_genesis::ViewFrame f{};
-    if(h.resolve(h.context,widget,&f)!=Mode::Local)return false;
+    if(h.resolve(h.context,widget,&f)!=Mode::Local || !scanner_weapon_current(widget))return false;
     scanner_scope_=widget;scanner_frame_=f;scanner_copy_failed_=false;return true;
 }
 bool Runtime::scanner_current() noexcept {
@@ -82,7 +91,7 @@ bool Runtime::scanner_current() noexcept {
 bool Runtime::scanner_end(u32 widget) noexcept {
     auto h=target_view_host();
     if(!h.on_thread(h.context))return false;
-    const bool ok=widget==scanner_scope_ && !scanner_copy_failed_ && scanner_current();
+    const bool ok=widget==scanner_scope_ && !scanner_copy_failed_ && scanner_current() && scanner_weapon_current(widget);
     scanner_scope_=0;scanner_frame_={};scanner_copy_failed_=false;return ok;
 }
 Mode Runtime::scanner_sample(u32 target,rev_genesis::ViewSample* out) noexcept {
@@ -145,13 +154,13 @@ void Runtime::genesis_detect(u32 manager) noexcept {
     if(!host_.image || !host_.image(host_.memory.context) || !targets_.healthy() ||
        driver_.in_event() || view_.active() || h.resolve(h.context,widget,&frame)!=Mode::Local ||
        !word(0x05799D3C,camera_manager) || genesis_camera(widget,camera_manager,&camera)!=Mode::Local ||
-       !backend_.scanner_producer_ready(host_.memory,widget)){
+       !backend_.scanner_producer_ready(host_.memory,widget) || !scanner_weapon_current(widget)){
         detector_busy_=false;return;
     }
     scanner_scope_=widget;scanner_frame_=frame;detector_producing_=true;scanner_copy_failed_=false;
     if(scanner_current())host_.native.method0(host_.native.context,0x01BBECD1,manager);
     const bool ok=!scanner_copy_failed_ && scanner_current() && targets_.healthy() &&
-        backend_.scanner_producer_ready(host_.memory,widget);
+        backend_.scanner_producer_ready(host_.memory,widget) && scanner_weapon_current(widget);
     scanner_scope_=0;scanner_frame_={};detector_producing_=false;
     scanner_copy_failed_=false;detector_busy_=false;
     if(!ok)lifecycle_.stop();
