@@ -1,0 +1,34 @@
+name: Runtime composition and freestanding link
+on:
+  pull_request:
+  push:
+    branches: [research/runtime-composition]
+permissions:
+  contents: read
+jobs:
+  integration:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        mode: [native, sanitized]
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Compose the real components with synthetic native operations
+        shell: bash
+        run: |
+          FLAGS="-std=c++17 -O1 -g -Wall -Wextra -Werror"
+          if [ "${{ matrix.mode }}" = sanitized ]; then FLAGS="$FLAGS -fsanitize=address,undefined -fno-omit-frame-pointer"; fi
+          g++ $FLAGS -Ipatches/hud_ownership patches/hud_ownership/*.cpp patches/runtime/runtime.cpp patches/menu_routing/menu_owner.cpp tests/runtime/runtime_tests.cpp -o "$RUNNER_TEMP/runtime-tests"
+          "$RUNNER_TEMP/runtime-tests"
+      - name: Lifetime regression
+        run: |
+          g++ -std=c++17 -Wall -Wextra -Werror -Ipatches/hud_ownership patches/hud_ownership/{ownership,lifetime_source}.cpp tests/hud_ownership/lifetime_source_tests.cpp -o "$RUNNER_TEMP/lifetime-tests"
+          "$RUNNER_TEMP/lifetime-tests"
+  freestanding:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Install LLVM linker
+        run: sudo apt-get update && sudo apt-get install -y clang lld
+      - name: Link every production HUD and menu gateway with the startup graph
+        run: python tools/build_runtime.py "$RUNNER_TEMP/runtime-module"

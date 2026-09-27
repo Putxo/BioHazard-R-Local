@@ -158,6 +158,11 @@ bool LifetimeSource::select_managers(u32 cockpit,u32 minimap) {
     if(equal(next[0],parents_[0]) && equal(next[1],parents_[1]))return true;
     parents_[0]=next[0];parents_[1]=next[1];return change(true);
 }
+bool LifetimeSource::clear_managers() {
+    if(!on_thread() || fault_!=SourceFault::None || capturing_ || depth_)return false;
+    if(!parents_[0].valid() && !parents_[1].valid())return true;
+    parents_[0]={};parents_[1]={};return change(true);
+}
 bool LifetimeSource::capture(LifeSnapshot* out) {
     if(!out || !on_thread() || fault_!=SourceFault::None || capturing_ || depth_)return false;
     CaptureGuard guard(capturing_);

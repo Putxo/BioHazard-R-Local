@@ -34,11 +34,14 @@ pad_bridge submenu_1a0, rev_menu_submenu_word_1a0
 .global rev_menu_gate_submenu_actor
 .type rev_menu_gate_submenu_actor,@function
 rev_menu_gate_submenu_actor:
+    # Stock is thiscall finder(predicate), ret 4. Forward the predicate rather
+    # than letting stock mistake our return address for its stack argument.
+    push dword ptr [esp+4]
     call rev_menu_stock_self
     push eax
     call rev_menu_submenu_actor
     add esp,4
-    ret
+    ret 4
 .size rev_menu_gate_submenu_actor,.-rev_menu_gate_submenu_actor
 
 # Central sIDCockpit transition ABI:
