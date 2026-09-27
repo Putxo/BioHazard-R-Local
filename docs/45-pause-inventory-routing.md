@@ -122,3 +122,120 @@ Falta localizar el opener real del estado 8 a través del wrapper público de sI
 - mantener la navegación y la pausa global separadas hasta demostrar su dispatcher.
 
 No se ha ejecutado gameplay y no se han instalado hooks.
+
+
+## Opener real del estado 8 localizado en mSession.cpp
+
+El wrapper público de cambio de estado:
+
+```
+0x01C8D7C0 -> 0x02CDD020
+```
+
+llama a la state machine interna `0x02CDD180`.
+
+El análisis de sus callers runtime identifica una función grande:
+
+```
+0x01F118E0
+```
+
+que conserva la string fuente literal:
+
+```
+mSession.cpp
+```
+
+Dentro de esa función existen varias rutas que solicitan explícitamente:
+
+```asm
+push 1
+push 8
+mov  ecx, sIDCockpit
+call 0x01C8D7C0
+```
+
+Callsites confirmados del estado 8 incluyen `0x01F11BAA`, `0x01F11BE8`, `0x01F11C26`, `0x01F11C61` y `0x01F11C9C`. No todos representan necesariamente el mismo dispositivo; algunos están precedidos por otras capas de command/flags.
+
+### Ruta física stock del opener
+
+La rama de `0x01F11B90` obtiene `sGamePad` y llama:
+
+```
+0x01B9B457 -> 0x01CB30E0
+```
+
+`0x01CB30E0` hace literalmente:
+
+```asm
+mov ecx,[this+0x970]     ; mStartPadNo
+push ecx
+call 0x01C485FD
+```
+
+y:
+
+```
+0x01C485FD -> 0x01CB3140
+```
+
+acepta un índice explícito y devuelve el DWORD en:
+
+```
+sGamePad + 0x1A0 + index*0x2F8
+```
+
+La rama stock hace después:
+
+```asm
+and eax,1
+je  no_submenu
+...
+setState(8)
+```
+
+Por tanto existe un bloqueo concreto: el opener físico stock del SubMenu usa el bloque de `mStartPadNo`, mientras la misma API interna permite consultar directamente el bloque 1.
+
+### Consecuencia mínima para P2
+
+No se debe cambiar globalmente `mStartPadNo`.
+
+La corrección mínima de apertura puede:
+
+1. conservar la comprobación stock y su prioridad;
+2. cuando local-coop está activo y el stock no solicitó el menú, consultar el mismo DWORD con `index=1`;
+3. si `bit0` está activo y Sub0 sigue siendo el actor local Pad válido, registrar `submenuOwner=Sub0`;
+4. reutilizar exactamente `sIDCockpit::setState(8)`.
+
+El owner debe quedar externo a `uGUI_SubMenu`, porque esa clase no tiene un campo actor/member demostrado.
+
+## Estado 8 no reserva la pausa global
+
+Al comienzo de `sIDCockpit::setState 0x02CDD180`, la llamada que modifica la reserva global se omite cuando el nuevo estado es:
+
+```
+5, 6, 7 u 8
+```
+
+Comparaciones:
+
+```
+0x02CDD1C1 state == 5
+0x02CDD1C7 state == 6
+0x02CDD1CD state == 7
+0x02CDD1D3 state == 8
+ -> 0x02CDD1E8
+```
+
+Solo los demás estados alcanzan la llamada de reserva alrededor de `0x02CDD1D9..0x02CDD1E3`.
+
+Por tanto abrir estado 8 no debe modelarse como “segundo PauseHD”. La pausa global y el ownership del inventario continúan siendo problemas separados.
+
+## Punto siguiente actualizado
+
+Quedan dos piezas antes de activar el submenu de P2:
+
+- navegación: comprobar qué capa usa `mStartPadNo` mientras `uSubMenuManager/uGUI_SubMenu` está activo y definir un scope Pad1 si es necesario;
+- presentación: comprobar cuánto del cambio global a estado 8 oculta/reemplaza el cockpit P1. Si la UI stock es global para toda la salida, P2 necesitará una instancia/scope de submenu propia para VIEW_1 en vez de convertir el único sIDCockpit global en “P2”.
+
+Después se conectarán las dos lecturas `Self -> cBioItemPack` de uGUI_SubMenu al owner externo de sesión; no se modifica el finder Self global.
