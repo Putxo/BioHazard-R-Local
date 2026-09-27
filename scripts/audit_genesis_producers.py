@@ -3,6 +3,7 @@ from pathlib import Path
 import argparse,json
 from audit_genesis_progress import Image
 WITNESSES=[
+    (0x02823A53,"8b45f8c7007085da04","Target destructor revocation before owner clear"),
     (0x02B25D8B,"e88d1613ff","Scanner camera call"),
     (0x02B25A42,"894df8","Aligned scanner method saves widget at EBP-8"),
     (0x02B25D90,"8945a4837da4000f8459010000","Caller null check"),

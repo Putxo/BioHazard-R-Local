@@ -1,7 +1,7 @@
 # Estado actual del cooperativo local
 
 27/09/2026. Rama técnica: `research/script-member-serial-validation`.
-PR33 integrado: `f56f44b5b809c2e7a426428be15ae300256332bc`, 21 workflows PASS.
+PR34 integrado: `2b9b8f27d7420ef14fe47349308ef8e9ffa0a12b`, 20 workflows PASS.
 
 **El cooperativo completo sigue en desarrollo. El juego no se ha ejecutado.**
 El propietario prohíbe abrirlo y hará personalmente las pruebas jugando.
@@ -20,7 +20,7 @@ El propietario prohíbe abrirlo y hará personalmente las pruebas jugando.
 | Guiones | Dos callbacks PcsSub con owner+serial; cobertura QTE parcial |
 | Rescate | Routing parcial existente; muerte/checkpoints pendientes |
 
-La compilación acumulativa nueva conecta 91 hooks HUD/menú/ActionIcon sobre la base de
+La compilación acumulativa nueva conecta 93 hooks HUD/menú/ActionIcon sobre la base de
 input, cámara, pickup, puertas y serial de guion. Se ha generado y verificado
 estáticamente una copia local de trabajo. No se ha instalado en Steam ni abierto.
 No constituye una entrega final.
@@ -67,3 +67,5 @@ Genesis: [contador fuente y gateways; integración pendiente](docs/60-genesis-pr
 Genesis: [clon y consumidores integrados; activación/objetivos pendientes](docs/61-scanner-clone.md).
 
 Genesis: [cámara propia y límites de productores](docs/62-genesis-camera-producers.md).
+
+Genesis: [vida observada de objetivos](docs/63-genesis-target-lifetime.md).

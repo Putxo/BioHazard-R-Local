@@ -52,6 +52,11 @@ struct Fixture {
     void prepare(){start();births();begin();C(f.allocations.empty());end();C(r.lifecycle().state()==LifeState::Live);C(f.allocations.size()==(f.original[6]?7u:f.original[5]?6u:f.original[4]?5u:f.original[3]?4u:LegacyWidgetKinds));}
 };
 int main(){
+    {Fixture x;x.start();constexpr u32 target=0xEF0000;x.f.m[target]=0x04DA8570;
+     C(x.r.genesis_targets().event(0x0281AE26,target));auto key=x.r.genesis_targets().capture(target);
+     C(key.valid());C(x.r.genesis_targets().live(key));x.f.m.erase(target);
+     C(x.r.genesis_targets().event(0x02823A53,target));C(!x.r.genesis_targets().live(key));++scenarios;}
+
     {Fixture x(7);x.prepare();x.begin();const u32 widget=x.r.lifecycle().unit(6);
      constexpr u32 camera_manager=0xE10000,camera_self=0xE20000,camera_sub=0xE30000;
      x.f.m[0x05799D3C]=camera_manager;x.f.m[camera_manager+0xCE0]=camera_self;

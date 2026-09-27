@@ -2,10 +2,10 @@
   "schema_version": 4,
   "canonical_branch": "research/script-member-serial-validation",
   "checkpoint": {
-    "merged_pr": 33,
-    "merge_sha": "f56f44b5b809c2e7a426428be15ae300256332bc",
-    "tested_head": "b829ad549d9c70075d5628c4e4514082883171d1",
-    "ci": "21 workflows PASS"
+    "merged_pr": 34,
+    "merge_sha": "2b9b8f27d7420ef14fe47349308ef8e9ffa0a12b",
+    "tested_head": "959384e104f52f71f756098cd77302c0f52bf697",
+    "ci": "20 workflows PASS"
   },
   "user_constraints": {
     "launch_game": false,
@@ -25,7 +25,7 @@
   },
   "runtime": {
     "composition_root": true,
-    "hud_menu_hook_count": 91,
+    "hud_menu_hook_count": 93,
     "local_views_use_native_immediate_draw": true,
     "action_loop_priority_per_member": true,
     "action_loop_stop_per_member": true,
@@ -53,7 +53,9 @@
     "genesis_progress_runtime_connected": true,
     "genesis_actor_consumers_connected": true,
     "genesis_activation_and_targets_connected": false,
-    "genesis_scanner_camera_connected": true
+    "genesis_scanner_camera_connected": true,
+    "genesis_target_lifetime_observer_connected": true,
+    "genesis_target_removal_connected": false
   },
   "pending": [
     "full HUD and interaction prompts",
@@ -77,6 +79,7 @@
     "docs/59-heal-hud.md",
     "docs/60-genesis-progress.md",
     "docs/61-scanner-clone.md",
-    "docs/62-genesis-camera-producers.md"
+    "docs/62-genesis-camera-producers.md",
+    "docs/63-genesis-target-lifetime.md"
   ]
 }

@@ -7,6 +7,7 @@
 #include "draw_schedule.hpp"
 #include "../genesis/progress.hpp"
 #include "../genesis/camera.hpp"
+#include "../genesis/target_lifetime.hpp"
 #include "../hud_ownership/heal_queue.hpp"
 
 namespace rev_runtime {
@@ -42,6 +43,7 @@ public:
     rev_action::Router& action() noexcept { return action_; }
     rev_action::PriorityDriver& priority() noexcept { return priority_; }
     rev_genesis::Progress& genesis_progress() noexcept {return genesis_;}
+    rev_genesis::TargetLifetime& genesis_targets() noexcept {return targets_;}
     Mode genesis_camera(u32 widget,u32 manager,u32* out) noexcept {
         return rev_genesis::camera(genesis_host(),host_.memory,widget,manager,out);
     }
@@ -55,6 +57,7 @@ private:
     Host host_;
     Registry& registry_;
     rev_genesis::Progress genesis_;
+    rev_genesis::TargetLifetime targets_;
     rev_genesis::ProgressHost genesis_host() noexcept;
     const u32 count_;
     bool attempted_=false,started_=false,bind_attempted_=false;
