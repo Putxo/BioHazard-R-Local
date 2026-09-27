@@ -72,29 +72,71 @@ bool JanuaryBackend::detached(u32 u,WidgetKind k) {
 }
 bool JanuaryBackend::scanner_valid(u32 unit) noexcept {
     rev_genesis::Resources current{};
+    rev_genesis::Collections collections{};
     return rev_genesis::capture_resources(host_.memory,unit,&current) &&
         rev_genesis::same_resources(current,scanner_owned_) &&
-        rev_genesis::disjoint(current,scanner_original_);
+        rev_genesis::disjoint(current,scanner_original_) &&
+        rev_genesis::capture_collections(host_.memory,unit,&collections);
 }
 bool JanuaryBackend::scanner_producer_ready(Reader memory,u32 unit) noexcept {
+    return scanner_external_ready(memory,unit,true);
+}
+bool JanuaryBackend::scanner_external_ready(Reader memory,u32 unit,bool active) noexcept {
     if(busy_ || !configured_ || count_<7 || !unit || unit!=entries_[6].unit ||
        !entries_[6].constructed || !entries_[6].ready || entries_[6].quarantine ||
        !memory.word || unit>Invalid-0x400)return false;
     auto read=[&](u32 a,u32& v) noexcept {return a && a<=Invalid-3 && memory.word(memory.context,a,&v);};
     u32 vt=0,flags=0,next=0,prev=0,link=0,skip=0;
     if(!read(unit,vt) || vt!=kind_info(WidgetKind::Scanner)->vtable ||
-       !read(unit+0xC,flags) || !(flags&0x4000) || ((flags>>3)&127)!=127 ||
+       !read(unit+0xC,flags) || (active && !(flags&0x4000)) || ((flags>>3)&127)!=127 ||
        !read(unit+0x14,next) || next || !read(unit+0x18,prev) || prev ||
-       !read(unit+0x290,link) || link || !read(unit+0x294,skip) || (skip&255))return false;
+       !read(unit+0x290,link) || link || !read(unit+0x294,skip) || (active && (skip&255)))return false;
     const auto* t=january_type(WidgetKind::Scanner);
     const u32 slots[]={0,5,8,9,11},expected[]={t->destroy,t->initialize,t->phase8,t->phase9,t->draw};
     for(u32 i=0;i<5;++i){u32 value=0;if(!read(vt+slots[i]*4,value) || value!=expected[i])return false;}
     const u32 manager=calls_.singleton(calls_.context,GetUnit);
     if(!manager || calls_.contains(calls_.context,Contains,manager,unit)!=0)return false;
     rev_genesis::Resources current{};
+    rev_genesis::Collections collections{};
     return rev_genesis::capture_resources(memory,unit,&current) &&
         rev_genesis::same_resources(current,scanner_owned_) &&
-        rev_genesis::disjoint(current,scanner_original_);
+        rev_genesis::disjoint(current,scanner_original_) &&
+        rev_genesis::capture_collections(memory,unit,&collections);
+}
+bool JanuaryBackend::scanner_remove_target(Reader memory,u32 target) noexcept {
+    if(count_<7 || !entries_[6].unit || !entries_[6].ready)return true;
+    auto& entry=entries_[6];const u32 unit=entry.unit;
+    // Only the pinned destructor boundary has cleared the native owner. The
+    // native reset then cannot notify a still-live world owner through +8.
+    u32 vt=0,owner=0;rev_genesis::Collections before{},after{};
+    if(!target || target>Invalid-11 || !memory.word || !calls_.method1 ||
+       !memory.word(memory.context,target,&vt) || vt!=0x04DA8570 ||
+       !memory.word(memory.context,target+8,&owner) || owner ||
+       !scanner_external_ready(memory,unit,false) ||
+       !rev_genesis::capture_collections(memory,unit,&before)){
+        entry.quarantine=true;return fail(NativeFault::Resources);
+    }
+    u32 index=Invalid;
+    for(u32 i=0;i<rev_genesis::Collections::Count;++i)if(before.targets[i]==target)index=i;
+    if(index==Invalid)return true;
+    {
+        Busy lock(busy_);
+        calls_.method1(calls_.context,0x01BB4079,unit,target);
+    }
+    bool ok=!entry.quarantine && scanner_external_ready(memory,unit,false) &&
+        rev_genesis::capture_collections(memory,unit,&after) &&
+        before.icon_pool==after.icon_pool && before.target_pool==after.target_pool;
+    if(ok){
+        const u32 removed=before.target_pool+index*0x28;
+        for(u32 i=0;i<rev_genesis::Collections::Count;++i){
+            const bool icon=before.icon_targets[i]==removed;
+            if(after.targets[i]!=(i==index?0:before.targets[i]) ||
+               after.icon_targets[i]!=(icon?0:before.icon_targets[i]) ||
+               after.gui_indices[i]!=(icon?Invalid:before.gui_indices[i]))ok=false;
+        }
+    }
+    if(!ok){entry.quarantine=true;return fail(NativeFault::Resources);}
+    return true;
 }
 bool JanuaryBackend::configure(const u32 p[2],const u32 originals[WidgetKinds]) {
     if (busy_) return fail(NativeFault::Reentrant);
@@ -215,7 +257,7 @@ bool JanuaryBackend::phase(u32 u,WidgetKind k,u32 phase,u32 context) {
         if (!field(context,0x158,view) || (view&255)!=1) return fail(NativeFault::Layout);
         if (!view_allowed(flags,1)) return true;
         if(k==WidgetKind::Scanner && (!events_.scanner_begin || !events_.scanner_end ||
-           !events_.scanner_begin(events_.context,u)))return fail(NativeFault::Permit);
+           !events_.scanner_begin(events_.context,u))){e.quarantine=true;return fail(NativeFault::Permit);}
         calls_.method1(calls_.context,t->draw,u,context);
     } else {
         if (phase==8) {
@@ -227,7 +269,7 @@ bool JanuaryBackend::phase(u32 u,WidgetKind k,u32 phase,u32 context) {
             if (!write(u+0x1C,scale)) return false;
         }
         if(k==WidgetKind::Scanner && (!events_.scanner_begin || !events_.scanner_end ||
-           !events_.scanner_begin(events_.context,u)))return fail(NativeFault::Permit);
+           !events_.scanner_begin(events_.context,u))){e.quarantine=true;return fail(NativeFault::Permit);}
         calls_.method0(calls_.context,phase==8?t->phase8:t->phase9,u);
     }
     if(k==WidgetKind::Scanner && !events_.scanner_end(events_.context,u)){

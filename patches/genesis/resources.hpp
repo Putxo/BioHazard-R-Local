@@ -15,4 +15,12 @@ struct Resources {
 bool capture_resources(Reader,u32 scanner,Resources*) noexcept;
 bool disjoint(const Resources&,const Resources&) noexcept;
 bool same_resources(const Resources&,const Resources&) noexcept;
+struct Collections {
+    static constexpr u32 Count=21;
+    u32 icon_pool=0,target_pool=0,active_icons=0,active_targets=0;
+    u32 targets[Count]{},icon_targets[Count]{},gui_indices[Count]{};
+};
+// Read-only certificate for all four intrusive lists and their fixed pools.
+// Never dereferences a world target. Native lifetimes must remain pinned.
+bool capture_collections(Reader,u32 scanner,Collections*) noexcept;
 }

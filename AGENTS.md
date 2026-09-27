@@ -2,7 +2,7 @@
 
 Actualización: 27/09/2026. Rama canónica: research/script-member-serial-validation.
 
-PR37 integrado: 82c9128f2c1c22e6e0d2fcda658cb05de7556995, 21 workflows PASS.
+PR38 integrado: 1fb102ad8ddbbbd9fbc57ddd84288971a8c91bc6, 21 workflows PASS.
 
 Leer CURRENT_STATUS.md, docs/50-runtime-composition.md,
 
@@ -12,7 +12,7 @@ Leer también docs/54-action-icon-view-routing.md, docs/55-action-priority-loop.
 
 y docs/56-local-draw-scheduling.md. Prioridad y parada del bucle por miembro;
 
-selector de dibujo inmediato local integrado: 108 hooks. No confundirlo
+selector de dibujo inmediato local integrado: 109 hooks. No confundirlo
 
 con cobertura completa de ActionCommand ni con validación jugando.
 
@@ -57,3 +57,5 @@ Genesis: [estado de detección por propietario](docs/64-genesis-target-view-stat
 Genesis: [lecturas nativas durante la fase del clon](docs/65-genesis-target-consumers.md).
 
 Genesis: [productores de detección por propietario](docs/66-genesis-detector-routing.md).
+
+Genesis: [retirada síncrona y listas privadas](docs/67-genesis-target-removal.md).

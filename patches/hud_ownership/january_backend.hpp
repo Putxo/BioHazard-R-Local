@@ -56,9 +56,12 @@ public:
     // certifies the owner thread, image and live registry/session first. This
     // does not grant a HUD phase or structural/allocation permission.
     bool scanner_producer_ready(Reader,u32 unit) noexcept;
+    bool scanner_remove_target(Reader,u32 target) noexcept;
+    void quarantine_scanner() noexcept {if(count_>=7)entries_[6].quarantine=true;}
 private:
     rev_genesis::Resources scanner_original_{},scanner_owned_{};
     bool scanner_valid(u32 unit) noexcept;
+    bool scanner_external_ready(Reader,u32 unit,bool active) noexcept;
     struct Entry { u32 unit = 0; bool constructed = false, ready = false, quarantine = false; };
     JanuaryHost host_; JanuaryCalls calls_;
     const u32 count_;

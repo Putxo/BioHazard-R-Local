@@ -63,6 +63,37 @@ struct Fixture {
     }
 };
 int main(){
+    {Fixture x(7);x.detector_setup();const u32 unit=x.r.lifecycle().unit(6);
+     scanner_fixture::collections(x.f.m,unit,3);scanner_fixture::collections(x.f.m,x.f.original[6],3);
+     x.f.m[0xEF0008]=0;C(x.r.genesis_targets().event(0x02823A53,0xEF0000));
+     x.f.m[unit+0xC]&=~0x4000u;x.f.m[unit+0x294]=1;
+     x.end();const auto before=x.f.m;
+     x.r.genesis_remove_target(0xEF0000);C(x.f.removal_calls==1);C(x.f.removal_unit==unit);
+     rev_genesis::Collections after{};C(rev_genesis::capture_collections(x.host().memory,unit,&after));
+     C(after.targets[0]==0);C(after.targets[1]==0xEF0100);C(after.targets[2]==0xEF0200);
+     C(after.icon_targets[0]==0);C(after.active_targets==6);C(after.active_icons==6);
+     const u32 stock=x.f.original[6];
+     for(const auto& kv:before)if(kv.first>=stock && kv.first<stock+0xE000)C(x.f.m[kv.first]==kv.second);
+     x.r.genesis_remove_target(0xEF0000);C(x.f.removal_calls==1);
+     C(x.r.lifecycle().state()==LifeState::Live);++scenarios;}
+    for(u32 fault=0;fault<5;++fault){Fixture x(7);x.detector_setup();const u32 unit=x.r.lifecycle().unit(6);
+     scanner_fixture::collections(x.f.m,unit,1);x.f.m[0xEF0008]=0;
+     C(x.r.genesis_targets().event(0x02823A53,0xEF0000));
+     switch(fault){
+     case 0:x.f.m[0xEF0008]=0xABCD0000;break;
+     case 1:x.f.m[unit+0x324+0xC]=x.f.original[6]+0xD008;break;
+     case 2:x.image=false;break;
+     case 3:x.f.removal_noop=true;break;
+     case 4:x.thread=9;break;
+     }
+     x.r.genesis_remove_target(0xEF0000);C(x.f.removal_calls==(fault==3?1u:0u));
+     if(fault!=4){C(x.r.lifecycle().state()!=LifeState::Live);x.image=true;
+         C(x.r.clock().event(PipelineEnd,0xC00000,0xD00000));
+         C(!x.r.window().event(PipelineEnd,0xC00000,0xD00000));
+         C(x.r.lifecycle().state()==LifeState::Quarantined);
+     }
+     ++scenarios;
+    }
     {Fixture x(7);x.detector_setup();const auto before=x.f.m;
      x.f.detector_observer=[](void* p,u32 manager) noexcept {
          auto& z=*static_cast<Fixture*>(p);C(manager==0xEE0000);u32 v=99;

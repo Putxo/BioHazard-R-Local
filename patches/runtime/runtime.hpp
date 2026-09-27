@@ -55,6 +55,7 @@ public:
     bool genesis_candidate(u32 target) noexcept;
     Mode genesis_set_focus(u32 target,u32 value) noexcept;
     Mode genesis_set_position(u32 target,u32 source) noexcept;
+    void genesis_remove_target(u32 target) noexcept;
     Mode genesis_camera(u32 widget,u32 manager,u32* out) noexcept {
         return rev_genesis::camera(genesis_host(),host_.memory,widget,manager,out);
     }

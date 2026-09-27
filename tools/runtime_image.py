@@ -65,6 +65,7 @@ def read_module(data):
 
 def hook_sites():
     out=[(0x01EB73A0,bytes.fromhex('558bec81ecfc000000'),'rev_action_draw_gate',0xE9)]
+    out.append((0x02823AA8,rel(0x02823AA8,0x01C919B5),'rev_genesis_remove_target_gate',0xE8))
     for va in (0x023CEA44,0x023D4449,0x027EBD87,0x027EBE4C,0x027EBEAA,0x027EBED8):
         out.append((va,rel(va,0x01BBECD1),'rev_genesis_detect_gate',0xE8))
     for va,target,name in ((0x0281FB8A,0x01C5741D,'detector_camera'),
