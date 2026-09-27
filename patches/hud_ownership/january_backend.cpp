@@ -253,6 +253,11 @@ bool JanuaryBackend::destroy(u32 u,WidgetKind k) {
     if (!allow(NativeOp::Destroy,k,u) || !targets(k) || !detached(u,k)) return false;
     if(k==WidgetKind::Scanner && !scanner_valid(u))return fail(NativeFault::Resources);
     if(k==WidgetKind::Scope && !scope_valid(u))return fail(NativeFault::Resources);
+    if(k==WidgetKind::Scanner && (!events_.scanner_retire ||
+       !events_.scanner_retire(events_.context,u,originals_[6]) ||
+       e.quarantine || !allow(NativeOp::Destroy,k,u) || !targets(k) || !detached(u,k))) {
+        e.quarantine=true;return fail(NativeFault::Resources);
+    }
     calls_.method1(calls_.context,january_type(k)->destroy,u,1);
     e={}; return true; // no memory read after scalar deleting destructor
 }

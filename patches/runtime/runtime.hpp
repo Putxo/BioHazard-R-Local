@@ -89,6 +89,7 @@ private:
     rev_genesis::EffectLifetime effects_;
     rev_genesis::Effects effects_owned_{},effects_stock_{};
     bool scanner_effects(u32 unit,u32 stock,bool prepare) noexcept;
+    bool scanner_retire(u32 unit,u32 stock) noexcept;
     rev_genesis::TargetViews target_views_;
     rev_genesis::TargetViewHost target_view_host() noexcept;
     u32 scanner_scope_=0;

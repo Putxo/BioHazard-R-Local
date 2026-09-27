@@ -20,7 +20,8 @@ Runtime::Runtime(Registry& registry,Host host,u32 count) noexcept
         [](void* p,u32 u) noexcept {return static_cast<Runtime*>(p)->scanner_begin(u);},
         [](void* p,u32 u) noexcept {return static_cast<Runtime*>(p)->scanner_end(u);},
         [](void* p,u32 u,u32 a) noexcept {return static_cast<Runtime*>(p)->scope_feed(u,a);},
-        [](void* p,u32 u,u32 s,bool init) noexcept {return static_cast<Runtime*>(p)->scanner_effects(u,s,init);}}),
+        [](void* p,u32 u,u32 s,bool init) noexcept {return static_cast<Runtime*>(p)->scanner_effects(u,s,init);},
+        [](void* p,u32 u,u32 s) noexcept {return static_cast<Runtime*>(p)->scanner_retire(u,s);}}),
       lifecycle_(registry,backend_.callbacks(),count),
       frames_(clock_,source_,view_.services()),
       driver_(lifecycle_,frames_.callbacks()),
@@ -88,6 +89,12 @@ bool Runtime::scanner_effects(u32 unit,u32 stock,bool prepare) noexcept {
     }
     return rev_genesis::same_effects(owned,effects_owned_) &&
         rev_genesis::same_effects(original,effects_stock_) && rev_genesis::effect_view(host_.memory,owned,1);
+}
+bool Runtime::scanner_retire(u32 unit,u32 stock) noexcept {
+    // Called only by JanuaryBackend after its Destroy admission and graph
+    // validation. No gameplay callback or render work may run in this window.
+    return scanner_effects(unit,stock,false) &&
+        rev_genesis::retire_effects(host_.memory,effects_,effects_owned_,host_.write);
 }
 u32 Runtime::genesis_filter_loaded(u32 widget,u32 resource) noexcept {
     if(!widget || widget!=backend_.retained(WidgetKind::Scanner))return resource;
