@@ -25,7 +25,8 @@ struct Fake {
 int main(){
     Fake f;Effects a{},b{},out{};C(capture_effects(f.reader(),f.life,Stock,&a));
     C(capture_effects(f.reader(),f.life,Local,&b));C(disjoint_effects(a,b));C(disjoint_effects(b,a));
-    C(!disjoint_effects(a,a));C(!disjoint_effects(a,{}));C(!same_effects(a,b));
+    const Effects empty{};
+    C(!disjoint_effects(a,a));C(!disjoint_effects(a,empty));C(!same_effects(a,b));
     C(capture_effects(f.reader(),f.life,Stock,&out));C(same_effects(a,out));
     C(!capture_effects(f.reader(),f.life,0,&out));C(!capture_effects(f.reader(),f.life,Stock,nullptr));
     C(!effect_view(f.reader(),b,1));C(!effect_view(f.reader(),b,2));
