@@ -109,11 +109,48 @@ bool Runtime::scanner_retire(u32 unit,u32 stock) noexcept {
     return scanner_effects(unit,stock,false) &&
         rev_genesis::retire_effects(host_.memory,effects_,effects_owned_,host_.write);
 }
+bool Runtime::color_policy(u32 unit,u32& views,bool& draw_override) noexcept {
+    auto h=target_view_host();u32 system=0,vt=0,flags=0,global=0,stock=0,local=0;
+    if(!h.on_thread(h.context) || color_policy_busy_ || !unit ||
+       !word(0x05563C04,system) || !system || system>Invalid-0x62B3u || unit!=system+0x6A0u)return false;
+    struct Busy {bool& value;explicit Busy(bool& v):value(v){value=true;}~Busy(){value=false;}} busy(color_policy_busy_);
+    rev_genesis::ViewFrame before{},after{};const u32 scanner=effects_owned_.scanner;
+    if(!word(system,vt) || vt!=0x04DB7C9C || !word(unit,vt) || vt!=0x04DB848C ||
+       h.resolve(h.context,scanner,&before)!=Mode::Local || !scanner_effects(scanner,effects_stock_.scanner,false) ||
+       !word(unit+12,flags) || !word(system+0x62B0,global) ||
+       !word(effects_stock_.units[0].address+12,stock) || !word(effects_owned_.units[0].address+12,local))return false;
+    // The original game's global color-disable flag belongs to J1's Scanner.
+    // Private effect control leaves it untouched. Root activity supplies each
+    // view's independent Genesis state without rewriting native flags.
+    const bool p1=(stock&0x4C00u)==0x4C00u,p2=(local&0x4C00u)==0x4C00u;
+    u32 again=0;
+    if(!scanner_effects(scanner,effects_stock_.scanner,false) ||
+       !word(0x05563C04,again) || again!=system ||
+       !word(system,again) || again!=0x04DB7C9C || !word(unit,again) || again!=0x04DB848C ||
+       !word(unit+12,again) || again!=flags || !word(system+0x62B0,again) || again!=global ||
+       !word(effects_stock_.units[0].address+12,again) || again!=stock ||
+       !word(effects_owned_.units[0].address+12,again) || again!=local ||
+       h.resolve(h.context,scanner,&after)!=Mode::Local || !same_effect_frame(before,after))return false;
+    views=0x3FFu&~((p1?1u:0u)|(p2?2u:0u));
+    // sUnit checks draw eligibility before asking for the view mask. Admit the
+    // shared color unit for the other view only when J1's Genesis disabled it.
+    // Preserve native state, zone/update availability, draw flag and view bit.
+    draw_override=p1 && !p2 && !(global&255u) && (flags&7u)==2u &&
+        (flags&0x4C00u)==0x4400u && ((flags>>16)&2u)!=0;
+    return true;
+}
+bool Runtime::unit_draw_enabled(u32 unit,bool original) noexcept {
+    if(original)return true;
+    u32 views=0;bool draw_override=false;
+    return color_policy(unit,views,draw_override) && draw_override;
+}
 u32 Runtime::unit_mask(u32 unit,u32 original) noexcept {
     auto h=target_view_host();
     // Local views use the native immediate draw path. Other threads must not
     // inspect these owner-thread certificates, including during replacement.
     if(!h.on_thread(h.context))return action_.mask(unit,original);
+    u32 color_views=0;bool color_override=false;
+    if(color_policy(unit,color_views,color_override))return original&color_views;
     rev_genesis::EffectKey key{};bool owned=false,found=false;
     for(const auto& k:effects_owned_.units)if(k.valid() && k.address==unit){key=k;owned=true;found=true;}
     if(!found)for(const auto& k:effects_stock_.units)if(k.valid() && k.address==unit){key=k;found=true;}
@@ -769,4 +806,8 @@ extern "C" unsigned int rev_genesis_weapon_use(unsigned int widget,unsigned int 
 
 extern "C" unsigned int rev_genesis_effect_toggle(unsigned int widget,unsigned int enabled) noexcept {
     return rev_runtime::HealSink && rev_runtime::HealSink->genesis_effect_toggle(widget,(enabled&255u)!=0)?1u:0u;
+}
+
+extern "C" unsigned int rev_runtime_unit_draw_enabled(unsigned int unit,unsigned int original) noexcept {
+    return rev_runtime::HealSink?static_cast<unsigned int>(rev_runtime::HealSink->unit_draw_enabled(unit,original!=0)):(original?1u:0u);
 }

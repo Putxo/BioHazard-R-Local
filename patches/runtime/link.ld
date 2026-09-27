@@ -77,3 +77,4 @@ rev_genesis_weapon_dying_resume = 0x0248742C;
 rev_genesis_weapon_retain_resume = 0x02B20D9F;
 rev_genesis_weapon_activate_end = 0x02B21097;
 rev_genesis_effect_toggle_resume = 0x02B23129;
+rev_genesis_color_draw_enabled_stock = 0x01C42635;

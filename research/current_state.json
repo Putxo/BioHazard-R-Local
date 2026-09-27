@@ -2,9 +2,9 @@
   "schema_version": 4,
   "canonical_branch": "research/script-member-serial-validation",
   "checkpoint": {
-    "merged_pr": 54,
-    "merge_sha": "e9b814427932a796361a5d6caabd115c3347fc1b",
-    "tested_head": "719c638043ece933ba55b9a2ff981f8187181d36",
+    "merged_pr": 55,
+    "merge_sha": "99b6a6472fa341d0236a0c920cf9240bac68136a",
+    "tested_head": "7820499726c6fda0038f3f3652d0d28ba0074448",
     "ci": "20 workflows PASS"
   },
   "user_constraints": {
@@ -25,7 +25,7 @@
   },
   "runtime": {
     "composition_root": true,
-    "hud_menu_hook_count": 179,
+    "hud_menu_hook_count": 181,
     "local_views_use_native_immediate_draw": true,
     "action_loop_priority_per_member": true,
     "action_loop_stop_per_member": true,
@@ -87,7 +87,8 @@
     "genesis_weapon_storage_pinned_through_callbacks": false,
     "genesis_native_weapon_use_admissions_connected": 41,
     "genesis_private_effect_activity_toggle_connected": true,
-    "genesis_shared_visual_consumers_per_view_complete": false
+    "genesis_shared_visual_consumers_per_view_complete": false,
+    "genesis_shared_color_per_view_admission_connected": true
   },
   "pending": [
     "full HUD and interaction prompts",
@@ -133,6 +134,7 @@
     "docs/81-genesis-activation-globals.md",
     "docs/82-genesis-weapon-lifetime.md",
     "docs/83-genesis-weapon-use-barriers.md",
-    "docs/84-genesis-private-effect-toggle.md"
+    "docs/84-genesis-private-effect-toggle.md",
+    "docs/85-genesis-color-per-view.md"
   ]
 }

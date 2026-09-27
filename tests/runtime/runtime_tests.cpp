@@ -167,6 +167,37 @@ struct Fixture {
     }
 };
 int main(){
+    for(u32 scan=0;scan<4;++scan){Fixture x(7);x.detector_setup();x.equipment_setup();const u32 scanner=x.r.lifecycle().unit(6);
+     constexpr u32 system=0xF80000,unit=system+0x6A0;
+     x.f.m[0x05563C04]=system;x.f.m[system]=0x04DB7C9C;x.f.m[unit]=0x04DB848C;
+     x.f.m[system+0x62B0]=scan&1?0:1;x.f.m[unit+12]=0x80034432u|((scan&1)?0u:0x800u);
+     const u32 stock=x.f.m[x.f.original[6]+0x2F0];
+     x.f.m[stock+12]=(x.f.m[stock+12]&~0x4C00u)|((scan&1)?0x4C00u:0u);
+     C(x.r.genesis_effect_toggle(scanner,(scan&2)!=0));const auto before=x.f.m;
+     for(u32 mask:{0u,1u,2u,3u,7u})C(x.r.unit_mask(unit,mask)==(mask&~scan));
+     C(x.r.unit_draw_enabled(unit,true));C(x.r.unit_draw_enabled(unit,false)==(scan==1));
+     C(!x.r.unit_draw_enabled(unit+0x10,false));C(x.r.unit_mask(unit+0x10,7)==7);C(x.f.m==before);
+     x.end();++scenarios;}
+    for(u32 fault=0;fault<12;++fault){Fixture x(7);x.detector_setup();x.equipment_setup();
+     constexpr u32 system=0xF80000,unit=system+0x6A0;
+     x.f.m[0x05563C04]=system;x.f.m[system]=0x04DB7C9C;x.f.m[unit]=0x04DB848C;
+     x.f.m[system+0x62B0]=0;x.f.m[unit+12]=0x80034432;
+     x.f.m[x.f.m[x.f.original[6]+0x2F0]+12]|=0x4C00;
+     C(x.r.genesis_effect_toggle(x.r.lifecycle().unit(6),false));C(x.r.unit_draw_enabled(unit,false));
+     if(fault==0)x.f.m[unit+12]&=~0x4000u;
+     if(fault==1)x.f.m[unit+12]&=~0x400u;
+     if(fault==2)x.f.m[unit+12]=(x.f.m[unit+12]&~7u)|3u;
+     if(fault==3)x.f.m[unit+12]&=~0x20000u;
+     if(fault==4)x.f.m[system+0x62B0]=1;
+     if(fault==5)x.f.m[unit]=0;
+     if(fault==6)x.f.m[system]=0;
+     if(fault==7)x.f.reader_fail=unit+12;
+     if(fault==8)x.thread=8;
+     if(fault==9)C(x.r.clock().event(PipelineEnd,0xC00000,0xD00000));
+     if(fault==10)x.r.lifecycle().stop();
+     if(fault==11){x.mask_read_at=system+0x62B0;x.mask_read_fault=1;}
+     C(!x.r.unit_draw_enabled(unit,false));C(x.r.unit_draw_enabled(unit,true));++scenarios;}
+
     {Fixture x(7);x.detector_setup();x.equipment_setup();const u32 scanner=x.r.lifecycle().unit(6);const auto before=x.f.m;
      C(!x.r.genesis_effect_toggle(x.f.original[6],true));C(x.f.m==before);
      C(x.r.genesis_effect_toggle(scanner,true));C(x.r.lifecycle().state()==LifeState::Live);
