@@ -16,7 +16,7 @@ Leer también docs/54-action-icon-view-routing.md, docs/55-action-priority-loop.
 
 y docs/56-local-draw-scheduling.md. Prioridad y parada del bucle por miembro;
 
-selector de dibujo inmediato local integrado: 46 hooks. No confundirlo
+selector de dibujo inmediato local integrado: 52 hooks. No confundirlo
 
 con cobertura completa de ActionCommand ni con validación jugando.
 
@@ -58,3 +58,5 @@ Indicador de daño separado: [alimentación por actor](docs/57-damage-hud.md).
 Indicador de daño separado: [alimentación por actor](docs/57-damage-hud.md).
 
 Genesis: [progreso global, productores y recompensa](docs/58-genesis-ownership-boundaries.md).
+
+Curación de J2: [productores y cola](docs/59-heal-hud.md).

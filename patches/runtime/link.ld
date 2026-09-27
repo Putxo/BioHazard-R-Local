@@ -17,6 +17,7 @@ rev_damage_state_value = 0x01C09353;
 rev_damage_health_ratio = 0x01B7DFCE;
 rev_damage_set_percent = 0x01C90F33;
 rev_damage_set_visible = 0x01C7799D;
+rev_hud_stock_heal = 0x01C88B6C;
 rev_hud_stock_self = 0x01C2C7F4;
 rev_menu_stock_self = 0x01C2C7F4;
 rev_menu_stock_state_transition = 0x02CDD180;

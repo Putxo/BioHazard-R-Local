@@ -14,13 +14,13 @@ El propietario prohíbe abrirlo y hará personalmente las pruebas jugando.
 | Cámaras | View0 TOP y View1 BOTTOM, targets separados; cutscenes pendientes |
 | Inventario | Pack gameplay propio; menú global muestra Sub0 con owner J2 |
 | Pausa | Una pausa global; abrir/navegar/confirmar/cancelar por owner; lifetime y nested 6/7 implementados |
-| HUD | Clones de Reticle, MainEquipment, MapHerb, SubEquipment y Damage; faltan curación, asfixia, Genesis y otros widgets |
+| HUD | Clones de Reticle, MainEquipment, MapHerb, SubEquipment, Damage y Heal; faltan asfixia, Genesis y otros widgets |
 | Recursos HUD | Grafo completo conectado, selección desde sIDCockpit, lifetimes y retirada |
 | Pickup/puertas | ActionIcon2D por miembro/vista; prioridad y parada del bucle por miembro; otros gates y prompts completos pendientes |
 | Guiones | Dos callbacks PcsSub con owner+serial; cobertura QTE parcial |
 | Rescate | Routing parcial existente; muerte/checkpoints pendientes |
 
-La compilación acumulativa nueva conecta 46 hooks HUD/menú/ActionIcon sobre la base de
+La compilación acumulativa nueva conecta 52 hooks HUD/menú/ActionIcon sobre la base de
 input, cámara, pickup, puertas y serial de guion. Se ha generado y verificado
 estáticamente una copia local de trabajo. No se ha instalado en Steam ni abierto.
 No constituye una entrega final.
@@ -61,3 +61,5 @@ El juego no se ha ejecutado.
 Indicador de daño separado: [alimentación por actor](docs/57-damage-hud.md).
 
 Genesis: [progreso global, productores y recompensa](docs/58-genesis-ownership-boundaries.md).
+
+Curación por actor: [seis productores y cola por lifetime](docs/59-heal-hud.md).

@@ -9,6 +9,7 @@ struct Fixture {
     std::map<u32,u32> m; P1ViewMask mask; u32 writes=0,fail_write=0;
     u32 cockpit=0x100000,minimap=0x110000,equip=0x200000,reticle=0x210000,herb=0x220000,ctx=0x300000;
     Fixture(u32 count=LegacyWidgetKinds):mask({{this,read},write},count) {
+        if(count>=6){m[cockpit+0x44]=0x250000;m[0x250000]=kind_info(WidgetKind::Heal)->vtable;m[0x25000C]=0x83031234;}
         if(count>=5){m[cockpit+0x3C]=0x240000;m[0x240000]=kind_info(WidgetKind::Damage)->vtable;m[0x24000C]=0x83031234;}
         if(count>=4){m[cockpit+0x64]=0x230000;m[0x230000]=kind_info(WidgetKind::SubEquipment)->vtable;m[0x23000C]=0x83031234;}
         m[cockpit]=manager_vtable(ManagerKind::Cockpit);m[minimap]=manager_vtable(ManagerKind::MiniMap);
@@ -29,6 +30,10 @@ struct Fixture {
     }
 };
 int main(){
+    {Fixture f(6);const auto before=f.m;
+     CHECK(f.mask.begin(0x02B49DE3,f.cockpit,f.ctx));CHECK((draw_view(f.m[0x25000C])&2)==0);
+     CHECK(f.mask.end(0x02B49E5C,f.cockpit));CHECK(f.m==before);++scenarios;}
+
     {Fixture f(5);const auto before=f.m;
      CHECK(f.mask.begin(0x02B49DE3,f.cockpit,f.ctx));CHECK((draw_view(f.m[0x24000C])&2)==0);
      CHECK(f.mask.end(0x02B49E5C,f.cockpit));CHECK(f.m==before);++scenarios;}

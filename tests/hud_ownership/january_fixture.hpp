@@ -16,6 +16,7 @@ struct Fake {
     Session session{true,1,{0x300000,1,0,1},{0x320000,1,1,1}};
     u32 next=0x600000,context=0x400000,ctor_count=0,init_count=0;
     u32 damage_unit=0,damage_actor=0,damage_calls=0;
+    u32 heal_unit=0,heal_calls=0;
     bool damage_ok=true;
     u32 allocation_override=0,attached=0,reader_fail=0,write_fail=0;
     int no_alloc=-1,no_init=-1,bad_ctor=-1;
@@ -27,6 +28,7 @@ struct Fake {
         if(!valid_widget_count(count))count=LegacyWidgetKinds;
         if(count>=4)original[3]=0x160000;
         if(count>=5)original[4]=0x180000;
+        if(count>=6)original[5]=0x1A0000;
         for(u32 i=0;i<2;++i){m[p[i]]=manager_vtable(static_cast<ManagerKind>(i));m[p[i]+0x1C]=i?0x3F000000:0x3F800000;}
         for(u32 i=0;i<count;++i){
             const auto k=static_cast<WidgetKind>(i);plain(original[i],k);tree(original[i],k);
@@ -81,7 +83,8 @@ struct Fake {
         auto& f=*static_cast<Fake*>(c);f.events.push_back({target,self,0,0});
         u32 i=WidgetKinds;for(u32 j=0;j<WidgetKinds;++j)if(kind_info(static_cast<WidgetKind>(j))->vtable==f.m[self])i=j;
         C(i<WidgetKinds);const auto k=static_cast<WidgetKind>(i);const auto* t=january_type(k);
-        if(target==t->initialize){
+        if(target==0x01C88B6C){C(k==WidgetKind::Heal);++f.heal_calls;f.heal_unit=self;}
+        else if(target==t->initialize){
             ++f.init_count;if(static_cast<int>(i)!=f.no_init)f.tree(self,k);
             if(f.alias_tree)f.m[self+0xF8]=f.m[f.original[0]+0xF8];
             if(f.stop_in_init && f.life)f.life->stop();

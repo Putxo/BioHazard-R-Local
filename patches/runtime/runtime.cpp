@@ -1,5 +1,6 @@
 #include "runtime.hpp"
 namespace rev_runtime {
+namespace {Runtime* HealSink=nullptr;}
 Runtime::Runtime(Registry& registry,Host host,u32 count) noexcept
     : host_(host), count_(count),
       source_(registry,{host.memory.context,host.memory.word,host.thread,host.self}),
@@ -12,7 +13,8 @@ Runtime::Runtime(Registry& registry,Host host,u32 count) noexcept
       ledger_(structural_allocation_gate(window_),host.native),
       allocation_(structural_allocation_gate(window_),ledger_,services()),
       admission_(gate(),allocation_.callbacks()),
-      backend_(admission_.callbacks(),ledger_.callbacks(),count,&registry),
+      backend_(admission_.callbacks(),ledger_.callbacks(),count,&registry,
+        {this,[](void* p,u32 u,u32 a) noexcept {return static_cast<Runtime*>(p)->heal_feed(u,a);}}),
       lifecycle_(registry,backend_.callbacks(),count),
       frames_(clock_,source_,view_.services()),
       driver_(lifecycle_,frames_.callbacks()),
@@ -29,6 +31,25 @@ Runtime::Runtime(Registry& registry,Host host,u32 count) noexcept
           u32 v=0;return static_cast<Runtime*>(p)->word(0x057D9184,v)?v:0;
       }}), priority_(priority_host()), action_(action_host()) {}
 
+bool Runtime::heal_event(u32 actor) noexcept {
+    auto h=action_host();rev_action::Frame f{};
+    const auto mode=h.snapshot(h.memory.context,&f);
+    if(mode==rev_action::SnapshotMode::Stock)return true;
+    if(mode!=rev_action::SnapshotMode::Local || !HealQueue::session_valid(f.session))return false;
+    if(actor==f.session.self.address)return true;
+    if(count_>=6 && lifecycle_.state()==LifeState::Live && lifecycle_.unit(5))
+        (void)heal_queue_.request(f.session,f.number,actor);
+    return false;
+}
+bool Runtime::heal_feed(u32 unit,u32 actor) noexcept {
+    auto h=action_host();rev_action::Frame f{};
+    if(!unit || unit!=lifecycle_.unit(5) ||
+       h.snapshot(h.memory.context,&f)!=rev_action::SnapshotMode::Local ||
+       actor!=f.session.sub0.address)return false;
+    if(heal_queue_.consume(f.session,f.number,actor))
+        host_.native.method0(host_.native.context,0x01C88B6C,unit);
+    return true;
+}
 rev_action::Host Runtime::action_host() noexcept {
     return {{this,[](void* p,u32 a,u32* v) noexcept {
         return v && static_cast<Runtime*>(p)->word(a,*v);
@@ -98,6 +119,8 @@ bool Runtime::bind() noexcept {
     bind_attempted_=true;
     // A failed bind must prevent installing/reaching gateways. The graph must
     // remain alive even on failure: some process-lifetime sinks may be bound.
+    if(HealSink)return false;
+    HealSink=this;
     return bind_lifetime_sink(source_) && bind_pipeline_sink(clock_) &&
         bind_structural_sink(window_) && bind_manager_sink(driver_) &&
         bind_begin_activator_sink(activator_) && bind_p1_mask_sink(mask_) &&
@@ -126,4 +149,8 @@ bool Runtime::structural(u32 frame,u32 owner,u32 frame_base) noexcept {
     // drains an existing clone set, instead of permanently poisoning the loop.
     return coordinator_.run(frame,owner,frame_base);
 }
+}
+
+extern "C" unsigned int rev_hud_heal_request(unsigned int actor) noexcept {
+    return rev_runtime::HealSink && rev_runtime::HealSink->heal_event(actor) ? 1u:0u;
 }
