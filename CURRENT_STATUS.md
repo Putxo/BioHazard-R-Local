@@ -1,7 +1,7 @@
 # Estado actual del cooperativo local
 
 27/09/2026. Rama técnica: `research/script-member-serial-validation`.
-PR29 integrado: `a9f53e92e34d6125977d150a36a2d10cc1e7da0e`, 19 workflows PASS.
+PR30 integrado: `ace0e0fd993eb4bf562e2f439be87a3f861cbc41`, 20 workflows PASS.
 
 **El cooperativo completo sigue en desarrollo. El juego no se ha ejecutado.**
 El propietario prohíbe abrirlo y hará personalmente las pruebas jugando.
@@ -59,3 +59,5 @@ Persisten gates/flags globales, historial y productores 3D por completar.
 El juego no se ha ejecutado.
 
 Indicador de daño separado: [alimentación por actor](docs/57-damage-hud.md).
+
+Genesis: [progreso global, productores y recompensa](docs/58-genesis-ownership-boundaries.md).

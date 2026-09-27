@@ -2,10 +2,10 @@
   "schema_version": 4,
   "canonical_branch": "research/script-member-serial-validation",
   "checkpoint": {
-    "merged_pr": 29,
-    "merge_sha": "a9f53e92e34d6125977d150a36a2d10cc1e7da0e",
-    "tested_head": "2bd99ebbaf6471f355a72d3a2b4a528f81eed13c",
-    "ci": "19 workflows PASS"
+    "merged_pr": 30,
+    "merge_sha": "ace0e0fd993eb4bf562e2f439be87a3f861cbc41",
+    "tested_head": "f2e99e756d5e5cbcbbce4377d6158c2b683ea0fc",
+    "ci": "20 workflows PASS"
   },
   "user_constraints": {
     "launch_game": false,
@@ -44,7 +44,8 @@
     "single_pause": true,
     "menu_owner_pad1": true,
     "menu_owner_lifetime": true,
-    "damage_hud_health_owner": 1
+    "damage_hud_health_owner": 1,
+    "genesis_owner_routing_implemented": false
   },
   "pending": [
     "full HUD and interaction prompts",
@@ -63,6 +64,7 @@
     "docs/54-action-icon-view-routing.md",
     "docs/55-action-priority-loop.md",
     "docs/56-local-draw-scheduling.md",
-    "docs/57-damage-hud.md"
+    "docs/57-damage-hud.md",
+    "docs/58-genesis-ownership-boundaries.md"
   ]
 }

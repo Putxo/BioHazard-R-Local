@@ -4,7 +4,7 @@
 
 Actualización: 27/09/2026. Rama canónica: research/script-member-serial-validation.
 
-PR29 integrado: a9f53e92e34d6125977d150a36a2d10cc1e7da0e, 19 workflows PASS.
+PR30 integrado: ace0e0fd993eb4bf562e2f439be87a3f861cbc41, 20 workflows PASS.
 
 
 
@@ -56,3 +56,5 @@ Indicador de daño separado: [alimentación por actor](docs/57-damage-hud.md).
 
 
 Indicador de daño separado: [alimentación por actor](docs/57-damage-hud.md).
+
+Genesis: [progreso global, productores y recompensa](docs/58-genesis-ownership-boundaries.md).
