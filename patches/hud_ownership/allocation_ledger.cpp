@@ -8,6 +8,7 @@ constexpr AllocationSpec Specs[] = {
     {WidgetKind::SubEquipment, 0x370,0x01B8BCE6,0x01C39C88,0x01C32956},
     {WidgetKind::Damage,       0x2B0,0x01B8DD52,0x01BB72E2,0x01C2CA29},
     {WidgetKind::Heal,         0x2B0,0x01C461C2,0x01BEA78C,0x01C490C5},
+    {WidgetKind::Scanner,      0x400,0x01B97C8A,0x01C802C8,0x01BED6A3},
 };
 struct Busy {
     bool& v; explicit Busy(bool& b):v(b){v=true;} ~Busy(){v=false;}

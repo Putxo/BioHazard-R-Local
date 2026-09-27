@@ -25,3 +25,12 @@ jobs:
           as --32 tests/genesis/progress_abi.S -o "$RUNNER_TEMP/progress-abi.o"
           ld -m elf_i386 "$RUNNER_TEMP/progress-gates.o" "$RUNNER_TEMP/progress-abi.o" -o "$RUNNER_TEMP/progress-abi"
           "$RUNNER_TEMP/progress-abi"
+      - name: Scanner resource graph and actor gateway ABI
+        run: |
+          g++ -std=c++17 -Wall -Wextra -Werror patches/genesis/resources.cpp tests/genesis/resources_tests.cpp -o "$RUNNER_TEMP/scanner-resources"
+          "$RUNNER_TEMP/scanner-resources"
+          as --32 patches/hud_ownership/self_bridges.S -o "$RUNNER_TEMP/scanner-self.o"
+          as --32 patches/genesis/actor_gateway.S -o "$RUNNER_TEMP/scanner-actor.o"
+          as --32 tests/genesis/actor_abi.S -o "$RUNNER_TEMP/scanner-abi.o"
+          ld -m elf_i386 "$RUNNER_TEMP/scanner-self.o" "$RUNNER_TEMP/scanner-actor.o" "$RUNNER_TEMP/scanner-abi.o" -o "$RUNNER_TEMP/scanner-abi"
+          "$RUNNER_TEMP/scanner-abi"

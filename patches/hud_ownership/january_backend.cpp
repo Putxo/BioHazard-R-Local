@@ -8,6 +8,7 @@ constexpr JanuaryType Types[] = {
     {0x370,0x01B8BCE6,0x01C39C88,0x01C32956,0x01C7FD6E,0x01BA1E2E,0x01BF295F,0x01C8373E},
     {0x2B0,0x01B8DD52,0x01BB72E2,0x01C2CA29,0x01B98D2E,0x01C6E591,0x01BBEFAB,0x01BB9E75},
     {0x2B0,0x01C461C2,0x01BEA78C,0x01C490C5,0x01C3D28E,0x01C774C5,0x01BF295F,0x01BFF67D},
+    {0x400,0x01B97C8A,0x01C802C8,0x01BED6A3,0x01C73AA5,0x01C7272C,0x01C54FB0,0x01C6E55F},
 };
 constexpr u32 GetUnit = 0x01C8C27B, Contains = 0x0326AA90;
 struct Busy { bool& flag; explicit Busy(bool& f):flag(f){flag=true;} ~Busy(){flag=false;} };
@@ -69,6 +70,12 @@ bool JanuaryBackend::detached(u32 u,WidgetKind k) {
     if (found!=0) return fail(NativeFault::Attached);
     return true;
 }
+bool JanuaryBackend::scanner_valid(u32 unit) noexcept {
+    rev_genesis::Resources current{};
+    return rev_genesis::capture_resources(host_.memory,unit,&current) &&
+        rev_genesis::same_resources(current,scanner_owned_) &&
+        rev_genesis::disjoint(current,scanner_original_);
+}
 bool JanuaryBackend::configure(const u32 p[2],const u32 originals[WidgetKinds]) {
     if (busy_) return fail(NativeFault::Reentrant);
     for (const auto& e:entries_) if (e.unit) return fail(NativeFault::Quarantined);
@@ -89,6 +96,8 @@ bool JanuaryBackend::configure(const u32 p[2],const u32 originals[WidgetKinds]) 
         for (u32 j=0;j<i;++j) if (!disjoint_trees(trees[i],trees[j])) return fail(NativeFault::Borrowed);
         if (originals[i]==p[0] || originals[i]==p[1]) return fail(NativeFault::Borrowed);
     }
+    if(count_>=7 && !rev_genesis::capture_resources(host_.memory,originals[6],&scanner_original_))
+        return fail(NativeFault::Resources);
     for(u32 i=0;i<2;++i) parents_[i]=p[i];
     for(u32 i=0;i<count_;++i) originals_[i]=originals[i];
     fault_=NativeFault::None; configured_=true; return true;
@@ -131,6 +140,9 @@ bool JanuaryBackend::init(u32 u,WidgetKind k) {
     if (!allow(NativeOp::Initialize,k,u) || !detached(u,k)) { e.quarantine=true;return false; }
     GuiTree tree{};
     if (!capture_tree(host_.memory,u,k,&tree)) return fail(NativeFault::Resources);
+    if(k==WidgetKind::Scanner &&
+        (!rev_genesis::capture_resources(host_.memory,u,&scanner_owned_) ||
+         !rev_genesis::disjoint(scanner_owned_,scanner_original_)))return fail(NativeFault::Resources);
     e.ready=true;return true;
 }
 bool JanuaryBackend::destroy(u32 u,WidgetKind k) {
@@ -139,6 +151,7 @@ bool JanuaryBackend::destroy(u32 u,WidgetKind k) {
     if (!u || u!=e.unit || !e.constructed || e.quarantine) return fail(NativeFault::Quarantined);
     Busy lock(busy_);
     if (!allow(NativeOp::Destroy,k,u) || !targets(k) || !detached(u,k)) return false;
+    if(k==WidgetKind::Scanner && !scanner_valid(u))return fail(NativeFault::Resources);
     calls_.method1(calls_.context,january_type(k)->destroy,u,1);
     e={}; return true; // no memory read after scalar deleting destructor
 }
@@ -148,6 +161,7 @@ bool JanuaryBackend::phase(u32 u,WidgetKind k,u32 phase,u32 context) {
     if (!u || u!=e.unit || !e.ready || e.quarantine || (phase!=8 && phase!=9 && phase!=11)) return fail(NativeFault::Layout);
     Busy lock(busy_);
     if (!allow(NativeOp::Phase,k,u,phase,context) || !targets(k) || !detached(u,k)) return false;
+    if(k==WidgetKind::Scanner && !scanner_valid(u))return fail(NativeFault::Resources);
     if (k==WidgetKind::Damage && phase==8) {
         const Route route=owners_?owners_->resolve(u,k):Route{};
         if (route.mode!=Mode::Local || route.member!=1 || route.view!=1 ||
@@ -194,7 +208,8 @@ bool JanuaryBackend::phase(u32 u,WidgetKind k,u32 phase,u32 context) {
     }
     // A phase can enqueue work or reenter the host; do not treat a changed
     // ownership/driver admission as a successful detached callback.
-    if (!allow(NativeOp::Phase,k,u,phase,context) || !detached(u,k)) {
+    if (!allow(NativeOp::Phase,k,u,phase,context) || !detached(u,k) ||
+        (k==WidgetKind::Scanner && !scanner_valid(u))) {
         e.quarantine=true; return false;
     }
     return true;

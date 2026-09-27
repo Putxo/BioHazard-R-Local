@@ -72,6 +72,10 @@ int main(){
     {Fixture f(4);const u32 e=f.m[f.equip+0xC],r=f.m[f.reticle+0xC];
      f.m.erase(0x23000C);CHECK(!f.mask.begin(0x02B49DE3,f.cockpit,f.ctx));
      CHECK(f.m[f.equip+0xC]==e);CHECK(f.m[f.reticle+0xC]==r);++scenarios;}
+    {Fixture f(7);f.m[f.cockpit+0x48]=0x260000;f.m[0x260000]=kind_info(WidgetKind::Scanner)->vtable;
+     f.m[0x26000C]=0xA0034000;const auto before=f.m;
+     CHECK(f.mask.begin(0x02B49DE3,f.cockpit,f.ctx));CHECK(draw_view(f.m[0x26000C])==(draw_view(before.at(0x26000C))&~2u));
+     CHECK(f.mask.end(0x02B49E5C,f.cockpit));CHECK(f.m==before);++scenarios;}
     std::printf("{\"status\":\"PASS\",\"scenarios\":%u,\"assertions\":%u,\"gameplay_executed\":false}\n",scenarios,checks);
 }
 

@@ -34,4 +34,5 @@ HUD_BRIDGE rev_hud_reticle_self, 0
 HUD_BRIDGE rev_hud_equipment_self, 1
 HUD_BRIDGE rev_hud_herb_self, 2
 HUD_BRIDGE rev_hud_subequipment_self, 3
+HUD_BRIDGE rev_hud_scanner_self, 6
 .section .note.GNU-stack,"",@progbits

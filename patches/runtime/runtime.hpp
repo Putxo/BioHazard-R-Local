@@ -5,6 +5,7 @@
 #include "../action_icons/router.hpp"
 #include "../action_icons/priority_driver.hpp"
 #include "draw_schedule.hpp"
+#include "../genesis/progress.hpp"
 #include "../hud_ownership/heal_queue.hpp"
 
 namespace rev_runtime {
@@ -39,6 +40,7 @@ public:
     rev_menu::MenuOwnerRouter& menu() noexcept { return menu_; }
     rev_action::Router& action() noexcept { return action_; }
     rev_action::PriorityDriver& priority() noexcept { return priority_; }
+    rev_genesis::Progress& genesis_progress() noexcept {return genesis_;}
     bool heal_event(u32 actor) noexcept; // true means call stock activation
     u32 draw_schedule(u32 context,u32 stock) noexcept {
         return choose_draw_schedule(action_host(),context,stock);
@@ -47,6 +49,9 @@ private:
     HealQueue heal_queue_;
     bool heal_feed(u32 unit,u32 actor) noexcept;
     Host host_;
+    Registry& registry_;
+    rev_genesis::Progress genesis_;
+    rev_genesis::ProgressHost genesis_host() noexcept;
     const u32 count_;
     bool attempted_=false,started_=false,bind_attempted_=false;
     u32 thread_=0;

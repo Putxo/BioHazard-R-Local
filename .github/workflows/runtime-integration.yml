@@ -18,7 +18,7 @@ jobs:
         run: |
           FLAGS="-std=c++17 -O1 -g -Wall -Wextra -Werror"
           if [ "${{ matrix.mode }}" = sanitized ]; then FLAGS="$FLAGS -fsanitize=address,undefined -fno-omit-frame-pointer"; fi
-          g++ $FLAGS -Ipatches/hud_ownership patches/hud_ownership/*.cpp patches/runtime/runtime.cpp patches/runtime/draw_schedule.cpp patches/menu_routing/menu_owner.cpp patches/action_icons/*.cpp tests/runtime/runtime_tests.cpp -o "$RUNNER_TEMP/runtime-tests"
+          g++ $FLAGS -Ipatches/hud_ownership patches/hud_ownership/*.cpp patches/genesis/*.cpp patches/runtime/runtime.cpp patches/runtime/draw_schedule.cpp patches/menu_routing/menu_owner.cpp patches/action_icons/*.cpp tests/runtime/runtime_tests.cpp -o "$RUNNER_TEMP/runtime-tests"
           "$RUNNER_TEMP/runtime-tests"
           g++ $FLAGS patches/runtime/draw_schedule.cpp tests/runtime/draw_schedule_tests.cpp -o "$RUNNER_TEMP/draw-schedule-tests"
           "$RUNNER_TEMP/draw-schedule-tests"

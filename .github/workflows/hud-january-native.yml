@@ -18,7 +18,7 @@ jobs:
         run: |
           FLAGS="-std=c++17 -O1 -g -Wall -Wextra -Werror"
           if [ "${{ matrix.mode }}" = sanitized ]; then FLAGS="$FLAGS -fsanitize=address,undefined -fno-omit-frame-pointer"; fi
-          g++ $FLAGS -Ipatches/hud_ownership patches/hud_ownership/{ownership,lifecycle,january_backend,january_calls}.cpp tests/hud_ownership/january_tests.cpp -o "$RUNNER_TEMP/january-tests"
+          g++ $FLAGS -Ipatches/hud_ownership patches/hud_ownership/{ownership,lifecycle,january_backend,january_calls}.cpp patches/genesis/resources.cpp tests/hud_ownership/january_tests.cpp -o "$RUNNER_TEMP/january-tests"
           "$RUNNER_TEMP/january-tests"
           g++ $FLAGS -Ipatches/hud_ownership patches/hud_ownership/{ownership,lifecycle}.cpp tests/hud_ownership/lifecycle_tests.cpp -o "$RUNNER_TEMP/lifecycle-regression"
           "$RUNNER_TEMP/lifecycle-regression"

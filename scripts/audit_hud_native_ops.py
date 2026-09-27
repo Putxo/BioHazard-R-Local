@@ -55,6 +55,12 @@ class Image:
                 return self.data[raw+va-start:raw+va-start+n]
         raise ValueError(f'no raw range at {va:#x}')
 
+TYPES += (
+ ('Scanner',0x04DE3D6C,0x400,0x01B97C8A,0x02B1E890,0x01C802C8,0x02B1ED20,
+  (0x01BED6A3,0x01C73AA5,0x01C7272C,0x01C54FB0,0x01C6E55F),
+  (0x02B1F3B0,0x02B1F680,0x02CD26C0,0x02B1FCF0,0x02B20430),0x02B486D9),
+)
+
 def audit(data):
     pe=Image(data);records=[]
     def exact(va,b,label):

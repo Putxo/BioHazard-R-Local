@@ -2,9 +2,9 @@
   "schema_version": 4,
   "canonical_branch": "research/script-member-serial-validation",
   "checkpoint": {
-    "merged_pr": 31,
-    "merge_sha": "1bada8feab8abafc2ca1fc17abb430a2c771dd3a",
-    "tested_head": "27fd3f019038b79122e5e850a02f9271b03dbe35",
+    "merged_pr": 32,
+    "merge_sha": "ee1f3d40c6f53adde6bf1d1e3ed76aa3fd7ddceb",
+    "tested_head": "704420e4932f494ecc5cabe715e7efe82619131e",
     "ci": "20 workflows PASS"
   },
   "user_constraints": {
@@ -25,7 +25,7 @@
   },
   "runtime": {
     "composition_root": true,
-    "hud_menu_hook_count": 52,
+    "hud_menu_hook_count": 90,
     "local_views_use_native_immediate_draw": true,
     "action_loop_priority_per_member": true,
     "action_loop_stop_per_member": true,
@@ -40,7 +40,8 @@
       "MapHerb",
       "SubEquipment",
       "Damage",
-      "Heal"
+      "Heal",
+      "Scanner"
     ],
     "single_pause": true,
     "menu_owner_pad1": true,
@@ -49,7 +50,9 @@
     "genesis_owner_routing_implemented": false,
     "heal_hud_actor_notifications": true,
     "genesis_progress_source_component": true,
-    "genesis_progress_runtime_connected": false
+    "genesis_progress_runtime_connected": true,
+    "genesis_actor_consumers_connected": true,
+    "genesis_activation_and_targets_connected": false
   },
   "pending": [
     "full HUD and interaction prompts",
@@ -71,6 +74,7 @@
     "docs/57-damage-hud.md",
     "docs/58-genesis-ownership-boundaries.md",
     "docs/59-heal-hud.md",
-    "docs/60-genesis-progress.md"
+    "docs/60-genesis-progress.md",
+    "docs/61-scanner-clone.md"
   ]
 }
