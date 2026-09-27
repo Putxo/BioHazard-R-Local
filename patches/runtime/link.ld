@@ -1,6 +1,8 @@
 OUTPUT_FORMAT(elf32-i386)
 ENTRY(rev_runtime_entry)
 rev_original_entry = 0x01C897E7;
+rev_action_draw_continue = 0x01EB73A9;
+rev_action_stock_mask = 0x01BE2D20;
 rev_hud_stock_self = 0x01C2C7F4;
 rev_menu_stock_self = 0x01C2C7F4;
 rev_menu_stock_state_transition = 0x02CDD180;

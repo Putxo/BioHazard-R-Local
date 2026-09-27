@@ -1,0 +1,25 @@
+name: Action icon view ownership
+on: [pull_request]
+permissions:
+  contents: read
+jobs:
+  routing:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        mode: [native, sanitized]
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Isolate native claims and reject stale ownership
+        shell: bash
+        run: |
+          FLAGS="-std=c++17 -O1 -g -Wall -Wextra -Werror"
+          if [ "${{ matrix.mode }}" = sanitized ]; then FLAGS="$FLAGS -fsanitize=address,undefined -fno-omit-frame-pointer"; fi
+          g++ $FLAGS patches/action_icons/router.cpp tests/action_icons/router_tests.cpp -o "$RUNNER_TEMP/action-tests"
+          "$RUNNER_TEMP/action-tests"
+      - name: Verify x86 stack and preserved registers with synthetic continuations
+        run: |
+          as --32 patches/action_icons/gateway.S -o "$RUNNER_TEMP/gateway.o"
+          as --32 tests/action_icons/gateway_abi.S -o "$RUNNER_TEMP/test.o"
+          ld -m elf_i386 -o "$RUNNER_TEMP/abi" "$RUNNER_TEMP/gateway.o" "$RUNNER_TEMP/test.o"
+          "$RUNNER_TEMP/abi"
