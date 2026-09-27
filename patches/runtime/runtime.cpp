@@ -1,6 +1,16 @@
 #include "runtime.hpp"
 namespace rev_runtime {
-namespace {Runtime* HealSink=nullptr;}
+namespace {
+Runtime* HealSink=nullptr;
+bool same_effect_frame(const rev_genesis::ViewFrame& a,const rev_genesis::ViewFrame& b) noexcept {
+    const auto actor=[](const Actor& x,const Actor& y) noexcept {
+        return x.address==y.address && x.lifetime==y.lifetime && x.serial==y.serial && x.think_mode==y.think_mode;
+    };
+    return a.number==b.number && a.owner.actor==b.owner.actor &&
+        a.owner.session.active==b.owner.session.active && a.owner.session.epoch==b.owner.session.epoch &&
+        actor(a.owner.session.self,b.owner.session.self) && actor(a.owner.session.sub0,b.owner.session.sub0);
+}
+}
 Runtime::Runtime(Registry& registry,Host host,u32 count) noexcept
     : host_(host), registry_(registry), genesis_(genesis_host()),
       targets_({host.memory,host.thread}), effects_({host.memory,host.thread}),
@@ -117,16 +127,35 @@ u32 Runtime::unit_mask(u32 unit,u32 original) noexcept {
     if(h.resolve(h.context,scanner,&before)!=Mode::Local ||
        !scanner_effects(scanner,effects_stock_.scanner,false) ||
        h.resolve(h.context,scanner,&after)!=Mode::Local || !effects_.live(key))return refused;
-    const auto same_actor=[](const Actor& a,const Actor& b) noexcept {
-        return a.address==b.address && a.lifetime==b.lifetime && a.serial==b.serial && a.think_mode==b.think_mode;
-    };
-    const auto& a=before.owner;const auto& b=after.owner;
-    if(before.number!=after.number || a.actor!=b.actor || a.session.active!=b.session.active ||
-       a.session.epoch!=b.session.epoch || !same_actor(a.session.self,b.session.self) ||
-       !same_actor(a.session.sub0,b.session.sub0))return refused;
+    if(!same_effect_frame(before,after))return refused;
     // Never widen an inactive mask, and never rewrite J1's native flags.
     // Auxiliary views retain their stock bits for J1; J2 owns only View1.
     return owned?(original&2u):(original&~2u);
+}
+bool Runtime::effect_draw(u32 kind,u32 unit,u32 context) noexcept {
+    auto h=target_view_host();
+    if(!h.on_thread(h.context) || kind>=3)return false;
+    const auto key=effects_owned_.units[kind];
+    if(!key.valid() || key.address!=unit)return false;
+    const auto now=effects_.capture(unit,key.kind);
+    if(now.valid() && now.generation!=key.generation)return false;
+    // A recognized local root is always handled, including refusal. Unrelated
+    // units (also private FilterSet children) retain their native call path.
+    if(effect_draw_busy_ || !effects_.live(key) || !host_.effect_draw)return true;
+    struct Busy {bool& value;explicit Busy(bool& v):value(v){value=true;}~Busy(){value=false;}} busy(effect_draw_busy_);
+    rev_genesis::ViewFrame before{},after{};const u32 scanner=effects_owned_.scanner;
+    if(h.resolve(h.context,scanner,&before)!=Mode::Local || unit_mask(unit,2)!=2)return true;
+    NativeViewScope draw({host_.memory,host_.thread});
+    ManagerFrame frame{};frame.frame=before.number;frame.session=before.owner.session;
+    if(!draw.enter({0,ManagerKind::Cockpit,11},frame,context))return true;
+    if(!effects_.live(key) || h.resolve(h.context,scanner,&after)!=Mode::Local ||
+       !same_effect_frame(before,after)){(void)draw.leave();return true;}
+    host_.effect_draw(host_.memory.context,kind,unit,context);
+    if(!draw.leave() || !effects_.live(key) || h.resolve(h.context,scanner,&after)!=Mode::Local ||
+       !same_effect_frame(before,after) || unit_mask(unit,2)!=2){
+        backend_.quarantine_scanner();lifecycle_.stop();
+    }
+    return true;
 }
 u32 Runtime::genesis_filter_loaded(u32 widget,u32 resource) noexcept {
     if(!widget || widget!=backend_.retained(WidgetKind::Scanner))return resource;
@@ -663,4 +692,7 @@ extern "C" unsigned int rev_genesis_filter_loaded(unsigned int widget,unsigned i
 }
 extern "C" unsigned int rev_runtime_unit_mask(unsigned int unit,unsigned int original) noexcept {
     return rev_runtime::HealSink?rev_runtime::HealSink->unit_mask(unit,original):original;
+}
+extern "C" unsigned int rev_genesis_effect_draw(unsigned int kind,unsigned int unit,unsigned int context) noexcept {
+    return rev_runtime::HealSink && rev_runtime::HealSink->effect_draw(kind,unit,context)?1u:0u;
 }

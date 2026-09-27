@@ -11,6 +11,7 @@ struct Fixture {
     u32 class_value=0x80050001,class_fault=0,scope_fault=0;
     u32 filter_created=0,filter_copied=0,filter_released=0,filter_returned=0,filter_fault=0;
     u32 mask_read_at=0,mask_read_fault=0,mask_nested=99;
+    u32 effect_draws=0,effect_draw_fault=0;
     static constexpr u32 FilterSource=0xF00000,FilterCopy=0xF10000;
     static void filter_graph(std::map<u32,u32>& m,u32 p,u32 count) {
         m[p]=0x04DB7A34;m[p+0x48]=1;m[p+0x54]=m[p+0x58]=m[p+0x5c]=0;
@@ -83,7 +84,15 @@ struct Fixture {
             case 4:z.f.m[unit+0x2AC]=z.f.m[z.f.original[7]+0x2AC];break;
             case 5:z.r.aim_visibility(actor,0);break;
             }
-        },filter_host()};
+        },filter_host(),[](void* p,u32 kind,u32 unit,u32 context) noexcept {
+            auto& z=*static_cast<Fixture*>(p);++z.effect_draws;
+            C(kind<3);C(unit==z.f.m[z.r.lifecycle().unit(6)+effect_fixture::Offsets[kind]]);C(context==z.f.context);
+            if(z.effect_draw_fault==1)z.f.m[context+0xBC]+=1;
+            if(z.effect_draw_fault==2)(void)z.r.source().event(0x0277DC70,z.f.session.sub0.address);
+            if(z.effect_draw_fault==3)(void)z.r.genesis_effects().event(effect_fixture::Death[kind],unit);
+            if(z.effect_draw_fault==4)z.r.lifecycle().stop();
+            if(z.effect_draw_fault==5)C(z.r.effect_draw(kind,unit,context));
+        }};
     }
     Fixture(u32 count=LegacyWidgetKinds):f(count),r(registry,host(),count) {
         f.life=&r.lifecycle();
@@ -152,6 +161,33 @@ struct Fixture {
     }
 };
 int main(){
+    {Fixture x(8);x.prepare();x.begin();const u32 scanner=x.r.lifecycle().unit(6);const auto before=x.f.m;
+     for(u32 kind=0;kind<3;++kind){const u32 root=x.f.m[scanner+effect_fixture::Offsets[kind]];
+         C(x.r.effect_draw(kind,root,x.f.context));C(x.effect_draws==kind+1);
+         C(!x.r.effect_draw(kind,x.f.m[x.f.original[6]+effect_fixture::Offsets[kind]],x.f.context));}
+     C(x.f.m==before);x.effect_draw_fault=5;
+     C(x.r.effect_draw(0,x.f.m[scanner+0x2F0],x.f.context));C(x.effect_draws==4);
+     C(x.r.lifecycle().state()==LifeState::Live);x.end();++scenarios;}
+    for(u32 fault=0;fault<10;++fault){Fixture x(8);x.prepare();x.begin();const u32 root=x.f.m[x.r.lifecycle().unit(6)+0x2F0];
+     if(fault==0)x.f.m[x.f.context+0x158]=0;
+     if(fault==1)x.f.m[x.f.context+0xBC]+=1;
+     if(fault==2)x.f.m[x.f.context]=0;
+     if(fault==3)x.image=false;
+     if(fault==4)C(x.r.source().event(0x0277DC70,x.f.session.sub0.address));
+     if(fault==5)C(x.r.clock().event(PipelineEnd,0xC00000,0xD00000));
+     if(fault==6)C(x.r.genesis_effects().event(effect_fixture::Death[0],root));
+     if(fault==7)x.f.reader_fail=x.f.context+0xC0;
+     if(fault==8)x.r.lifecycle().stop();
+     if(fault==9)x.f.m[0xB00000+0x1D0]=0;
+     C(x.r.effect_draw(0,root,x.f.context));C(x.effect_draws==0);++scenarios;}
+    for(u32 fault=1;fault<=4;++fault){Fixture x(8);x.prepare();x.begin();const u32 root=x.f.m[x.r.lifecycle().unit(6)+0x2F0];
+     x.effect_draw_fault=fault;C(x.r.effect_draw(0,root,x.f.context));C(x.effect_draws==1);
+     C(x.r.lifecycle().state()!=LifeState::Live);C(x.r.effect_draw(0,root,x.f.context));C(x.effect_draws==1);++scenarios;}
+    {Fixture x(8);x.prepare();x.begin();const u32 root=x.f.m[x.r.lifecycle().unit(6)+0x2F0];
+     C(!x.r.effect_draw(3,root,x.f.context));C(!x.r.effect_draw(1,root,x.f.context));
+     x.thread=8;C(!x.r.effect_draw(0,root,x.f.context));x.thread=7;
+     C(x.r.genesis_effects().event(effect_fixture::Death[0],root));C(x.r.genesis_effects().event(effect_fixture::Birth[0],root));
+     C(!x.r.effect_draw(0,root,x.f.context));C(x.effect_draws==0);++scenarios;}
     {Fixture x(8);x.prepare();x.begin();const auto before=x.f.m;
      const u32 scanner=x.r.lifecycle().unit(6);
      for(u32 i=0;i<3;++i){const u32 own=x.f.m[scanner+effect_fixture::Offsets[i]],stock=x.f.m[x.f.original[6]+effect_fixture::Offsets[i]];

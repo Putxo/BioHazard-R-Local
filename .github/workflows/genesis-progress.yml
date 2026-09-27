@@ -138,6 +138,12 @@ jobs:
           as --32 tests/genesis/aim_abi.S -o "$RUNNER_TEMP/aim-abi.o"
           ld -m elf_i386 "$RUNNER_TEMP/aim-gate.o" "$RUNNER_TEMP/aim-abi.o" -o "$RUNNER_TEMP/aim-abi"
           "$RUNNER_TEMP/aim-abi"
+      - name: Auxiliary draw gates preserve normal and aligned native frames
+        run: |
+          as --32 patches/genesis/effect_draw_gateways.S -o "$RUNNER_TEMP/effect-draw-gates.o"
+          as --32 tests/genesis/effect_draw_abi.S -o "$RUNNER_TEMP/effect-draw-abi.o"
+          ld -m elf_i386 "$RUNNER_TEMP/effect-draw-gates.o" "$RUNNER_TEMP/effect-draw-abi.o" -o "$RUNNER_TEMP/effect-draw-abi"
+          "$RUNNER_TEMP/effect-draw-abi"
       - name: World callback gate keeps detector locals and thiscall ABI
         run: |
           as --32 patches/genesis/notification_gateway.S -o "$RUNNER_TEMP/notification-gate.o"

@@ -31,6 +31,7 @@ struct Host {
     bool (*weapon_class)(void*,u32 weapon,u32* out) noexcept=nullptr;
     void (*scope_activate)(void*,u32 unit,u32 weapon,u32 flag) noexcept=nullptr;
     rev_genesis::FilterCopyHost filter_copy{};
+    void (*effect_draw)(void*,u32 kind,u32 unit,u32 context) noexcept=nullptr;
 };
 // One process-lifetime graph. Construct and start before ANY installed gateway
 // is reachable. No callback is invoked during member construction.
@@ -73,6 +74,7 @@ public:
     Mode scope_actor(u32 widget,u32* out) noexcept;
     u32 genesis_filter_loaded(u32 widget,u32 resource) noexcept;
     u32 unit_mask(u32 unit,u32 original) noexcept;
+    bool effect_draw(u32 kind,u32 unit,u32 context) noexcept;
     Mode genesis_camera(u32 widget,u32 manager,u32* out) noexcept {
         return rev_genesis::camera(genesis_host(),host_.memory,widget,manager,out);
     }
@@ -90,6 +92,7 @@ private:
     rev_genesis::EffectLifetime effects_;
     rev_genesis::Effects effects_owned_{},effects_stock_{};
     bool effect_mask_busy_=false;
+    bool effect_draw_busy_=false;
     bool scanner_effects(u32 unit,u32 stock,bool prepare) noexcept;
     bool scanner_retire(u32 unit,u32 stock) noexcept;
     rev_genesis::TargetViews target_views_;

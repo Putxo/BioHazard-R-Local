@@ -7,6 +7,9 @@ using usize=__SIZE_TYPE__;
 void* operator new(usize,void* p) noexcept {return p;}
 extern "C" {
 void __attribute__((thiscall)) rev_action_stock_draw(u32 icon,u32 context) noexcept;
+void __attribute__((thiscall)) rev_genesis_filter_stock_draw(u32 unit,u32 context) noexcept;
+void __attribute__((thiscall)) rev_genesis_noise_stock_draw(u32 unit,u32 context) noexcept;
+void __attribute__((thiscall)) rev_genesis_outline_stock_draw(u32 unit,u32 context) noexcept;
 void* memset(void* p,int v,usize n) {
     auto* d=static_cast<unsigned char*>(p);for(usize i=0;i<n;++i)d[i]=static_cast<unsigned char>(v);return p;
 }
@@ -53,6 +56,11 @@ u32 action_member(void*,u32 command) noexcept {
 void action_draw(void*,u32 icon,u32 context) noexcept {
     rev_action_stock_draw(icon,context);
 }
+void effect_draw(void*,u32 kind,u32 unit,u32 context) noexcept {
+    if(kind==0)rev_genesis_filter_stock_draw(unit,context);
+    if(kind==1)rev_genesis_noise_stock_draw(unit,context);
+    if(kind==2)rev_genesis_outline_stock_draw(unit,context);
+}
 u32 action_rank(void*,u32 raw) noexcept {return reinterpret_cast<u32(*)(u32)>(0x01E87DB0u)(raw);}
 bool aim_weapon_hidden(void*,u32 actor) noexcept {
     using Predicate=unsigned char(__attribute__((thiscall))*)(u32);
@@ -95,6 +103,7 @@ extern "C" u32 rev_runtime_initialize() noexcept {
     h.weapon_class=weapon_class;
     h.scope_activate=scope_activate;
     h.filter_copy=rev_genesis::january_filter_copy_host(h.memory);
+    h.effect_draw=effect_draw;
     auto* r=new(storage) rev_runtime::Runtime(rev_hud::registry(),h,rev_hud::WidgetKinds);
     if(!r->start() || !r->bind()){accepted=false;return 0;}
     return 1;

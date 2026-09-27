@@ -69,3 +69,6 @@ rev_genesis_scan_stock = 0x01C41E92;
 rev_genesis_state_end = 0x02B2F9C2;
 rev_genesis_state_stock = 0x01C0CE54;
 rev_genesis_phase9_end = 0x02B201BF;
+rev_genesis_filter_draw_resume = 0x02933B29;
+rev_genesis_noise_draw_resume = 0x02935669;
+rev_genesis_outline_draw_resume = 0x037DE566;
