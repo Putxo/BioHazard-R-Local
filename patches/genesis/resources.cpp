@@ -114,4 +114,82 @@ bool same_resources(const Resources& a,const Resources& b) noexcept {
         if(a.regions[i].address!=b.regions[i].address || a.regions[i].bytes!=b.regions[i].bytes)return false;
     return true;
 }
+namespace {
+bool list(Reader r,u32 header,u32 pool,u32 stride,u32 node_offset,u32 list_vt,
+          u32& seen,u32& members) noexcept {
+    const u32 sentinel=header+4;u32 vt=0,end=0,node=0,tail=0;
+    if(!word(r,header,0,vt) || vt!=list_vt ||
+       !word(r,sentinel,0,vt) || vt!=0x04CBE468 ||
+       !word(r,header,0x10,end) || end!=sentinel ||
+       !word(r,sentinel,8,node) || !word(r,sentinel,4,tail))return false;
+    u32 previous=sentinel;members=0;
+    while(node!=sentinel){
+        if(node<pool+node_offset)return false;
+        const u32 delta=node-pool-node_offset,index=delta/stride;
+        if(delta%stride || index>=Collections::Count || (seen&(1u<<index)))return false;
+        seen|=1u<<index;members|=1u<<index;
+        u32 prev=0,next=0,data=0;
+        if(!word(r,node,4,prev) || prev!=previous || !word(r,node,8,next) ||
+           !word(r,node,0x10,data) || data!=pool+index*stride)return false;
+        previous=node;node=next;
+    }
+    return tail==previous;
+}
+bool collections(Reader r,u32 unit,Collections& out) noexcept {
+    u32 vt=0,n=0,cookie=0;
+    if(!range(unit,0x400) || !word(r,unit,0,vt) || vt!=0x04DE3D6C ||
+       !word(r,unit,0x2B4,out.icon_pool) || !word(r,unit,0x308,out.target_pool) ||
+       !range(out.icon_pool,21*0x48) || !range(out.target_pool,21*0x28) ||
+       out.icon_pool<8 || out.target_pool<4 ||
+       !word(r,unit,0x2B8,n) || n!=21 || !word(r,unit,0x30C,n) || n!=21 ||
+       !word(r,out.icon_pool-8,0,cookie) || cookie!=21 ||
+       !word(r,out.target_pool-4,0,cookie) || cookie!=21)return false;
+    const Region regions[]={{unit,0x400},{out.icon_pool-8,8+21*0x48},{out.target_pool-4,4+21*0x28}};
+    for(u32 i=0;i<3;++i)for(u32 j=0;j<i;++j)if(overlap(regions[i],regions[j]))return false;
+    u32 seen=0,free=0;
+    if(!list(r,unit+0x2BC,out.icon_pool,0x48,0x24,0x04DE45AC,seen,free) ||
+       !list(r,unit+0x2D0,out.icon_pool,0x48,0x24,0x04DE45AC,seen,out.active_icons) || seen!=0x1FFFFF)return false;
+    seen=0;
+    if(!list(r,unit+0x310,out.target_pool,0x28,4,0x04DE45B8,seen,free) ||
+       !list(r,unit+0x324,out.target_pool,0x28,4,0x04DE45B8,seen,out.active_targets) || seen!=0x1FFFFF)return false;
+    for(u32 i=0;i<Collections::Count;++i){
+        const u32 icon=out.icon_pool+i*0x48,target=out.target_pool+i*0x28;
+        if(!word(r,icon,0,vt) || vt!=0x04DE44B4 ||
+           !word(r,icon,0x24,vt) || vt!=0x04DE45D4 ||
+           !word(r,icon,0x30,vt) || vt!=0x04DE45C4 ||
+           !word(r,target,0,vt) || vt!=0x04DE45A0 ||
+           !word(r,target,4,vt) || vt!=0x04DE45F4 ||
+           !word(r,target,0x10,vt) || vt!=0x04DE45E4 ||
+           !word(r,target,0x1C,out.targets[i]) ||
+           !word(r,icon,0x3C,out.icon_targets[i]) ||
+           !word(r,icon,0x40,out.gui_indices[i]))return false;
+        const bool target_active=(out.active_targets&(1u<<i))!=0;
+        if(target_active!=static_cast<bool>(out.targets[i]))return false;
+        if(out.gui_indices[i]!=Limit && out.gui_indices[i]>=5)return false;
+        if(!(out.active_icons&(1u<<i)) && (out.icon_targets[i] || out.gui_indices[i]!=Limit))return false;
+        if(out.active_icons&(1u<<i)){
+            const u32 p=out.icon_targets[i];
+            if(p<out.target_pool || (p-out.target_pool)%0x28)return false;
+            const u32 index=(p-out.target_pool)/0x28;
+            if(index>=Collections::Count || !(out.active_targets&(1u<<index)))return false;
+        }
+        if(out.targets[i])for(u32 j=0;j<i;++j)if(out.targets[j]==out.targets[i])return false;
+        if(out.icon_targets[i])for(u32 j=0;j<i;++j)if(out.icon_targets[j]==out.icon_targets[i])return false;
+    }
+    return true;
+}
+bool same(const Collections& a,const Collections& b) noexcept {
+    if(a.icon_pool!=b.icon_pool || a.target_pool!=b.target_pool ||
+       a.active_icons!=b.active_icons || a.active_targets!=b.active_targets)return false;
+    for(u32 i=0;i<Collections::Count;++i)
+        if(a.targets[i]!=b.targets[i] || a.icon_targets[i]!=b.icon_targets[i] || a.gui_indices[i]!=b.gui_indices[i])return false;
+    return true;
+}
+}
+bool capture_collections(Reader r,u32 unit,Collections* result) noexcept {
+    if(!result)return false;
+    Collections a{},b{};
+    if(!collections(r,unit,a) || !collections(r,unit,b) || !same(a,b))return false;
+    *result=a;return true;
+}
 }

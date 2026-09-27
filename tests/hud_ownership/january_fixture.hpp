@@ -29,6 +29,8 @@ struct Fake {
     void* detector_context=nullptr;
     void (*detector_observer)(void*,u32) noexcept=nullptr;
     u32 detector_calls=0;
+    u32 removal_calls=0,removal_unit=0;
+    bool removal_noop=false;
     Lifecycle* life=nullptr;
     Fake(u32 count=LegacyWidgetKinds){
         if(!valid_widget_count(count))count=LegacyWidgetKinds;
@@ -110,6 +112,23 @@ struct Fake {
     }
     static void method1(void* c,u32 target,u32 self,u32 arg) noexcept {
         auto& f=*static_cast<Fake*>(c);f.events.push_back({target,self,arg,1});
+        if(target==0x01BB4079){
+            ++f.removal_calls;f.removal_unit=self;if(f.removal_noop)return;
+            const u32 pool=f.m[self+0x308],icons=f.m[self+0x2B4];
+            const auto move=[&](u32 node,u32 header){
+                const u32 previous=f.m[node+4],next=f.m[node+8];
+                f.m[previous+8]=next;f.m[next+4]=previous;
+                const u32 sentinel=header+4,first=f.m[sentinel+8];
+                f.m[node+4]=sentinel;f.m[node+8]=first;f.m[first+4]=node;f.m[sentinel+8]=node;
+            };
+            for(u32 i=0;i<21;++i){const u32 t=pool+i*0x28;if(f.m[t+0x1C]!=arg)continue;
+                for(u32 j=0;j<21;++j){const u32 icon=icons+j*0x48;if(f.m[icon+0x3C]!=t)continue;
+                    move(icon+0x24,self+0x2BC);f.m[icon+0x3C]=0;f.m[icon+0x40]=~0u;
+                }
+                move(t+4,self+0x310);f.m[t+0x1C]=0;
+            }
+            return;
+        }
         u32 i=WidgetKinds;for(u32 j=0;j<WidgetKinds;++j)if(kind_info(static_cast<WidgetKind>(j))->vtable==f.m[self])i=j;
         C(i<WidgetKinds);const auto* t=january_type(static_cast<WidgetKind>(i));
         if(target==t->destroy){

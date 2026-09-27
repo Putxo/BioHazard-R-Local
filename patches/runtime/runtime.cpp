@@ -62,7 +62,7 @@ rev_genesis::TargetViewHost Runtime::target_view_host() noexcept {
 }
 bool Runtime::scanner_begin(u32 widget) noexcept {
     auto h=target_view_host();
-    if(!h.on_thread(h.context) || scanner_scope_ || !gate().unit(this,WidgetKind::Scanner,widget))return false;
+    if(!h.on_thread(h.context) || !targets_.healthy() || scanner_scope_ || !gate().unit(this,WidgetKind::Scanner,widget))return false;
     rev_genesis::ViewFrame f{};
     if(h.resolve(h.context,widget,&f)!=Mode::Local)return false;
     scanner_scope_=widget;scanner_frame_=f;scanner_copy_failed_=false;return true;
@@ -136,6 +136,9 @@ void Runtime::genesis_detect(u32 manager) noexcept {
     scanner_scope_=saved_scope;scanner_frame_=saved_frame;
     detector_producing_=saved_producing;scanner_copy_failed_=saved_failed;
     if(nested || saved_scope){detector_busy_=nested;return;}
+    if(!targets_.healthy()){
+        backend_.quarantine_scanner();lifecycle_.stop();detector_busy_=false;return;
+    }
     const u32 widget=lifecycle_.unit(6);rev_genesis::ViewFrame frame{};
     u32 camera_manager=0,camera=0;
     if(!host_.image || !host_.image(host_.memory.context) || !targets_.healthy() ||
@@ -200,6 +203,16 @@ Mode Runtime::genesis_set_position(u32 target,u32 source) noexcept {
     const auto result=target_views_.publish(scanner_scope_,key,sample);
     if(result!=Mode::Local)scanner_copy_failed_=true;
     return result;
+}
+void Runtime::genesis_remove_target(u32 target) noexcept {
+    auto h=target_view_host();
+    // The earlier lifetime observer poisons admission for off-thread deaths.
+    // Never access owner-thread clone state from that thread.
+    if(!h.on_thread(h.context))return;
+    if(!host_.image || !host_.image(host_.memory.context) ||
+       !backend_.scanner_remove_target(host_.memory,target)){
+        backend_.quarantine_scanner();lifecycle_.stop();scanner_copy_failed_=true;
+    }
 }
 bool Runtime::heal_event(u32 actor) noexcept {
     auto h=action_host();rev_action::Frame f{};
@@ -358,4 +371,7 @@ extern "C" unsigned int rev_genesis_set_focus(unsigned int target,unsigned int v
 }
 extern "C" unsigned int rev_genesis_set_position(unsigned int target,unsigned int source) noexcept {
     return rev_runtime::HealSink?static_cast<unsigned int>(rev_runtime::HealSink->genesis_set_position(target,source)):0;
+}
+extern "C" void rev_genesis_remove_target(unsigned int target) noexcept {
+    if(rev_runtime::HealSink)rev_runtime::HealSink->genesis_remove_target(target);
 }
