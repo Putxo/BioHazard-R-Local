@@ -19,7 +19,8 @@ Runtime::Runtime(Registry& registry,Host host,u32 count) noexcept
         {this,[](void* p,u32 u,u32 a) noexcept {return static_cast<Runtime*>(p)->heal_feed(u,a);},
         [](void* p,u32 u) noexcept {return static_cast<Runtime*>(p)->scanner_begin(u);},
         [](void* p,u32 u) noexcept {return static_cast<Runtime*>(p)->scanner_end(u);},
-        [](void* p,u32 u,u32 a) noexcept {return static_cast<Runtime*>(p)->scope_feed(u,a);}}),
+        [](void* p,u32 u,u32 a) noexcept {return static_cast<Runtime*>(p)->scope_feed(u,a);},
+        [](void* p,u32 u,u32 s,bool init) noexcept {return static_cast<Runtime*>(p)->scanner_effects(u,s,init);}}),
       lifecycle_(registry,backend_.callbacks(),count),
       frames_(clock_,source_,view_.services()),
       driver_(lifecycle_,frames_.callbacks()),
@@ -61,6 +62,32 @@ rev_genesis::TargetViewHost Runtime::target_view_host() noexcept {
         if(!out || !r.clock_.capture(&stamp))return Mode::Hidden;
         *out={owner,stamp.frame};return Mode::Local;
     }};
+}
+bool Runtime::scanner_effects(u32 unit,u32 stock,bool prepare) noexcept {
+    auto h=target_view_host();
+    if(!h.on_thread(h.context) || !host_.image || !host_.image(host_.memory.context) ||
+       unit!=backend_.retained(WidgetKind::Scanner) || !effects_.healthy())return false;
+    if(prepare && (lifecycle_.state()!=LifeState::Preparing || !host_.write))return false;
+    if(!prepare && (effects_owned_.scanner!=unit || effects_stock_.scanner!=stock))return false;
+    // Native effect allocations are inspected only after their observed keys
+    // have been admitted by capture_effects. No pointer-only liveness fallback.
+    rev_genesis::Effects owned{},original{};
+    if(!rev_genesis::capture_effects(host_.memory,effects_,unit,&owned) ||
+       !rev_genesis::capture_effects(host_.memory,effects_,stock,&original) ||
+       !rev_genesis::disjoint_effects(owned,original))return false;
+    if(prepare){
+        // The serialized structural window prevents scheduled draws here.
+        // Change only the three exclusively owned roots, preserving all unit
+        // state, activity and scheduling flags. Child render clipping is separate.
+        for(const auto& key:owned.units){u32 flags=0;
+            if(!effects_.live(key) || !word(key.address+12,flags) || !effects_.live(key) ||
+               !host_.write(host_.memory.context,key.address+12,(flags&~0x03FF0000u)|0x20000u))return false;
+        }
+        effects_owned_=owned;effects_stock_=original;
+        return scanner_effects(unit,stock,false);
+    }
+    return rev_genesis::same_effects(owned,effects_owned_) &&
+        rev_genesis::same_effects(original,effects_stock_) && rev_genesis::effect_view(host_.memory,owned,1);
 }
 u32 Runtime::genesis_filter_loaded(u32 widget,u32 resource) noexcept {
     if(!widget || widget!=backend_.retained(WidgetKind::Scanner))return resource;

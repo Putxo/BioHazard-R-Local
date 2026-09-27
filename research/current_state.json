@@ -2,10 +2,10 @@
   "schema_version": 4,
   "canonical_branch": "research/script-member-serial-validation",
   "checkpoint": {
-    "merged_pr": 47,
-    "merge_sha": "f82f2e1010e7be18fe4bfc82809cd6ba145e5025",
-    "tested_head": "086f931c6fe386b9ad36bfedb38ce2e21f508f8d",
-    "ci": "21 workflows PASS"
+    "merged_pr": 48,
+    "merge_sha": "37b2895b745c2f5d605ba205dd4416581eb6215c",
+    "tested_head": "6c36c81e6e9e0fb0dd20e858ec26f0d23e598c69",
+    "ci": "20 workflows PASS"
   },
   "user_constraints": {
     "launch_game": false,
@@ -75,7 +75,9 @@
     "genesis_private_filter_resource_copy_connected": true,
     "genesis_auxiliary_effect_view_lifetime_complete": false,
     "genesis_auxiliary_effect_lifetime_observer_connected": true,
-    "genesis_auxiliary_effect_ownership_view_retirement_connected": false
+    "genesis_auxiliary_effect_ownership_view_retirement_connected": false,
+    "genesis_auxiliary_effect_ownership_guard_connected": true,
+    "genesis_auxiliary_root_view1_masks_connected": true
   },
   "pending": [
     "full HUD and interaction prompts",
@@ -113,6 +115,7 @@
     "docs/73-genesis-completion-boundary.md",
     "docs/74-genesis-state-actor-routing.md",
     "docs/75-genesis-private-filter-resource.md",
-    "docs/76-genesis-effect-lifetimes.md"
+    "docs/76-genesis-effect-lifetimes.md",
+    "docs/77-genesis-effect-ownership.md"
   ]
 }

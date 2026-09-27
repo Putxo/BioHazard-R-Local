@@ -1,6 +1,7 @@
 #pragma once
 #include "january_backend.hpp"
 #include "../genesis/resource_fixture.hpp"
+#include "../genesis/effect_fixture.hpp"
 #include <map>
 #include <vector>
 #include <cstdio>
@@ -36,6 +37,8 @@ struct Fake {
     u32 notification_calls=0,resource_releases=0;
     void* init_observer_context=nullptr;
     void (*init_observer)(void*,u32) noexcept=nullptr;
+    void* effect_context=nullptr;
+    void (*effect_observer)(void*,u32) noexcept=nullptr;
     void (*notification_observer)(void*,u32) noexcept=nullptr;
     Lifecycle* life=nullptr;
     Fake(u32 count=LegacyWidgetKinds){
@@ -61,7 +64,11 @@ struct Fake {
     }
     void tree(u32 u,WidgetKind k){
         u32 r=0x500000+static_cast<u32>(k)*0x10000;
-        if(k==WidgetKind::Scanner){scanner_fixture::populate(m,u,r);return;}
+        if(k==WidgetKind::Scanner){
+            scanner_fixture::populate(m,u,r);effect_fixture::populate(m,u);
+            if(effect_observer)effect_observer(effect_context,u);
+            return;
+        }
         m[u+0xF0]=r;m[u+0xF4]=u+0x1000;m[u+0xF8]=u+0x2000;
         m[r+0x68]=r+0x100;m[r+0x144]=k==WidgetKind::Scope?3u:2u;m[u+0x106C]=u;
         for(u32 i=0;i<m[r+0x144];++i){m[u+0x2000+i*4]=u+0x3000+i*0x100;m[u+0x306C+i*0x100]=u;}

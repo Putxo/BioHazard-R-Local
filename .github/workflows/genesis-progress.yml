@@ -19,6 +19,8 @@ jobs:
           if [ "${{ matrix.mode }}" = sanitized ]; then FLAGS="$FLAGS -fsanitize=address,undefined -fno-omit-frame-pointer"; fi
           g++ $FLAGS patches/genesis/effect_lifetime.cpp tests/genesis/effect_lifetime_tests.cpp -o "$RUNNER_TEMP/effect-lifetime"
           "$RUNNER_TEMP/effect-lifetime"
+          g++ $FLAGS patches/genesis/effect_lifetime.cpp patches/genesis/filter_resource.cpp patches/genesis/effects.cpp tests/genesis/effects_tests.cpp -o "$RUNNER_TEMP/effects"
+          "$RUNNER_TEMP/effects"
           as --32 patches/genesis/effect_gateways.S -o "$RUNNER_TEMP/effect-gates.o"
           as --32 tests/genesis/effect_abi.S -o "$RUNNER_TEMP/effect-abi.o"
           ld -m elf_i386 "$RUNNER_TEMP/effect-gates.o" "$RUNNER_TEMP/effect-abi.o" -o "$RUNNER_TEMP/effect-abi"

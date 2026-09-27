@@ -81,6 +81,10 @@ struct Fixture {
     }
     Fixture(u32 count=LegacyWidgetKinds):f(count),r(registry,host(),count) {
         f.life=&r.lifecycle();
+        f.effect_context=this;
+        f.effect_observer=[](void* p,u32 unit) noexcept {
+            auto& z=*static_cast<Fixture*>(p);C(effect_fixture::observe(z.f.m,z.r.genesis_effects(),unit));
+        };
         f.m[0x055623C4]=OWNER;f.m[OWNER+0x28]=f.p[0];f.m[OWNER+0x2C]=f.p[1];
         f.m[f.p[0]+0x90]=f.original[0];f.m[f.p[0]+0x5C]=f.original[1];
         f.m[f.p[1]+0x30]=f.m[f.p[1]+0x40]=f.original[2];
@@ -100,6 +104,7 @@ struct Fixture {
     }
     void start(){C(r.start());C(!r.start());}
     void births() {
+        if(f.original[6])C(effect_fixture::observe(f.m,r.genesis_effects(),f.original[6]));
         for(u32 a:{f.session.self.address,f.session.sub0.address}){
             f.m[a]=0x04D9B25C;f.m[a+0xE3C]=a==f.session.self.address?0:1;f.m[a+0xE40]=1;
             C(r.source().event(0x0277D4FB,a));
@@ -141,6 +146,33 @@ struct Fixture {
     }
 };
 int main(){
+    // Auxiliary roots are private View1 objects; loss or ABA never reaches the
+    // Scanner's native phase, even when an address still has the expected VT.
+    for(u32 fault=0;fault<9;++fault){Fixture x(8);const auto stock=x.f.m;
+        x.prepare();x.begin();const u32 scanner=x.r.lifecycle().unit(6),root=x.f.m[scanner+0x2F0];
+        for(u32 i=0;i<3;++i){const u32 p=x.f.m[scanner+effect_fixture::Offsets[i]];
+            C(((x.f.m[p+12]>>16)&0x3FF)==2);C((x.f.m[p+12]&~0x03FF0000u)==(0x80032032u&~0x03FF0000u));
+            const u32 s=x.f.m[x.f.original[6]+effect_fixture::Offsets[i]];C(x.f.m[s+12]==stock.at(s+12));}
+        if(fault<3)C(x.r.genesis_effects().event(effect_fixture::Death[fault],x.f.m[scanner+effect_fixture::Offsets[fault]]));
+        if(fault==3)x.f.m[root+12]|=0x10000;
+        if(fault==4)x.f.m[root+0x40]=x.f.m[x.f.m[x.f.original[6]+0x2F0]+0x40];
+        if(fault==5)x.f.m[root+0x44]=x.f.original[6]+0x2F4;
+        if(fault==6){C(x.r.genesis_effects().event(effect_fixture::Death[0],root));C(x.r.genesis_effects().event(effect_fixture::Birth[0],root));}
+        if(fault==7){x.f.m[0xEE0000]=0x04DB80CC;x.f.m[scanner+0x2F0]=0xEE0000;}
+        if(fault==8)C(x.r.genesis_effects().event(effect_fixture::Death[0],x.f.m[x.f.original[6]+0x2F0]));
+        const auto before=x.f.events.size();C(!x.r.driver().event(0x02B49C5B,x.f.p[0],0));
+        for(size_t i=before;i<x.f.events.size();++i)C(x.f.events[i].self!=scanner);
+        C(x.r.clock().event(PipelineEnd,0xC00000,0xD00000));C(!x.r.window().event(PipelineEnd,0xC00000,0xD00000));
+        C(x.r.lifecycle().state()==LifeState::Quarantined);++scenarios;
+    }
+    for(u32 fault=0;fault<2;++fault){Fixture x(8);const auto stock=x.f.m;
+        if(fault==0)x.f.effect_observer=nullptr;
+        else x.f.write_fail=0x660000+0xE20C;
+        x.start();x.births();x.begin();C(x.r.clock().event(PipelineEnd,0xC00000,0xD00000));
+        C(!x.r.window().event(PipelineEnd,0xC00000,0xD00000));C(x.r.lifecycle().state()==LifeState::Quarantined);
+        for(u32 off:effect_fixture::Offsets){const u32 p=x.f.m[x.f.original[6]+off];C(x.f.m[p+12]==stock.at(p+12));}
+        ++scenarios;
+    }
     // Runtime starts the scheduled-effect observer on its admitted thread.
     {Fixture x(8);x.start();auto& effects=x.r.genesis_effects();
      constexpr u32 unit=0xEE0000;x.f.m[unit]=0x04DB80CC;
