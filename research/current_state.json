@@ -25,7 +25,7 @@
   },
   "runtime": {
     "composition_root": true,
-    "hud_menu_hook_count": 46,
+    "hud_menu_hook_count": 52,
     "local_views_use_native_immediate_draw": true,
     "action_loop_priority_per_member": true,
     "action_loop_stop_per_member": true,
@@ -39,13 +39,15 @@
       "MainEquipment",
       "MapHerb",
       "SubEquipment",
-      "Damage"
+      "Damage",
+      "Heal"
     ],
     "single_pause": true,
     "menu_owner_pad1": true,
     "menu_owner_lifetime": true,
     "damage_hud_health_owner": 1,
-    "genesis_owner_routing_implemented": false
+    "genesis_owner_routing_implemented": false,
+    "heal_hud_actor_notifications": true
   },
   "pending": [
     "full HUD and interaction prompts",
@@ -65,6 +67,7 @@
     "docs/55-action-priority-loop.md",
     "docs/56-local-draw-scheduling.md",
     "docs/57-damage-hud.md",
-    "docs/58-genesis-ownership-boundaries.md"
+    "docs/58-genesis-ownership-boundaries.md",
+    "docs/59-heal-hud.md"
   ]
 }

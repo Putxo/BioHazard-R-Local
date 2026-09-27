@@ -35,10 +35,14 @@ struct JanuaryHost {
     // exclusively ours and disjoint from ALL live engine allocations/borrows.
     bool (*fresh_allocation)(void*, u32, u32) noexcept = nullptr;
 };
+struct HudEventFeed {
+    void* context=nullptr;
+    bool (*heal)(void*,u32 unit,u32 actor) noexcept=nullptr;
+};
 class JanuaryBackend {
 public:
-    JanuaryBackend(JanuaryHost host, JanuaryCalls calls, u32 count=LegacyWidgetKinds, Registry* owners=nullptr)
-        : host_(host), calls_(calls), count_(count), owners_(owners) {}
+    JanuaryBackend(JanuaryHost host, JanuaryCalls calls, u32 count=LegacyWidgetKinds, Registry* owners=nullptr, HudEventFeed events={})
+        : host_(host), calls_(calls), count_(count), owners_(owners), events_(events) {}
     // Bind the same borrowed parents/originals passed to Lifecycle::prepare.
     // Must remain alive throughout preparation/publication. No live reconfigure.
     bool configure(const u32 parents[2], const u32 originals[WidgetKinds]);
@@ -50,6 +54,7 @@ private:
     JanuaryHost host_; JanuaryCalls calls_;
     const u32 count_;
     Registry* owners_;
+    HudEventFeed events_;
     Entry entries_[WidgetKinds]{};
     u32 parents_[2]{}, originals_[WidgetKinds]{};
     bool configured_ = false, busy_ = false;

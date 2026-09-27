@@ -22,6 +22,14 @@ jobs:
           "$RUNNER_TEMP/runtime-tests"
           g++ $FLAGS patches/runtime/draw_schedule.cpp tests/runtime/draw_schedule_tests.cpp -o "$RUNNER_TEMP/draw-schedule-tests"
           "$RUNNER_TEMP/draw-schedule-tests"
+      - name: Heal visual notification queue
+        run: |
+          g++ -std=c++17 -Wall -Wextra -Werror -Ipatches/hud_ownership patches/hud_ownership/heal_queue.cpp tests/hud_ownership/heal_queue_tests.cpp -o "$RUNNER_TEMP/heal-queue"
+          "$RUNNER_TEMP/heal-queue"
+          as --32 patches/hud_ownership/heal_gateway.S -o "$RUNNER_TEMP/heal-gate.o"
+          as --32 tests/hud_ownership/heal_gateway_abi.S -o "$RUNNER_TEMP/heal-abi.o"
+          ld -m elf_i386 "$RUNNER_TEMP/heal-gate.o" "$RUNNER_TEMP/heal-abi.o" -o "$RUNNER_TEMP/heal-abi"
+          "$RUNNER_TEMP/heal-abi"
       - name: Draw selector x86 ABI with synthetic calls
         run: |
           as --32 patches/runtime/draw_schedule.S -o "$RUNNER_TEMP/draw-schedule.o"

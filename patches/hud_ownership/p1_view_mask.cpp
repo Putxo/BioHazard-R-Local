@@ -33,8 +33,8 @@ bool P1ViewMask::collect(u32 manager, ManagerKind kind, u32 units[WidgetKinds],
     u32 vt=0;
     if (!word(manager,vt) || vt != manager_vtable(kind)) return false;
     if (kind == ManagerKind::Cockpit) {
-        const u32 offsets[] = {0x5C,0x90,0x64,0x3C};
-        const WidgetKind kinds[] = {WidgetKind::MainEquipment,WidgetKind::Reticle,WidgetKind::SubEquipment,WidgetKind::Damage};
+        const u32 offsets[] = {0x5C,0x90,0x64,0x3C,0x44};
+        const WidgetKind kinds[] = {WidgetKind::MainEquipment,WidgetKind::Reticle,WidgetKind::SubEquipment,WidgetKind::Damage,WidgetKind::Heal};
         const u32 cockpit_count=widget_count_-1;
         for (u32 i=0;i<cockpit_count;++i) {
             if (!word(manager+offsets[i],units[i]) || !units[i] ||
@@ -57,7 +57,8 @@ bool P1ViewMask::restore_one(u32 i) noexcept {
     const WidgetKind k = kind_==ManagerKind::MiniMap ? WidgetKind::MapHerb :
         (slots_[i]==0x5C ? WidgetKind::MainEquipment :
          slots_[i]==0x64 ? WidgetKind::SubEquipment :
-         slots_[i]==0x3C ? WidgetKind::Damage : WidgetKind::Reticle);
+         slots_[i]==0x3C ? WidgetKind::Damage :
+         slots_[i]==0x44 ? WidgetKind::Heal : WidgetKind::Reticle);
     if (!word(manager_+slots_[i],in_slot) || in_slot != units_[i] ||
         !word(units_[i],vt) || vt != kind_info(k)->vtable ||
         !word(units_[i]+0x0C,current) ||

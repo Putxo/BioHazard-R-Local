@@ -27,6 +27,7 @@ struct Fixture {
         f.m[f.p[1]+0x30]=f.m[f.p[1]+0x40]=f.original[2];
         if(count>=4) f.m[f.p[0]+0x64]=f.original[3];
         if(count>=5) f.m[f.p[0]+0x3C]=f.original[4];
+        if(count>=6) f.m[f.p[0]+0x44]=f.original[5];
         f.m[MAIN]=0x04E1642C;f.m[SUB]=0x04E1649C;
         f.m[MAIN+0x44]=f.session.self.address;f.m[SUB+0x44]=f.session.sub0.address;
         f.m[0x057D9188]=1;f.m[0x057D9184]=f.session.sub0.address;
@@ -47,9 +48,30 @@ struct Fixture {
     }
     void begin(){C(r.clock().event(PipelineBegin,0xC00000,0xD00000));C(r.activator().event(PipelineBegin,0xC00000,0xD00000));}
     void end(){C(r.clock().event(PipelineEnd,0xC00000,0xD00000));C(r.window().event(PipelineEnd,0xC00000,0xD00000));}
-    void prepare(){start();births();begin();C(f.allocations.empty());end();C(r.lifecycle().state()==LifeState::Live);C(f.allocations.size()==(f.original[4]?5u:f.original[3]?4u:LegacyWidgetKinds));}
+    void prepare(){start();births();begin();C(f.allocations.empty());end();C(r.lifecycle().state()==LifeState::Live);C(f.allocations.size()==(f.original[5]?6u:f.original[4]?5u:f.original[3]?4u:LegacyWidgetKinds));}
 };
 int main(){
+    {Fixture x(6);x.prepare();x.begin();const u32 p2=x.f.session.sub0.address;
+     C(x.r.heal_event(x.f.session.self.address));C(!x.r.heal_event(p2));C(!x.r.heal_event(p2));
+     C(x.f.heal_calls==0);C(x.r.driver().event(0x02B497CA,x.f.p[0],0));
+     C(x.f.heal_calls==1);C(x.f.heal_unit==x.r.lifecycle().unit(5));
+     C(x.f.heal_unit!=x.f.original[5]);
+     C(x.r.driver().event(0x02B49C5B,x.f.p[0],0));
+     C(x.r.driver().event(0x02B49DE3,x.f.p[0],x.f.context));C(x.f.heal_calls==1);
+     C(!x.r.heal_event(p2));x.end();x.begin();
+     C(x.r.driver().event(0x02B497CA,x.f.p[0],0));C(x.f.heal_calls==2);
+     x.f.m[0x055623C4]=0;x.end();C(x.f.deleted.size()==6);++scenarios;}
+    {Fixture x(6);x.prepare();x.begin();
+     C(!x.r.heal_event(0x123456));C(!x.r.heal_event(0));
+     x.thread=9;C(!x.r.heal_event(x.f.session.sub0.address));x.thread=7;
+     C(x.r.driver().event(0x02B497CA,x.f.p[0],0));C(x.f.heal_calls==0);
+     C(!x.r.heal_event(x.f.session.sub0.address));
+     C(x.r.source().event(0x0277DC70,x.f.session.sub0.address));
+     C(!x.r.driver().event(0x02B497CA,x.f.p[0],0));C(x.f.heal_calls==0);
+     x.end();++scenarios;}
+    {Fixture x;x.start();x.f.m[0x057D9188]=0;
+     C(x.r.heal_event(0x12345));C(x.f.heal_calls==0);++scenarios;}
+
     {Fixture x(5);x.prepare();x.begin();const auto original=x.f.m;
      const u32 unit=x.r.lifecycle().unit(4);C(unit!=0);
      C(x.registry.resolve(unit,WidgetKind::Damage).actor==x.f.session.sub0.address);
@@ -57,7 +79,7 @@ int main(){
      C(x.f.damage_calls==1);C(x.f.damage_unit==unit);C(x.f.damage_actor==x.f.session.sub0.address);
      C(x.r.driver().event(0x02B49C5B,x.f.p[0],0));
      C(x.r.driver().event(0x02B49DE3,x.f.p[0],x.f.context));C(x.f.damage_calls==1);
-     for(u32 u:x.f.original)C(x.f.m[u+0xC]==original.at(u+0xC));
+     for(u32 u:x.f.original)if(u)C(x.f.m[u+0xC]==original.at(u+0xC));
      C(!x.r.driver().event(0x02B497CA,x.f.p[0],0));C(x.f.damage_calls==1);
      x.f.m[0x055623C4]=0;x.end();C(x.f.deleted.size()==5);++scenarios;}
     {Fixture x(5);x.prepare();x.begin();x.f.damage_ok=false;
