@@ -67,6 +67,13 @@ def hook_sites():
     out=[(0x01EB73A0,bytes.fromhex('558bec81ecfc000000'),'rev_action_draw_gate',0xE9)]
     for va in (0x03268708,0x03268918):
         out.append((va,rel(va,0x01BE2D20),'rev_action_mask_gate',0xE8))
+    for va,old,name in ((0x01EA61A7,'8d85e4feffff50','begin'),
+                        (0x01EA6235,'7e05e958040000','decide'),
+                        (0x01EA6679,'6a008d8df4feffff','commit'),
+                        (0x01EA66B6,'8b45f88b8d00ffffff','finish')):
+        out.append((va,bytes.fromhex(old),'rev_priority_'+name+'_gate',0xE9))
+    for va,target,name in ((0x01EA6215,0x01BEEF99,'prepare'),(0x01EB7419,0x01C6FF63,'draw_getter')):
+        out.append((va,rel(va,target),'rev_priority_'+name+'_gate',0xE8))
     for name,va,old,_ in LIFE_SITES:out.append((va,bytes.fromhex(old),'rev_life_gate_'+name,0xE9))
     for va,family,phase,old in MANAGER_SITES:out.append((va,bytes.fromhex(old),f'rev_hud_gate_{family}{phase}',0xE9))
     for (va,old,_),name in zip(PIPELINE_SITES,('begin','end')):out.append((va,bytes.fromhex(old),'rev_pipeline_gate_'+name,0xE9))

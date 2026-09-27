@@ -61,6 +61,9 @@ Result Router::draw(u32 icon,u32 context) noexcept {
     if(member>1 || member!=view)return Result::Skipped;
     u32 current_manager=0;
     if(!manager(current_manager) || current_manager!=owner)return Result::Refused;
+    u32 priority=0;
+    if(host_.priority && !host_.priority(host_.memory.context,frame,owner,member,&priority))
+        return Result::Refused;
     if(!same(current_,frame) || manager_!=owner){
         current_=frame;manager_=owner;claims_[0]=claims_[1]=0;
     }
@@ -68,7 +71,9 @@ Result Router::draw(u32 icon,u32 context) noexcept {
     if(!word(owner+0x174,saved))return Result::Refused;
     const u32 scoped=(saved&~255u)|claims_[view];
     if(!host_.write(host_.memory.context,owner+0x174,scoped))return Result::Refused;
+    draw_priority_=priority;priority_active_=host_.priority!=nullptr;
     host_.calls.draw(host_.calls.context,icon,context);
+    priority_active_=false;
     u32 now=0;
     // Do not overwrite a replacement manager or restore neighboring flag bytes.
     if(!manager(current_manager) || current_manager!=owner || !word(owner+0x174,now) ||
@@ -99,6 +104,11 @@ u32 Router::mask(u32 unit,u32 original) noexcept {
        !valid(after) || !same(frame,after) || !word(unit+0x40,check) || check!=command)return 0;
     return (original&~3u)|(1u<<member);
 }
+u32 Router::draw_priority(u32 manager,u32 original) noexcept {
+    Frame f{};
+    if(!ready() || host_.snapshot(host_.memory.context,&f)!=SnapshotMode::Local || !valid(f))return original;
+    return priority_active_&&busy_&&manager==manager_&&same(f,current_)?draw_priority_:original;
+}
 bool bind(Router& r) noexcept {
     if(sink || !r.ready())return false;
     sink=&r;return true;
@@ -109,4 +119,7 @@ extern "C" void rev_action_draw(unsigned int icon,unsigned int context) noexcept
 }
 extern "C" unsigned int rev_action_mask(unsigned int unit,unsigned int original) noexcept {
     return rev_action::sink?rev_action::sink->mask(unit,original):original;
+}
+extern "C" unsigned int rev_action_draw_priority(unsigned int manager,unsigned int original) noexcept {
+    return rev_action::sink?rev_action::sink->draw_priority(manager,original):original;
 }

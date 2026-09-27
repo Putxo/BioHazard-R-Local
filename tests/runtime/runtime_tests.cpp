@@ -17,7 +17,8 @@ struct Fixture {
         [](void* p) noexcept {return static_cast<Fixture*>(p)->f.session.self.address;},f.calls(),
         {this,[](void* p,u32) noexcept {
             auto& x=*static_cast<Fixture*>(p);++x.action_reads;return x.action_member;
-        },[](void* p,u32,u32) noexcept {++static_cast<Fixture*>(p)->action_draws;}}};
+        },[](void* p,u32,u32) noexcept {++static_cast<Fixture*>(p)->action_draws;}},
+        [](void*,u32 raw) noexcept {return raw;}};
     }
     Fixture(u32 count=LegacyWidgetKinds):f(count),r(registry,host(),count) {
         f.life=&r.lifecycle();
@@ -55,9 +56,16 @@ int main(){
      x.f.m[0x0556279C]=manager;x.f.m[manager]=0x04CDBDB4;x.f.m[manager+0x174]=1;
      x.f.m[x.f.context+0x158]=1;x.action_member=1;
      C(x.r.action().draw(icon,x.f.context)==rev_action::Result::Refused);
-     x.begin();C(x.r.action().draw(icon,x.f.context)==rev_action::Result::Drawn);C(x.action_draws==1);
+     x.begin();C(x.r.action().draw(icon,x.f.context)==rev_action::Result::Refused);
+     constexpr u32 stack=0xF30000;
+     x.f.m[stack-8]=manager;x.f.m[stack-0x100]=0;x.f.m[stack-0x10C]=0;x.f.m[stack-0x128]=0;
+     x.r.priority().begin(stack);x.r.priority().prepare(stack,command);
+     C(x.r.priority().decide(stack,true)==rev_action::Decision::Proceed);
+     x.f.m[stack-0x100]=0x201;x.f.m[stack-0x10C]=3;
+     C(x.r.priority().commit(stack));x.r.priority().finish(stack);
+     C(x.r.action().draw(icon,x.f.context)==rev_action::Result::Drawn);C(x.action_draws==1);
      x.f.m[x.f.context+0x158]=0;C(x.r.action().draw(icon,x.f.context)==rev_action::Result::Skipped);
-     x.thread=8;C(x.r.action().draw(icon,x.f.context)==rev_action::Result::Refused);C(x.action_reads==2);
+     x.thread=8;C(x.r.action().draw(icon,x.f.context)==rev_action::Result::Refused);C(x.action_reads==4);
      x.thread=7;C(x.r.source().event(0x0277DC70,x.f.session.sub0.address));
      C(x.r.action().draw(icon,x.f.context)==rev_action::Result::Refused);C(x.action_draws==1);
      x.f.m[0x057D9188]=0;C(x.r.action().draw(icon,x.f.context)==rev_action::Result::Stock);C(x.action_draws==2);

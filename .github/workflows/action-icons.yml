@@ -17,9 +17,17 @@ jobs:
           if [ "${{ matrix.mode }}" = sanitized ]; then FLAGS="$FLAGS -fsanitize=address,undefined -fno-omit-frame-pointer"; fi
           g++ $FLAGS patches/action_icons/router.cpp tests/action_icons/router_tests.cpp -o "$RUNNER_TEMP/action-tests"
           "$RUNNER_TEMP/action-tests"
+          g++ $FLAGS patches/action_icons/arbitration.cpp tests/action_icons/arbitration_tests.cpp -o "$RUNNER_TEMP/arbitration-tests"
+          "$RUNNER_TEMP/arbitration-tests"
+          g++ $FLAGS patches/action_icons/{arbitration,priority_driver}.cpp tests/action_icons/priority_driver_tests.cpp -o "$RUNNER_TEMP/priority-tests"
+          "$RUNNER_TEMP/priority-tests"
       - name: Verify x86 stack and preserved registers with synthetic continuations
         run: |
           as --32 patches/action_icons/gateway.S -o "$RUNNER_TEMP/gateway.o"
           as --32 tests/action_icons/gateway_abi.S -o "$RUNNER_TEMP/test.o"
           ld -m elf_i386 -o "$RUNNER_TEMP/abi" "$RUNNER_TEMP/gateway.o" "$RUNNER_TEMP/test.o"
           "$RUNNER_TEMP/abi"
+          as --32 patches/action_icons/priority_gateways.S -o "$RUNNER_TEMP/priority-gate.o"
+          as --32 tests/action_icons/priority_abi.S -o "$RUNNER_TEMP/priority-test.o"
+          ld -m elf_i386 -o "$RUNNER_TEMP/priority-abi" "$RUNNER_TEMP/priority-gate.o" "$RUNNER_TEMP/priority-test.o"
+          "$RUNNER_TEMP/priority-abi"

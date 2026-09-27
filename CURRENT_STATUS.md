@@ -16,11 +16,11 @@ El propietario prohíbe abrirlo y hará personalmente las pruebas jugando.
 | Pausa | Una pausa global; abrir/navegar/confirmar/cancelar por owner; lifetime y nested 6/7 implementados |
 | HUD | Clones de Reticle, MainEquipment, MapHerb y SubEquipment; faltan otros widgets e iconos |
 | Recursos HUD | Grafo completo conectado, selección desde sIDCockpit, lifetimes y retirada |
-| Pickup/puertas | Filtro ActionIcon2D por miembro/vista e indicador separado; arbitraje de prioridad y prompts completos pendientes |
+| Pickup/puertas | ActionIcon2D por miembro/vista; prioridad y parada del bucle por miembro; otros gates y prompts completos pendientes |
 | Guiones | Dos callbacks PcsSub con owner+serial; cobertura QTE parcial |
 | Rescate | Routing parcial existente; muerte/checkpoints pendientes |
 
-La compilación acumulativa nueva conecta 39 hooks HUD/menú/ActionIcon sobre la base de
+La compilación acumulativa nueva conecta 45 hooks HUD/menú/ActionIcon sobre la base de
 input, cámara, pickup, puertas y serial de guion. Se ha generado y verificado
 estáticamente una copia local de trabajo. No se ha instalado en Steam ni abierto.
 No constituye una entrega final.
@@ -53,5 +53,6 @@ Panel de subarmas y rollback de máscaras: [detalle](docs/52-subweapon-hud.md).
 Icono de interacción: [productor y arbitraje pendientes](docs/53-action-icon-findings.md).
 
 Nuevo aislamiento del dibujo: [ActionIcon por vista](docs/54-action-icon-view-routing.md).
-Las pruebas sintéticas y 19 workflows pasan; la prioridad global y el soporte
-de ejecución del icono en workers siguen pendientes. El juego no se ha ejecutado.
+PR27 pasó 19 workflows. Nuevo bloque: [prioridad del bucle por miembro](docs/55-action-priority-loop.md).
+Persisten gates globales y el soporte de ejecución del icono en workers.
+El juego no se ha ejecutado.

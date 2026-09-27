@@ -25,7 +25,9 @@
   },
   "runtime": {
     "composition_root": true,
-    "hud_menu_hook_count": 39,
+    "hud_menu_hook_count": 45,
+    "action_loop_priority_per_member": true,
+    "action_loop_stop_per_member": true,
     "action_icon_sunit_mask_filters": true,
     "action_icon_view_filter": true,
     "action_icon_claim_per_view": true,
@@ -55,6 +57,7 @@
     "docs/51-runtime-installer.md",
     "docs/52-subweapon-hud.md",
     "docs/53-action-icon-findings.md",
-    "docs/54-action-icon-view-routing.md"
+    "docs/54-action-icon-view-routing.md",
+    "docs/55-action-priority-loop.md"
   ]
 }

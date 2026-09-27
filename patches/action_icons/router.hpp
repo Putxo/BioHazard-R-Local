@@ -16,6 +16,7 @@ struct Host {
     // return Unavailable, before the router accesses any mutable state.
     SnapshotMode (*snapshot)(void*,Frame*) noexcept=nullptr;
     Calls calls{};
+    bool (*priority)(void*,const Frame&,u32 manager,u32 member,u32* out) noexcept=nullptr;
 };
 enum class Result : u32 { Stock, Skipped, Drawn, Refused, RestoreFailed };
 // Borrowed native objects only. Never clones or frees embedded ActionIcon GUIs.
@@ -27,12 +28,15 @@ public:
     Result draw(u32 icon,u32 context) noexcept;
     // Used only by the two audited sUnit draw-list filters, not the global getter.
     u32 mask(u32 unit,u32 original) noexcept;
+    u32 draw_priority(u32 manager,u32 original) noexcept;
     bool faulted() const noexcept {return faulted_;}
 private:
     Host host_;
     Frame current_{};
     u32 manager_=0,claims_[2]{};
     bool busy_=false,faulted_=false;
+    bool priority_active_=false;
+    u32 draw_priority_=0;
     bool word(u32,u32&) const noexcept;
     bool manager(u32&) const noexcept;
 };
@@ -40,3 +44,4 @@ bool bind(Router&) noexcept;
 }
 extern "C" void rev_action_draw(unsigned int icon,unsigned int context) noexcept;
 extern "C" unsigned int rev_action_mask(unsigned int unit,unsigned int original) noexcept;
+extern "C" unsigned int rev_action_draw_priority(unsigned int manager,unsigned int original) noexcept;
