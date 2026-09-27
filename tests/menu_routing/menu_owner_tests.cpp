@@ -11,12 +11,13 @@ struct F {
     u32 pad=0x100000,actor=0x200000,stock_actor=0x300000;
     F():access{this,read,active_cb,sub_cb},router(access) {
         m[pad+0x970]=0;
-        m[pad+0x198]=0x11110000; m[pad+0x1A0]=0;
-        m[pad+0x2F8+0x198]=0x22220000; m[pad+0x2F8+0x1A0]=0;
+        m[pad+0x198]=0x11110000; m[pad+0x1A0]=0; m[pad+0x1AC]=0x1111AC00;
+        m[pad+0x2F8+0x198]=0x22220000; m[pad+0x2F8+0x1A0]=0; m[pad+0x2F8+0x1AC]=0x2222AC00;
         m[actor+0xE3C]=1; m[actor+0xE40]=1;
     }
     static bool read(void* p,u32 a,u32* v) noexcept {
-        auto& f=*static_cast<F*>(p); auto i=f.m.find(a); if(i==f.m.end())return false;*v=i->second;return true;
+        auto& f=*static_cast<F*>(p); auto i=f.m.find(a);
+        if(i==f.m.end())return false;*v=i->second;return true;
     }
     static u32 active_cb(void* p) noexcept {return static_cast<F*>(p)->active;}
     static u32 sub_cb(void* p) noexcept {return static_cast<F*>(p)->sub;}
@@ -33,9 +34,13 @@ int main(){
      CHECK(f.router.submenu_word_198(f.pad)==0x22220000);CHECK(f.router.submenu_word_1a0(f.pad)==1);++scenarios;}
     {F f;f.local();f.m[f.pad+0x2F8+0x1A0]=8;
      CHECK(f.router.pause_open_word(f.pad)&8);CHECK(f.router.owner()==1);CHECK(f.router.surface()==Surface::Pause);
+     CHECK(f.router.pause_word_1a0(f.pad)==8);CHECK(f.router.pause_word_1ac(f.pad)==0x2222AC00);
      CHECK(f.router.submenu_actor(f.stock_actor)==f.stock_actor);CHECK(f.router.submenu_word_198(f.pad)==0x11110000);++scenarios;}
     {F f;f.local();f.m[f.pad+0x1A0]=8;f.m[f.pad+0x2F8+0x1A0]=8;
-     CHECK(f.router.pause_open_word(f.pad)&8);CHECK(f.router.owner()==0);++scenarios;}
+     CHECK(f.router.pause_open_word(f.pad)&8);CHECK(f.router.owner()==0);
+     CHECK(f.router.pause_word_1ac(f.pad)==0x1111AC00);++scenarios;}
+    {F f;f.local();f.m[f.pad+0x2F8+0x1A0]=8;CHECK(f.router.pause_open_word(f.pad)&8);
+     f.m[f.actor+0xE40]=2;CHECK(f.router.pause_word_1a0(f.pad)==0);CHECK(f.router.pause_word_1ac(f.pad)==0x1111AC00);++scenarios;}
     {F f;f.local();f.m[f.pad+0x2F8+0x1A0]=1;CHECK(f.router.submenu_open_word(f.pad)&1);
      f.m[f.actor+0xE40]=2;CHECK(f.router.submenu_actor(f.stock_actor)==f.stock_actor);
      CHECK(f.router.submenu_word_198(f.pad)==0x11110000);++scenarios;}
