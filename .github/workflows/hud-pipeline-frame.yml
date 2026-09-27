@@ -21,7 +21,7 @@ jobs:
           if [ "${{ matrix.mode }}" = sanitized ]; then FLAGS="$FLAGS -fsanitize=address,undefined -fno-omit-frame-pointer"; fi
           g++ $FLAGS -Ipatches/hud_ownership patches/hud_ownership/pipeline_clock.cpp tests/hud_ownership/pipeline_clock_tests.cpp -o "$RUNNER_TEMP/clock-test"
           "$RUNNER_TEMP/clock-test"
-          g++ $FLAGS -Ipatches/hud_ownership -Itests/hud_ownership patches/hud_ownership/{ownership,lifetime_source,pipeline_clock,pipeline_frame_provider,manager_driver,lifecycle,january_backend,january_calls}.cpp patches/genesis/resources.cpp tests/hud_ownership/pipeline_provider_tests.cpp -o "$RUNNER_TEMP/provider-test"
+          g++ $FLAGS -Ipatches/hud_ownership -Itests/hud_ownership patches/hud_ownership/{ownership,lifetime_source,pipeline_clock,pipeline_frame_provider,manager_driver,lifecycle,january_backend,scope_resources,january_calls}.cpp patches/genesis/resources.cpp tests/hud_ownership/pipeline_provider_tests.cpp -o "$RUNNER_TEMP/provider-test"
           "$RUNNER_TEMP/provider-test"
       - name: Source maps and read-only refusal tests, private original excluded
         run: python tests/hud_ownership/test_pipeline_audit.py

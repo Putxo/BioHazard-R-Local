@@ -40,6 +40,7 @@ struct Fake {
         if(count>=5)original[4]=0x180000;
         if(count>=6)original[5]=0x1A0000;
         if(count>=7)original[6]=0x1C0000;
+        if(count>=8)original[7]=0x1E0000;
         for(u32 i=0;i<2;++i){m[p[i]]=manager_vtable(static_cast<ManagerKind>(i));m[p[i]+0x1C]=i?0x3F000000:0x3F800000;}
         for(u32 i=0;i<count;++i){
             const auto k=static_cast<WidgetKind>(i);plain(original[i],k);tree(original[i],k);
@@ -58,8 +59,13 @@ struct Fake {
         u32 r=0x500000+static_cast<u32>(k)*0x10000;
         if(k==WidgetKind::Scanner){scanner_fixture::populate(m,u,r);return;}
         m[u+0xF0]=r;m[u+0xF4]=u+0x1000;m[u+0xF8]=u+0x2000;
-        m[r+0x68]=r+0x100;m[r+0x144]=2;m[u+0x106C]=u;
-        for(u32 i=0;i<2;++i){m[u+0x2000+i*4]=u+0x3000+i*0x100;m[u+0x306C+i*0x100]=u;}
+        m[r+0x68]=r+0x100;m[r+0x144]=k==WidgetKind::Scope?3u:2u;m[u+0x106C]=u;
+        for(u32 i=0;i<m[r+0x144];++i){m[u+0x2000+i*4]=u+0x3000+i*0x100;m[u+0x306C+i*0x100]=u;}
+        if(k==WidgetKind::Scope){
+            for(u32 i=0;i<3;++i)m[u+0x2A0+i*4]=m[u+0x2000+i*4];
+            m[u+0x224]=1;m[u+0x230]=u+0x6000;m[u+0x6000]=m[u+0x2AC]=u+0x6100;
+            m[u+0x6100]=0x04FC0000;
+        }
     }
     static bool read(void* c,u32 a,u32* v) noexcept {
         auto& f=*static_cast<Fake*>(c);auto i=f.m.find(a);

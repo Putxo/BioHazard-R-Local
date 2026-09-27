@@ -1,6 +1,7 @@
 #pragma once
 #include "../genesis/resources.hpp"
 #include "lifecycle.hpp"
+#include "scope_resources.hpp"
 // Exact January engine operations. Still opt-in source: no installer or hooks.
 namespace rev_hud {
 enum class NativeOp : u32 { Structural, Read, Write, Initialize, Destroy, Phase };
@@ -61,6 +62,8 @@ public:
 private:
     rev_genesis::Resources scanner_original_{},scanner_owned_{};
     bool scanner_valid(u32 unit) noexcept;
+    ScopeResources scope_original_{},scope_owned_{};
+    bool scope_valid(u32 unit) noexcept;
     bool scanner_external_ready(Reader,u32 unit,bool active) noexcept;
     struct Entry { u32 unit = 0; bool constructed = false, ready = false, quarantine = false; };
     JanuaryHost host_; JanuaryCalls calls_;

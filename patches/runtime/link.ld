@@ -56,3 +56,5 @@ rev_genesis_set_position_resume = 0x0281DDE9;
 rev_genesis_target_cleanup_stock = 0x01C919B5;
 rev_genesis_notify_stock = 0x01C315EC;
 rev_aim_visibility_resume = 0x0279D11A;
+rev_scope_actor_stock = 0x01C2C7F4;
+rev_scope_phase8_end = 0x02B41EF0;
