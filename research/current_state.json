@@ -2,9 +2,9 @@
   "schema_version": 4,
   "canonical_branch": "research/script-member-serial-validation",
   "checkpoint": {
-    "merged_pr": 56,
-    "merge_sha": "d39367f1734f650105f980b89a892d38247120d4",
-    "tested_head": "2ea27503b7e2a2843b7ba5aeb4e31bd6804e0b7a",
+    "merged_pr": 57,
+    "merge_sha": "770d79aa8adca7701af3dd32747c5a73c2e55934",
+    "tested_head": "f74f53f63e15199cc4e501fa9b3a3970e908a755",
     "ci": "20 workflows PASS"
   },
   "user_constraints": {
@@ -25,7 +25,7 @@
   },
   "runtime": {
     "composition_root": true,
-    "hud_menu_hook_count": 181,
+    "hud_menu_hook_count": 182,
     "local_views_use_native_immediate_draw": true,
     "action_loop_priority_per_member": true,
     "action_loop_stop_per_member": true,
@@ -89,7 +89,9 @@
     "genesis_private_effect_activity_toggle_connected": true,
     "genesis_shared_visual_consumers_per_view_complete": false,
     "genesis_shared_color_per_view_admission_connected": true,
-    "genesis_retained_weapon_component": "app::game::sound::uBioSoundMotionSe"
+    "genesis_retained_weapon_component": "app::game::sound::uBioSoundMotionSe",
+    "genesis_hunter_local_uncached_draw_connected": true,
+    "genesis_hunter_per_view_materials_complete": false
   },
   "pending": [
     "full HUD and interaction prompts",
@@ -136,6 +138,7 @@
     "docs/82-genesis-weapon-lifetime.md",
     "docs/83-genesis-weapon-use-barriers.md",
     "docs/84-genesis-private-effect-toggle.md",
-    "docs/85-genesis-color-per-view.md"
+    "docs/85-genesis-color-per-view.md",
+    "docs/86-genesis-hunter-draw-cache.md"
   ]
 }

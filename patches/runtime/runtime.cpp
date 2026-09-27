@@ -335,7 +335,7 @@ bool Runtime::genesis_effect_toggle(u32 widget,bool enabled) noexcept {
     if(route.mode==Mode::Stock)return false;
     rev_genesis::ViewFrame before{},after{};
     // Closing the private effects is valid after equipment has changed. Opening
-    // requires the current observed Scanner weapon and its model.
+    // requires the current observed Scanner weapon and its sound emitter.
     const bool ok=route.mode==Mode::Local &&
         h.resolve(h.context,widget,&before)==Mode::Local &&
         scanner_effects(widget,effects_stock_.scanner,false) &&
