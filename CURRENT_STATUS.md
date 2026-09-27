@@ -1,7 +1,7 @@
 # Estado actual del cooperativo local
 
 27/09/2026. Rama técnica: `research/script-member-serial-validation`.
-PR40 integrado: `3f7a8e6b5fd6d1880d4f49fb541b2f82ad258725`, 21 workflows PASS.
+PR41 integrado: `96e26d20f346d7096b8c0d039a4c4e3b6737540b`, 20 workflows aplicables PASS.
 
 **El cooperativo completo sigue en desarrollo. El juego no se ha ejecutado.**
 El propietario prohíbe abrirlo y hará personalmente las pruebas jugando.
@@ -20,7 +20,7 @@ El propietario prohíbe abrirlo y hará personalmente las pruebas jugando.
 | Guiones | Dos callbacks PcsSub con owner+serial; cobertura QTE parcial |
 | Rescate | Routing parcial existente; muerte/checkpoints pendientes |
 
-La compilación acumulativa nueva conecta 110 hooks HUD/menú/ActionIcon sobre la base de
+La compilación acumulativa nueva conecta 111 hooks HUD/menú/ActionIcon sobre la base de
 input, cámara, pickup, puertas y serial de guion. Se ha generado y verificado
 estáticamente una copia local de trabajo. No se ha instalado en Steam ni abierto.
 No constituye una entrega final.
@@ -81,3 +81,5 @@ Genesis: [retirada síncrona y listas privadas](docs/67-genesis-target-removal.m
 Genesis: [notificaciones del mundo y reentrada del detector](docs/68-genesis-world-notifications.md).
 
 Genesis: [arma equipada, retención y límites de activación](docs/69-genesis-equipped-weapon.md).
+
+Apuntar: [visibilidad de personaje y arma en la segunda cámara](docs/70-aim-secondary-visibility.md).

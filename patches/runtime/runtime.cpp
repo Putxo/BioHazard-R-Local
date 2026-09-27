@@ -60,6 +60,46 @@ rev_genesis::TargetViewHost Runtime::target_view_host() noexcept {
         *out={owner,stamp.frame};return Mode::Local;
     }};
 }
+void Runtime::aim_visibility(u32 actor,u32 hide) noexcept {
+    auto vh=target_view_host();
+    if(!vh.on_thread(vh.context))return;
+    if(aim_busy_ || aim_faulted_ || !host_.write || !host_.aim_weapon_hidden ||
+       !host_.image || !host_.image(host_.memory.context) || count_<7 ||
+       lifecycle_.state()!=LifeState::Live)return;
+    const u32 widget=lifecycle_.unit(6);
+    rev_genesis::ViewFrame before{},after{};
+    u32 manager=0,camera=0,weapon=0;
+    if(vh.resolve(vh.context,widget,&before)!=Mode::Local || before.owner.actor!=actor ||
+       !actor || actor>Invalid-15 || !word(0x05799D3C,manager) ||
+       genesis_camera(widget,manager,&camera)!=Mode::Local ||
+       rev_genesis::equipment(genesis_host(),host_.memory,widget,&weapon)!=Mode::Local ||
+       (weapon && (weapon>Invalid-15 || weapon==actor || weapon==before.owner.session.self.address)))return;
+    struct Busy {bool& value;explicit Busy(bool& b):value(b){value=true;}~Busy(){value=false;}} busy(aim_busy_);
+    const bool affect_weapon=weapon && host_.aim_weapon_hidden(host_.memory.context,actor);
+    const auto same_actor=[](const Actor& a,const Actor& b) noexcept {
+        return a.address==b.address && a.lifetime==b.lifetime &&
+            a.serial==b.serial && a.think_mode==b.think_mode;
+    };
+    u32 now=0,camera_after=0;
+    if(vh.resolve(vh.context,widget,&after)!=Mode::Local || after.number!=before.number ||
+       after.owner.actor!=actor || after.owner.session.epoch!=before.owner.session.epoch ||
+       !same_actor(before.owner.session.self,after.owner.session.self) ||
+       !same_actor(before.owner.session.sub0,after.owner.session.sub0) ||
+       genesis_camera(widget,manager,&camera_after)!=Mode::Local || camera_after!=camera ||
+       rev_genesis::equipment(genesis_host(),host_.memory,widget,&now)!=Mode::Local || now!=weapon)return;
+    u32 actor_flags=0,weapon_flags=0;
+    if(!word(actor+12,actor_flags) || (affect_weapon && !word(weapon+12,weapon_flags)))return;
+    // Native get/set pair modifies bit 0 of the ten-bit view mask. This
+    // secondary-camera branch modifies only bit 1; every other flag survives.
+    const auto changed=[&](u32 flags) noexcept {return (hide&255)==1?flags&~0x20000u:flags|0x20000u;};
+    const u32 next_actor=changed(actor_flags),next_weapon=changed(weapon_flags);
+    if(next_actor!=actor_flags && !host_.write(host_.memory.context,actor+12,next_actor))return;
+    if(affect_weapon && next_weapon!=weapon_flags && !host_.write(host_.memory.context,weapon+12,next_weapon)){
+        if(next_actor!=actor_flags && !host_.write(host_.memory.context,actor+12,actor_flags)){
+            aim_faulted_=true;lifecycle_.stop();
+        }
+    }
+}
 bool Runtime::scanner_weapon_current(u32 widget) noexcept {
     u32 retained=0,current=0,again=0;
     if(!widget || widget>Invalid-0x2FF || !word(widget+0x2FC,retained))return false;
@@ -416,4 +456,7 @@ extern "C" void rev_genesis_remove_target(unsigned int target) noexcept {
 }
 extern "C" unsigned int rev_genesis_notify(unsigned int target,unsigned int owner,unsigned int delegate) noexcept {
     return rev_runtime::HealSink && rev_runtime::HealSink->genesis_notify(target,owner,delegate)?1:0;
+}
+extern "C" void rev_aim_visibility(unsigned int actor,unsigned int hide) noexcept {
+    if(rev_runtime::HealSink)rev_runtime::HealSink->aim_visibility(actor,hide);
 }

@@ -17,7 +17,7 @@ class ImageTests(unittest.TestCase):
         sections,symbols=image.read_module(self.data)
         va,code=sections['.revtext']
         sites=image.hook_sites()
-        self.assertEqual(110,len(sites))
+        self.assertEqual(111,len(sites))
         occupied=set()
         for at,old,name,opcode in sites:
             self.assertIn(opcode,(0xE8,0xE9))

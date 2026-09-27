@@ -6,19 +6,33 @@ constexpr u32 OWNER=0x900000,MAIN=0xA00000,SUB=0xA10000;
 struct Fixture {
     Fake f;Registry registry;u32 thread=7;bool image=true;
     u32 action_draws=0,action_member=0,action_reads=0;
+    u32 aim_queries=0,aim_query_kind=0,aim_writes=0,aim_fail_write=0;
     Runtime r;
     Host host() {
         return {{this,[](void* p,u32 a,u32* v) noexcept {
             return Fake::read(&static_cast<Fixture*>(p)->f,a,v);
         }},[](void* p,u32 a,u32 v) noexcept {
-            return Fake::write(&static_cast<Fixture*>(p)->f,a,v);
+            auto& z=*static_cast<Fixture*>(p);
+            if(z.aim_fail_write && ++z.aim_writes>=z.aim_fail_write)return false;
+            return Fake::write(&z.f,a,v);
         },[](void* p) noexcept {return static_cast<Fixture*>(p)->thread;},
         [](void* p) noexcept {return static_cast<Fixture*>(p)->image;},
         [](void* p) noexcept {return static_cast<Fixture*>(p)->f.session.self.address;},f.calls(),
         {this,[](void* p,u32) noexcept {
             auto& x=*static_cast<Fixture*>(p);++x.action_reads;return x.action_member;
         },[](void* p,u32,u32) noexcept {++static_cast<Fixture*>(p)->action_draws;}},
-        [](void*,u32 raw) noexcept {return raw;}};
+        [](void*,u32 raw) noexcept {return raw;},
+        [](void* p,u32 actor) noexcept {
+            auto& z=*static_cast<Fixture*>(p);++z.aim_queries;C(actor==z.f.session.sub0.address);
+            switch(z.aim_query_kind){
+            case 1:return false;
+            case 2:z.f.m[0xEC100C]=0;break;
+            case 3:z.f.m[actor+0xE40]=3;break;
+            case 4:z.f.m[0xE30074]=z.f.session.self.address;break;
+            case 5:z.r.aim_visibility(actor,0);break;
+            }
+            return true;
+        }};
     }
     Fixture(u32 count=LegacyWidgetKinds):f(count),r(registry,host(),count) {
         f.life=&r.lifecycle();
@@ -73,6 +87,44 @@ struct Fixture {
     }
 };
 int main(){
+    for(u32 query:{0u,1u,5u}){Fixture x(7);x.detector_setup();x.equipment_setup();x.aim_query_kind=query;
+     const u32 actor=x.f.session.sub0.address,af=0xF3FFBEAD,wf=0xA5FF1234;
+     x.f.m[actor+12]=af;x.f.m[0xED100C]=wf;x.f.m[x.f.session.self.address+12]=af;
+     x.f.writes.clear();x.r.aim_visibility(actor,1);
+     C(x.f.m[actor+12]==(af&~0x20000u));C(x.f.m[0xED100C]==(query==1?wf:(wf&~0x20000u)));
+     C(x.f.m[x.f.session.self.address+12]==af);C(x.aim_queries==1);
+     C(x.f.writes.size()==(query==1?1u:2u));
+     x.r.aim_visibility(actor,0);C(x.f.m[actor+12]==af);C(x.f.m[0xED100C]==wf);
+     x.r.aim_visibility(actor,1);x.r.aim_visibility(actor,255);C(x.f.m[actor+12]==af);C(x.f.m[0xED100C]==wf);
+     x.end();++scenarios;}
+    for(u32 fault=0;fault<9;++fault){Fixture x(7);x.detector_setup();x.equipment_setup();
+     const u32 actor=x.f.session.sub0.address; x.f.m[actor+12]=0xA5FF1111;x.f.m[0xED100C]=0xB6FF2222;
+     switch(fault){
+     case 0:x.aim_query_kind=2;break;
+     case 1:x.aim_query_kind=3;break;
+     case 2:x.aim_query_kind=4;break;
+     case 3:x.f.m[0xEC0008]=0xED1000;break;
+     case 4:x.f.m[0xE30074]=x.f.session.self.address;break;
+     case 5:x.thread=99;break;
+     case 6:x.f.reader_fail=actor+12;break;
+     case 7:x.f.write_fail=0xED100C;break; // Roll back first write.
+     case 8:x.f.write_fail=actor+12;break;
+     }
+     x.r.aim_visibility(actor,1);C(x.f.m[actor+12]==0xA5FF1111);C(x.f.m[0xED100C]==0xB6FF2222);
+     ++scenarios;
+    }
+    {Fixture x(7);x.detector_setup();x.equipment_setup();const auto before=x.f.m;
+     x.r.aim_visibility(x.f.session.self.address,1);C(x.f.m==before);C(x.aim_queries==0);
+     x.r.aim_visibility(0,1);C(x.f.m==before);C(x.aim_queries==0);x.end();
+     x.r.aim_visibility(x.f.session.sub0.address,1);C(x.f.m==before);C(x.aim_queries==0);++scenarios;}
+    {Fixture x(7);x.detector_setup();x.equipment_setup();const u32 actor=x.f.session.sub0.address;
+     x.f.m[0xEC100C]=0;x.f.m[actor+12]=0xA5FF1111;x.r.aim_visibility(actor,1);
+     C(x.f.m[actor+12]==0xA5FD1111);C(x.aim_queries==0);x.end();++scenarios;}
+    {Fixture x(7);x.detector_setup();x.equipment_setup();const u32 actor=x.f.session.sub0.address;
+     x.f.m[actor+12]=0xA5FF1111;x.f.m[0xED100C]=0xB6FF2222;x.aim_fail_write=2;
+     x.r.aim_visibility(actor,1);C(x.r.lifecycle().state()!=LifeState::Live);
+     const auto calls=x.aim_queries;x.r.aim_visibility(actor,0);C(x.aim_queries==calls);++scenarios;}
+
     {Fixture x(7);x.detector_setup();x.equipment_setup();const auto before=x.f.m;
      x.r.genesis_detect(0xEE0000);C(x.f.detector_calls==2);C(x.f.m==before);
      C(x.r.driver().event(0x02B49C5B,x.f.p[0],0));x.end();++scenarios;}
