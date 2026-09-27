@@ -1,7 +1,7 @@
 # Estado actual del cooperativo local
 
 27/09/2026. Rama técnica: `research/script-member-serial-validation`.
-PR38 integrado: `1fb102ad8ddbbbd9fbc57ddd84288971a8c91bc6`, 21 workflows PASS.
+PR39 integrado: `b6e60e1fa0d28ed1e4259b4faeca52fc5d4e343c`, 21 workflows PASS.
 
 **El cooperativo completo sigue en desarrollo. El juego no se ha ejecutado.**
 El propietario prohíbe abrirlo y hará personalmente las pruebas jugando.
@@ -20,7 +20,7 @@ El propietario prohíbe abrirlo y hará personalmente las pruebas jugando.
 | Guiones | Dos callbacks PcsSub con owner+serial; cobertura QTE parcial |
 | Rescate | Routing parcial existente; muerte/checkpoints pendientes |
 
-La compilación acumulativa nueva conecta 109 hooks HUD/menú/ActionIcon sobre la base de
+La compilación acumulativa nueva conecta 110 hooks HUD/menú/ActionIcon sobre la base de
 input, cámara, pickup, puertas y serial de guion. Se ha generado y verificado
 estáticamente una copia local de trabajo. No se ha instalado en Steam ni abierto.
 No constituye una entrega final.
@@ -77,3 +77,5 @@ Genesis: [lecturas nativas durante la fase del clon](docs/65-genesis-target-cons
 Genesis: [productores de detección por propietario](docs/66-genesis-detector-routing.md).
 
 Genesis: [retirada síncrona y listas privadas](docs/67-genesis-target-removal.md).
+
+Genesis: [notificaciones del mundo y reentrada del detector](docs/68-genesis-world-notifications.md).

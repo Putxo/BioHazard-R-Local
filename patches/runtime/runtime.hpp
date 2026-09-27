@@ -56,6 +56,7 @@ public:
     Mode genesis_set_focus(u32 target,u32 value) noexcept;
     Mode genesis_set_position(u32 target,u32 source) noexcept;
     void genesis_remove_target(u32 target) noexcept;
+    bool genesis_notify(u32 target,u32 world_owner,u32 delegate) noexcept;
     Mode genesis_camera(u32 widget,u32 manager,u32* out) noexcept {
         return rev_genesis::camera(genesis_host(),host_.memory,widget,manager,out);
     }
@@ -76,6 +77,8 @@ private:
     rev_genesis::ViewFrame scanner_frame_{};
     bool scanner_copy_failed_=false;
     bool detector_busy_=false,detector_producing_=false;
+    struct Notification {u32 generation=0,owner=0,invoke=0;};
+    Notification notifications_[rev_genesis::TargetLifetime::Capacity]{};
     Mode detector_mode() noexcept;
     bool scanner_begin(u32) noexcept;
     bool scanner_end(u32) noexcept;

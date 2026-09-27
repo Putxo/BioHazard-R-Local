@@ -3,6 +3,13 @@ from pathlib import Path
 import argparse,json
 from audit_genesis_progress import Image
 WITNESSES=[
+    (0x028206D2,"e8150f41ff","Detector world callback invocation"),
+    (0x028206CC,"8d8decfcffff","Delegate lives on detector caller stack"),
+    (0x02820682,"898500fdffff","World callback owner local"),
+    (0x02820649,"8b8d48feffff","Current target local"),
+    (0x0282065A,"83bd78faffff027c7f83bd78faffff03","Notification admits focus states two or three"),
+    (0x020CA52C,"8b5104ffd2","Delegate invocation reads function at plus four"),
+    (0x020CAE08,"837804000f94c1","Delegate empty check"),
     (0x02823A5F,"c7400800000000","Destructor clears target world owner before scanner removal"),
     (0x02823C46,"8b4008","Target world-owner getter"),
     (0x02823C8E,"837dec007505e9c9000000","Material notification exits when owner is absent"),

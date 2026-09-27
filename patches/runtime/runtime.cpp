@@ -129,6 +129,7 @@ void Runtime::genesis_detect(u32 manager) noexcept {
     const bool nested=detector_busy_;detector_busy_=true;
     const u32 saved_scope=scanner_scope_;const auto saved_frame=scanner_frame_;
     const bool saved_producing=detector_producing_,saved_failed=scanner_copy_failed_;
+    if(!nested && !saved_scope)for(auto& n:notifications_)n={};
     // A reentrant ordinary engine call must not inherit the surrounding J2
     // target getter overrides. Preserve the outer scope after its stock pass.
     scanner_scope_=0;scanner_frame_={};detector_producing_=false;scanner_copy_failed_=false;
@@ -213,6 +214,35 @@ void Runtime::genesis_remove_target(u32 target) noexcept {
        !backend_.scanner_remove_target(host_.memory,target)){
         backend_.quarantine_scanner();lifecycle_.stop();scanner_copy_failed_=true;
     }
+}
+bool Runtime::genesis_notify(u32 target,u32 world_owner,u32 delegate) noexcept {
+    auto h=target_view_host();
+    if(!h.on_thread(h.context))return false;
+    const auto mode=detector_mode();
+    // Stock calls retain their exact count. During the paired stock/J2
+    // traversal, remember which target callbacks stock already delivered.
+    if(mode==Mode::Stock && !detector_busy_)return false;
+    const auto key=targets_.capture(target);const u32 slot=targets_.slot(key);
+    u32 invoke=0;
+    const bool valid=slot<rev_genesis::TargetLifetime::Capacity && world_owner &&
+        delegate && delegate<=Invalid-7 && word(delegate+4,invoke) && invoke;
+    if(mode==Mode::Stock){
+        if(valid)notifications_[slot]={key.generation,world_owner,invoke};
+        return false;
+    }
+    if(mode!=Mode::Local || !valid || !host_.native.method0)return true;
+    const auto& n=notifications_[slot];
+    if(n.generation==key.generation && n.owner==world_owner && n.invoke==invoke)return true;
+    notifications_[slot]={key.generation,world_owner,invoke};
+    const u32 saved_scope=scanner_scope_;const auto saved_frame=scanner_frame_;
+    const bool failed=scanner_copy_failed_;
+    // A world/script callback must never inherit J2's global target getter or
+    // setter overrides. Native callback storage stays on its caller's stack.
+    scanner_scope_=0;scanner_frame_={};detector_producing_=false;scanner_copy_failed_=false;
+    host_.native.method0(host_.native.context,0x01C315EC,delegate);
+    scanner_scope_=saved_scope;scanner_frame_=saved_frame;detector_producing_=true;
+    scanner_copy_failed_=scanner_copy_failed_ || failed || !scanner_current();
+    return true;
 }
 bool Runtime::heal_event(u32 actor) noexcept {
     auto h=action_host();rev_action::Frame f{};
@@ -374,4 +404,7 @@ extern "C" unsigned int rev_genesis_set_position(unsigned int target,unsigned in
 }
 extern "C" void rev_genesis_remove_target(unsigned int target) noexcept {
     if(rev_runtime::HealSink)rev_runtime::HealSink->genesis_remove_target(target);
+}
+extern "C" unsigned int rev_genesis_notify(unsigned int target,unsigned int owner,unsigned int delegate) noexcept {
+    return rev_runtime::HealSink && rev_runtime::HealSink->genesis_notify(target,owner,delegate)?1:0;
 }
