@@ -80,7 +80,8 @@ bool JanuaryBackend::scope_valid(u32 unit) noexcept {
 bool JanuaryBackend::scanner_valid(u32 unit) noexcept {
     rev_genesis::Resources current{};
     rev_genesis::Collections collections{};
-    return rev_genesis::capture_resources(host_.memory,unit,&current) &&
+    return events_.scanner_effects && events_.scanner_effects(events_.context,unit,originals_[6],false) &&
+        rev_genesis::capture_resources(host_.memory,unit,&current) &&
         rev_genesis::same_resources(current,scanner_owned_) &&
         rev_genesis::disjoint(current,scanner_original_) &&
         rev_genesis::capture_collections(host_.memory,unit,&collections);
@@ -119,7 +120,8 @@ bool JanuaryBackend::scanner_external_ready(Reader memory,u32 unit,bool active,b
     if(!manager || calls_.contains(calls_.context,Contains,manager,unit)!=0)return false;
     rev_genesis::Resources current{};
     rev_genesis::Collections collections{};
-    return rev_genesis::capture_resources(memory,unit,&current) &&
+    return events_.scanner_effects && events_.scanner_effects(events_.context,unit,originals_[6],false) &&
+        rev_genesis::capture_resources(memory,unit,&current) &&
         rev_genesis::same_resources(current,scanner_owned_) &&
         rev_genesis::disjoint(current,scanner_original_) &&
         rev_genesis::capture_collections(memory,unit,&collections);
@@ -235,7 +237,10 @@ bool JanuaryBackend::init(u32 u,WidgetKind k) {
     if (!capture_tree(host_.memory,u,k,&tree)) return fail(NativeFault::Resources);
     if(k==WidgetKind::Scanner &&
         (!rev_genesis::capture_resources(host_.memory,u,&scanner_owned_) ||
-         !rev_genesis::disjoint(scanner_owned_,scanner_original_)))return fail(NativeFault::Resources);
+         !rev_genesis::disjoint(scanner_owned_,scanner_original_) || !events_.scanner_effects ||
+         !events_.scanner_effects(events_.context,u,originals_[6],true))) {
+        e.quarantine=true;return fail(NativeFault::Resources);
+    }
     if(k==WidgetKind::Scope && (!capture_scope(host_.memory,u,&scope_owned_) ||
        !scope_valid(u)))return fail(NativeFault::Resources);
     e.ready=true;return true;

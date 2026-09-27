@@ -11,6 +11,7 @@
 #include "../genesis/filter_resource.hpp"
 #include "../genesis/target_lifetime.hpp"
 #include "../genesis/effect_lifetime.hpp"
+#include "../genesis/effects.hpp"
 #include "../genesis/target_views.hpp"
 #include "../hud_ownership/heal_queue.hpp"
 
@@ -86,6 +87,8 @@ private:
     rev_genesis::Progress genesis_;
     rev_genesis::TargetLifetime targets_;
     rev_genesis::EffectLifetime effects_;
+    rev_genesis::Effects effects_owned_{},effects_stock_{};
+    bool scanner_effects(u32 unit,u32 stock,bool prepare) noexcept;
     rev_genesis::TargetViews target_views_;
     rev_genesis::TargetViewHost target_view_host() noexcept;
     u32 scanner_scope_=0;

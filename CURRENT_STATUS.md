@@ -1,7 +1,7 @@
 # Estado actual del cooperativo local
 
 27/09/2026. Rama técnica: `research/script-member-serial-validation`.
-PR47 integrado: `f82f2e1010e7be18fe4bfc82809cd6ba145e5025`, 21 workflows PASS.
+PR48 integrado: `37b2895b745c2f5d605ba205dd4416581eb6215c`, 20 workflows PASS.
 
 **El cooperativo completo sigue en desarrollo. El juego no se ha ejecutado.**
 El propietario prohíbe abrirlo y hará personalmente las pruebas jugando.
@@ -95,3 +95,5 @@ Genesis: [inventario del actor en los ocho estados internos](docs/74-genesis-sta
 Genesis: [copia privada del recurso mutable de filtros](docs/75-genesis-private-filter-resource.md).
 
 Genesis: [vida observada de los tres efectos auxiliares](docs/76-genesis-effect-lifetimes.md).
+
+Genesis: [pertenencia de auxiliares y máscaras View1](docs/77-genesis-effect-ownership.md).
