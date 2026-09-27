@@ -1,0 +1,11 @@
+{
+  "status": "SOURCE_COMPONENT_PENDING_CI",
+  "base_commit": "4afe150c82c669960539f98c7efe7c2efb813d87",
+  "original_sha256": "9124bb92d6c54a047ade47dacc8429221b18f9910b504f0e87718d5151013f69",
+  "component": "patches/menu_routing",
+  "sites": 6,
+  "gameplay_executed": false,
+  "game_image_modified": false,
+  "scope": ["pause/submenu opener ownership","submenu Pad0/Pad1 indexed input","submenu Self/Sub0 inventory actor routing"],
+  "not_yet": ["PauseHD/options member input","nested submenu owner lifetime","runtime installation"]
+}
