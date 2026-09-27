@@ -1,11 +1,37 @@
-# Continuar sin perder el estado real
+# EMPEZAR AQUÍ — cooperativo local actual
 
-Leer completo [CURRENT_STATUS.md](CURRENT_STATUS.md), después [docs/20-local-routing-built-and-tested.md](docs/20-local-routing-built-and-tested.md) y [research/current_state.json](research/current_state.json).
+Rama técnica canónica:
 
-El candidato más reciente es **LOCAL ROUTING EXPERIMENTAL**, SHA-256 `0c019d43b92c0092fa458abcf7e2990f8783895eb2bd8181f6e9f130b697d378`. Hay código construido y pruebas de componentes, pero no cooperativo completo certificado jugando.
+```text
+research/script-member-serial-validation
+```
 
-La base inmediata es el owner-fix `e3c5c188782309a1683d27ade0ce9e38cf1c40219de9fb5d684b3d6fda2e285a`. No empezar de nuevo por v13/v14 ni por `0x049A8023`.
+No usar `main` como estado técnico de implementación.
 
-El handoff largo anterior se ha conservado sin cambiar sus bytes en [docs/history/START_HERE-before-local-routing.md](docs/history/START_HERE-before-local-routing.md). Es histórico: contiene afirmaciones de alcance y un selector de pickup rectificados en documentos posteriores.
+Leer en este orden:
 
-No subir binarios propietarios, no pisar trabajo paralelo y no marcar runtime como validado a partir de tests con mocks.
+1. [CURRENT_STATUS.md](CURRENT_STATUS.md)
+2. [docs/45-local-menu-owner-routing.md](docs/45-local-menu-owner-routing.md)
+3. [docs/46-pause-global-submenu-handoff.md](docs/46-pause-global-submenu-handoff.md)
+4. [research/current_state.json](research/current_state.json)
+5. [AGENTS.md](AGENTS.md)
+
+Checkpoint integrado antes de este handoff:
+
+```text
+PR #19
+merge b0900736d9e44a04a47f9804b75059f007dd12fd
+15 workflows PASS
+```
+
+## Continuación exacta
+
+`MenuOwnerRouter` ya distingue J1/J2 al abrir Pause/SubMenu. SubMenu owner=J2 ya usa Pad1 y los datos de Sub0.
+
+**Ahora continuar por Pause owner=1:** localizar la navegación real de PauseHD/opciones y enrutar confirmar/cancelar/navegación a Pad1 solo cuando owner=J2. Mantener una sola pausa global de sIDCockpit.
+
+Después cerrar owner/surface al salir de states 5/8 y auditar states 6/7/callers alternativos.
+
+No confundir los índices de sGameFlags de PauseHD con pads. No volver a pickup, HUD base, puertas generales, v12/v13/v14 ni 0x049A8023.
+
+No generar EXE salvo petición expresa.
