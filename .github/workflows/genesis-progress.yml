@@ -52,3 +52,9 @@ jobs:
           as --32 tests/genesis/target_abi.S -o "$RUNNER_TEMP/target-abi.o"
           ld -m elf_i386 "$RUNNER_TEMP/target-gates.o" "$RUNNER_TEMP/target-abi.o" -o "$RUNNER_TEMP/target-abi"
           "$RUNNER_TEMP/target-abi"
+      - name: View-derived target state stays separate from native world state
+        run: |
+          FLAGS="-std=c++17 -O1 -g -Wall -Wextra -Werror"
+          if [ "${{ matrix.mode }}" = sanitized ]; then FLAGS="$FLAGS -fsanitize=address,undefined -fno-omit-frame-pointer"; fi
+          g++ $FLAGS patches/genesis/target_lifetime.cpp patches/genesis/target_views.cpp tests/genesis/target_views_tests.cpp -o "$RUNNER_TEMP/target-views"
+          "$RUNNER_TEMP/target-views"

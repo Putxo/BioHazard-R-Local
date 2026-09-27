@@ -59,8 +59,14 @@ TargetKey TargetLifetime::capture(u32 target) noexcept {
     return {};
 }
 bool TargetLifetime::live(TargetKey key) noexcept {
-    if(!key.valid())return false;
-    const auto now=capture(key.address);return now.valid() && now.generation==key.generation;
+    return slot(key)!=rev_hud::Invalid;
+}
+u32 TargetLifetime::slot(TargetKey key) noexcept {
+    if(!key.valid() || !owner() || busy_)return rev_hud::Invalid;
+    for(u32 i=0;i<Capacity;++i)
+        if(entries_[i].address==key.address && entries_[i].generation==key.generation)
+            return healthy()?i:rev_hud::Invalid;
+    return rev_hud::Invalid;
 }
 bool bind_targets(TargetLifetime& targets) noexcept {
     if(Sink)return false;

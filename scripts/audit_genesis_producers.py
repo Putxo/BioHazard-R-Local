@@ -3,6 +3,18 @@ from pathlib import Path
 import argparse,json
 from audit_genesis_progress import Image
 WITNESSES=[
+    (0x023CEA44,"e888027fff","Detector caller preserves its target-list owner"),
+    (0x023D4449,"e883a87eff","Detector caller preserves its target-list owner"),
+    (0x027EBD87,"e8452f3dff","Detector caller preserves its target-list owner"),
+    (0x027EBE4C,"e8802e3dff","Detector caller preserves its target-list owner"),
+    (0x027EBEAA,"e8222e3dff","Detector caller preserves its target-list owner"),
+    (0x027EBED8,"e8f42d3dff","Detector caller preserves its target-list owner"),
+    (0x0282006F,"e880c740ff","Detector selected actor finder"),
+    (0x02823243,"8b45f883c010508b4d08e884b737ff8b4508","Vector getter copies into destination"),
+    (0x02823268,"c20400","Position getter ret4"),
+    (0x01CAE245,"8b45f8f30f10056c6dcb04f30f11400c","Vector copy constructor sets fourth component"),
+    (0x01CA77D5,"8b45f8f30f10056c6dcb04f30f11400c","Vector assignment sets fourth component"),
+    (0x04CB6D6C,"00000000","Canonical Vector3 fourth component is zero"),
     (0x02823A53,"8b45f8c7007085da04","Target destructor revocation before owner clear"),
     (0x02B25D8B,"e88d1613ff","Scanner camera call"),
     (0x02B25A42,"894df8","Aligned scanner method saves widget at EBP-8"),

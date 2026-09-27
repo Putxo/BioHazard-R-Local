@@ -3,7 +3,7 @@ namespace rev_runtime {
 namespace {Runtime* HealSink=nullptr;}
 Runtime::Runtime(Registry& registry,Host host,u32 count) noexcept
     : host_(host), registry_(registry), genesis_(genesis_host()),
-      targets_({host.memory,host.thread}), count_(count),
+      targets_({host.memory,host.thread}), target_views_(targets_,target_view_host()), count_(count),
       source_(registry,{host.memory.context,host.memory.word,host.thread,host.self}),
       clock_({host.memory.context,host.thread}),
       view_({host.memory,host.thread}),
@@ -43,6 +43,19 @@ rev_genesis::ProgressHost Runtime::genesis_host() noexcept {
            h.snapshot(h.memory.context,&f)!=rev_action::SnapshotMode::Local ||
            route.actor!=f.session.sub0.address)return Mode::Hidden;
         *out={f.session,route.actor};return Mode::Local;
+    }};
+}
+rev_genesis::TargetViewHost Runtime::target_view_host() noexcept {
+    return {this,[](void* p) noexcept {
+        auto& r=*static_cast<Runtime*>(p);
+        return r.started_ && r.host_.thread && r.thread_==r.host_.thread(r.host_.memory.context);
+    },[](void* p,u32 widget,rev_genesis::ViewFrame* out) noexcept {
+        auto& r=*static_cast<Runtime*>(p);auto h=r.genesis_host();rev_genesis::Owner owner{};
+        const auto mode=h.resolve(h.context,widget,&owner);
+        if(mode!=Mode::Local)return mode;
+        PipelineStamp stamp{};
+        if(!out || !r.clock_.capture(&stamp))return Mode::Hidden;
+        *out={owner,stamp.frame};return Mode::Local;
     }};
 }
 bool Runtime::heal_event(u32 actor) noexcept {
