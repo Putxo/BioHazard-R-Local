@@ -33,11 +33,11 @@ CoordinatorOps NativeCoordinatorBindings::callbacks() noexcept {
     out.allocation_clean = [](void* p) noexcept {
         return static_cast<NativeCoordinatorBindings*>(p)->ledger_.retained() == 0;
     };
-    out.configure = [](void* p, const u32 parents[2], const u32 originals[3]) noexcept {
+    out.configure = [](void* p, const u32 parents[2], const u32 originals[WidgetKinds]) noexcept {
         return static_cast<NativeCoordinatorBindings*>(p)->backend_.configure(parents, originals);
     };
     out.prepare = [](void* p, const Session& session,
-                     const u32 parents[2], const u32 originals[3]) noexcept {
+                     const u32 parents[2], const u32 originals[WidgetKinds]) noexcept {
         return static_cast<NativeCoordinatorBindings*>(p)->life_.prepare(
             session, parents, originals);
     };
@@ -75,8 +75,8 @@ bool StructuralCoordinator::same_snapshot(const LifeSnapshot& a,
 }
 
 bool StructuralCoordinator::originals(const LifeSnapshot& snap,
-                                      u32 out[3]) const noexcept {
-    if (!out || !snap.session.active || !snap.session.epoch ||
+                                      u32 out[WidgetKinds]) const noexcept {
+    if (!valid_widget_count(count_) || !out || !snap.session.active || !snap.session.epoch ||
         !snap.parents[0] || !snap.parents[1])
         return false;
 
@@ -98,7 +98,10 @@ bool StructuralCoordinator::originals(const LifeSnapshot& snap,
         out[0] == out[1] || out[0] == out[2] || out[1] == out[2])
         return false;
 
-    for (u32 i = 0; i < 3; ++i) {
+    if (count_ == WidgetKinds && !word(snap.parents[0] + 0x64, out[3])) return false;
+    for (u32 i = 0; i < count_; ++i) {
+        if (!out[i]) return false;
+        for (u32 j=0;j<i;++j) if (out[i]==out[j]) return false;
         if (!word(out[i], value) ||
             value != kind_info(static_cast<WidgetKind>(i))->vtable)
             return false;
@@ -141,7 +144,7 @@ bool StructuralCoordinator::drain() noexcept {
 }
 
 bool StructuralCoordinator::create(const LifeSnapshot& snap) noexcept {
-    u32 original[3]{};
+    u32 original[WidgetKinds]{};
     if (!originals(snap, original))
         return fail(CoordinatorFault::Layout);
     if (!ops_.allocation_clean(ops_.context))

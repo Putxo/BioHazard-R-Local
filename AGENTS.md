@@ -1,7 +1,7 @@
 # Trabajo y entrega
 
 Actualización: 27/09/2026. Rama canónica: research/script-member-serial-validation.
-PR24 integrado: 7f1f3029ea2d63dac8527834eac51c4496381ac3, 19 workflows PASS.
+PR25 integrado: 6a7144f513f93b9128af7606c45a016973cf833d, 19 workflows PASS.
 
 Leer CURRENT_STATUS.md, docs/50-runtime-composition.md,
 docs/51-runtime-installer.md y research/current_state.json antes de editar.
@@ -18,3 +18,4 @@ sin partner. Consultar el estado real; no reiniciar versiones anteriores.
 Preservar Self, mStartPadNo, GameMode, serial y Network globales.
 Una sola pausa global. Main/SubEquip son armas, no jugadores.
 Preflight remoto y conservar trabajo paralelo.
+

@@ -5,6 +5,7 @@ constexpr AllocationSpec Specs[] = {
     {WidgetKind::Reticle,       0x2E0,0x01C11706,0x01C19CCB,0x01C40C04},
     {WidgetKind::MainEquipment, 0x370,0x01C15775,0x01B7D1F0,0x01C0C74C},
     {WidgetKind::MapHerb,       0x2C0,0x01C7855A,0x01C6392A,0x01BAB4F6},
+    {WidgetKind::SubEquipment, 0x370,0x01B8BCE6,0x01C39C88,0x01C32956},
 };
 struct Busy {
     bool& v; explicit Busy(bool& b):v(b){v=true;} ~Busy(){v=false;}

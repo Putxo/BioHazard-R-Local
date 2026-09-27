@@ -17,7 +17,7 @@ struct Host {
 // is reachable. No callback is invoked during member construction.
 class Runtime {
 public:
-    Runtime(Registry&, Host) noexcept;
+    Runtime(Registry&, Host, u32 count=LegacyWidgetKinds) noexcept;
     Runtime(const Runtime&) = delete;
     Runtime& operator=(const Runtime&) = delete;
     bool start() noexcept;
@@ -33,6 +33,7 @@ public:
     rev_menu::MenuOwnerRouter& menu() noexcept { return menu_; }
 private:
     Host host_;
+    const u32 count_;
     bool attempted_=false,started_=false,bind_attempted_=false;
     LifetimeSource source_;
     PipelineClock clock_;

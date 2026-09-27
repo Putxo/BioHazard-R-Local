@@ -18,7 +18,7 @@ class NativeAuditTests(unittest.TestCase):
     def test_target_table_matches_cpp(self):
         source=(ROOT/'patches/hud_ownership/january_backend.cpp').read_text()
         rows=re.findall(r'\{(0x[0-9A-F]+(?:,0x[0-9A-F]+){7})\}',source)
-        self.assertEqual(len(rows),3)
+        self.assertEqual(len(rows),len(audit.TYPES))
         for row,t in zip(rows,audit.TYPES):
             actual=tuple(int(v,16) for v in row.split(','))
             self.assertEqual(actual,(t[2],t[3],t[5],*t[7]))
@@ -45,10 +45,11 @@ class NativeAuditTests(unittest.TestCase):
         name=os.environ.get('REV_JANUARY_ORIGINAL')
         if not name:self.skipTest('private original intentionally not available in CI')
         path=Path(name);before=path.read_bytes();report=audit.audit(before)
-        self.assertEqual(report['checks'],69);self.assertEqual(report['input_sha256'],audit.SHA)
+        self.assertEqual(report['checks'],85);self.assertEqual(report['input_sha256'],audit.SHA)
         self.assertFalse(report['gameplay_executed']);self.assertFalse(report['game_image_written'])
         with self.assertRaises(ValueError):audit.audit(before[:-1])
         modified=bytearray(before);modified[100]^=1
         with self.assertRaises(ValueError):audit.audit(bytes(modified))
         self.assertEqual(hashlib.sha256(path.read_bytes()).hexdigest(),audit.SHA)
 if __name__=='__main__':unittest.main(verbosity=2)
+

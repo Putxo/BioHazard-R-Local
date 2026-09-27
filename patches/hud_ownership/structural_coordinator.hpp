@@ -11,8 +11,8 @@ struct CoordinatorOps {
     bool (*healthy)(void*) noexcept = nullptr;
     LifeState (*state)(void*) noexcept = nullptr;
     bool (*allocation_clean)(void*) noexcept = nullptr;
-    bool (*configure)(void*, const u32 parents[2], const u32 originals[3]) noexcept = nullptr;
-    u32 (*prepare)(void*, const Session&, const u32 parents[2], const u32 originals[3]) noexcept = nullptr;
+    bool (*configure)(void*, const u32 parents[2], const u32 originals[WidgetKinds]) noexcept = nullptr;
+    u32 (*prepare)(void*, const Session&, const u32 parents[2], const u32 originals[WidgetKinds]) noexcept = nullptr;
     bool (*publish)(void*, u32 ticket, const Session&) noexcept = nullptr;
     void (*stop)(void*) noexcept = nullptr;
     bool (*collect)(void*) noexcept = nullptr;
@@ -43,8 +43,8 @@ enum class CoordinatorFault : u32 {
 
 class StructuralCoordinator {
 public:
-    StructuralCoordinator(Reader memory, CoordinatorOps ops)
-        : memory_(memory), ops_(ops) {}
+    StructuralCoordinator(Reader memory, CoordinatorOps ops, u32 count=LegacyWidgetKinds)
+        : memory_(memory), ops_(ops), count_(count) {}
 
     StructuralCoordinator(const StructuralCoordinator&) = delete;
     StructuralCoordinator& operator=(const StructuralCoordinator&) = delete;
@@ -61,6 +61,7 @@ public:
 private:
     Reader memory_{};
     CoordinatorOps ops_{};
+    const u32 count_;
     LifeSnapshot current_{};
     u32 ticket_ = 0;
     u32 last_frame_ = 0;
@@ -72,7 +73,7 @@ private:
         return false;
     }
     bool word(u32 address, u32& value) const noexcept;
-    bool originals(const LifeSnapshot& snap, u32 out[3]) const noexcept;
+    bool originals(const LifeSnapshot& snap, u32 out[WidgetKinds]) const noexcept;
     bool same_snapshot(const LifeSnapshot& a, const LifeSnapshot& b) const noexcept;
     bool drain() noexcept;
     bool create(const LifeSnapshot& snap) noexcept;

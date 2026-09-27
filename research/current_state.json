@@ -2,8 +2,8 @@
   "schema_version": 4,
   "canonical_branch": "research/script-member-serial-validation",
   "checkpoint": {
-    "merged_pr": 24,
-    "merge_sha": "7f1f3029ea2d63dac8527834eac51c4496381ac3",
+    "merged_pr": 25,
+    "merge_sha": "6a7144f513f93b9128af7606c45a016973cf833d",
     "ci": "19 workflows PASS"
   },
   "user_constraints": {
@@ -24,11 +24,12 @@
   },
   "runtime": {
     "composition_root": true,
-    "hud_menu_hook_count": 35,
+    "hud_menu_hook_count": 36,
     "hud_widgets": [
       "Reticle",
       "MainEquipment",
-      "MapHerb"
+      "MapHerb",
+      "SubEquipment"
     ],
     "single_pause": true,
     "menu_owner_pad1": true,
@@ -45,6 +46,7 @@
   ],
   "documents": [
     "docs/50-runtime-composition.md",
-    "docs/51-runtime-installer.md"
+    "docs/51-runtime-installer.md",
+    "docs/52-subweapon-hud.md"
   ]
 }

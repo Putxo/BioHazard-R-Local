@@ -1,7 +1,7 @@
 #include "runtime.hpp"
 namespace rev_runtime {
-Runtime::Runtime(Registry& registry,Host host) noexcept
-    : host_(host),
+Runtime::Runtime(Registry& registry,Host host,u32 count) noexcept
+    : host_(host), count_(count),
       source_(registry,{host.memory.context,host.memory.word,host.thread,host.self}),
       clock_({host.memory.context,host.thread}),
       view_({host.memory,host.thread}),
@@ -12,15 +12,15 @@ Runtime::Runtime(Registry& registry,Host host) noexcept
       ledger_(structural_allocation_gate(window_),host.native),
       allocation_(structural_allocation_gate(window_),ledger_,services()),
       admission_(gate(),allocation_.callbacks()),
-      backend_(admission_.callbacks(),ledger_.callbacks()),
-      lifecycle_(registry,backend_.callbacks()),
+      backend_(admission_.callbacks(),ledger_.callbacks(),count),
+      lifecycle_(registry,backend_.callbacks(),count),
       frames_(clock_,source_,view_.services()),
       driver_(lifecycle_,frames_.callbacks()),
       coordinator_bindings_(source_,lifecycle_,backend_,driver_,ledger_),
-      coordinator_(host.memory,coordinator_bindings_.callbacks()),
+      coordinator_(host.memory,coordinator_bindings_.callbacks(),count),
       begin_bindings_(coordinator_,driver_),
       activator_(clock_,begin_bindings_.callbacks()),
-      mask_({host.memory,host.write}),
+      mask_({host.memory,host.write},count),
       menu_({this,[](void* p,u32 a,u32* out) noexcept {
           return out && static_cast<Runtime*>(p)->word(a,*out);
       },[](void* p) noexcept -> u32 {
@@ -55,7 +55,7 @@ bool Runtime::start() noexcept {
     if(attempted_)return false;
     attempted_=true;
     const auto& n=host_.native;
-    if(!host_.memory.word || !host_.write || !host_.thread || !host_.image ||
+    if(!valid_widget_count(count_) || !host_.memory.word || !host_.write || !host_.thread || !host_.image ||
        !host_.self || !n.allocate || !n.construct || !n.method0 || !n.method1 ||
        !n.singleton || !n.contains || !host_.image(host_.memory.context))return false;
     const u32 thread=host_.thread(host_.memory.context);

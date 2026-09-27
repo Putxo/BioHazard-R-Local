@@ -35,18 +35,20 @@ struct JanuaryHost {
 };
 class JanuaryBackend {
 public:
-    JanuaryBackend(JanuaryHost host, JanuaryCalls calls) : host_(host), calls_(calls) {}
+    JanuaryBackend(JanuaryHost host, JanuaryCalls calls, u32 count=LegacyWidgetKinds)
+        : host_(host), calls_(calls), count_(count) {}
     // Bind the same borrowed parents/originals passed to Lifecycle::prepare.
     // Must remain alive throughout preparation/publication. No live reconfigure.
-    bool configure(const u32 parents[2], const u32 originals[3]);
+    bool configure(const u32 parents[2], const u32 originals[WidgetKinds]);
     Backend callbacks();
     NativeFault fault() const { return fault_; }
     u32 retained(WidgetKind k) const;
 private:
     struct Entry { u32 unit = 0; bool constructed = false, ready = false, quarantine = false; };
     JanuaryHost host_; JanuaryCalls calls_;
-    Entry entries_[3]{};
-    u32 parents_[2]{}, originals_[3]{};
+    const u32 count_;
+    Entry entries_[WidgetKinds]{};
+    u32 parents_[2]{}, originals_[WidgetKinds]{};
     bool configured_ = false, busy_ = false;
     NativeFault fault_ = NativeFault::None;
     bool allow(NativeOp, WidgetKind, u32 unit=0, u32 phase=0, u32 context=0);

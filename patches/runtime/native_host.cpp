@@ -65,7 +65,7 @@ extern "C" u32 rev_runtime_initialize() noexcept {
     for(auto p=rev_init_begin;p!=rev_init_end;++p)if(*p)(*p)();
     accepted=true;
     rev_runtime::Host h{{nullptr,word},write,thread,image,self,rev_hud::january_native_calls()};
-    auto* r=new(storage) rev_runtime::Runtime(rev_hud::registry(),h);
+    auto* r=new(storage) rev_runtime::Runtime(rev_hud::registry(),h,rev_hud::WidgetKinds);
     if(!r->start() || !r->bind()){accepted=false;return 0;}
     return 1;
 }

@@ -21,6 +21,11 @@ TYPES = (
   (0x01BAB4F6,0x01C33D4C,0x01C28CAD,0x01BF295F,0x01C67381),
   (0x02B619A0,0x02B61A70,0x02B61D60,0x02CD27E0,0x02B624E0),0x02B68183),
 )
+TYPES += (
+ ('SubEquipWin',0x04DE57B4,0x370,0x01B8BCE6,0x02B42720,0x01C39C88,0x02B42A90,
+  (0x01C32956,0x01C7FD6E,0x01BA1E2E,0x01BF295F,0x01C8373E),
+  (0x02B42BA0,0x02B42C80,0x02B42F60,0x02CD27E0,0x02B43110),0x02B4899C),
+)
 class Image:
     def __init__(self,data: bytes):
         if len(data)!=SIZE or hashlib.sha256(data).hexdigest()!=SHA:
@@ -77,6 +82,7 @@ def audit(data):
         (0x02B401BA,'c3','Reticle constructor zero stack args'),
         (0x02B3B122,'c3','MainEquipment constructor zero stack args'),
         (0x02B6192B,'c3','MapHerb constructor zero stack args'),
+        (0x02B42B33,'c3','SubEquipment constructor zero stack args'),
     ): exact(va,bytes.fromhex(h),label)
     branch(0x02B4C61B,0x01BF2BC6,label='separate native registration call')
     exact(0x04EC4BAC,b'sUnit::addBottom\0','native registration literal')
@@ -97,3 +103,4 @@ def main(argv=None):
     except (OSError,ValueError,struct.error) as e:
         print('ERROR: '+str(e),file=sys.stderr);return 2
 if __name__=='__main__':raise SystemExit(main())
+

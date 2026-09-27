@@ -43,7 +43,7 @@ private:
     static const AllocationSpec* spec_for_destroy(u32 target) noexcept;
     AllocationGate gate_{};
     JanuaryCalls native_{};
-    AllocationRecord records_[3]{};
+    AllocationRecord records_[WidgetKinds]{};
     bool busy_=false;
     AllocationFault fault_=AllocationFault::None;
     bool safe() const noexcept;
