@@ -4,7 +4,7 @@
 
 Actualización: 27/09/2026. Rama canónica: research/script-member-serial-validation.
 
-PR30 integrado: ace0e0fd993eb4bf562e2f439be87a3f861cbc41, 20 workflows PASS.
+PR31 integrado: 1bada8feab8abafc2ca1fc17abb430a2c771dd3a, 20 workflows PASS.
 
 
 
@@ -60,3 +60,5 @@ Indicador de daño separado: [alimentación por actor](docs/57-damage-hud.md).
 Genesis: [progreso global, productores y recompensa](docs/58-genesis-ownership-boundaries.md).
 
 Curación de J2: [productores y cola](docs/59-heal-hud.md).
+
+Genesis: [contador fuente y gateways; integración pendiente](docs/60-genesis-progress.md).
