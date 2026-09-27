@@ -111,7 +111,7 @@ def elf_module(path: Path) -> tuple[dict, dict]:
         raise ValueError('binding storage must initially be zero')
     return result,symbols
 
-def compile_module(work: Path) -> tuple[dict,dict,dict]:
+def compile_module(work: Path, clang: str | None = None, linker: str | None = None) -> tuple[dict,dict,dict]:
     sources={name:sha((ROOT/name).read_bytes()) for name in ('core.cpp','hooks.S','link.ld')}
     commands=[
         ['g++','-m32','-std=c++17','-Os','-ffreestanding','-fno-exceptions','-fno-rtti',
@@ -122,11 +122,19 @@ def compile_module(work: Path) -> tuple[dict,dict,dict]:
         ['as','--32',str(ROOT/'hooks.S'),'-o',str(work/'hooks.o')],
         ['ld','-m','elf_i386','-T',str(ROOT/'link.ld'),'-o',str(work/'routing.elf'),
          str(work/'core.o'),str(work/'hooks.o')]]
+    if clang:
+        commands[0]=[clang,'--target=i386-none-elf',*[
+            x for x in commands[0][1:] if x not in
+            ('-m32','-mpreferred-stack-boundary=2','-mincoming-stack-boundary=2')],'-mstack-alignment=4']
+        commands[1]=[clang,'--target=i386-none-elf','-c',str(ROOT/'hooks.S'),'-o',str(work/'hooks.o')]
+        commands[2][0]=linker or 'ld.lld'
+    elif linker:
+        commands[2][0]=linker
     for command in commands:
         subprocess.run(command,check=True,capture_output=True,text=True)
     module,symbols=elf_module(work/'routing.elf')
     provenance={'source_sha256':sources,'elf_sha256':sha((work/'routing.elf').read_bytes()),
-                'compiler':subprocess.check_output(['g++','--version'],text=True).splitlines()[0],
+                'compiler':subprocess.check_output([clang or 'g++','--version'],text=True).splitlines()[0],
                 'commands':commands}
     return module,symbols,provenance
 
@@ -257,13 +265,15 @@ def main() -> int:
     ap=argparse.ArgumentParser(description=__doc__)
     ap.add_argument('input',type=Path);ap.add_argument('output',type=Path)
     ap.add_argument('--report',type=Path,required=True)
+    ap.add_argument('--clang',help='optional clang binary for portable ELF32 build')
+    ap.add_argument('--linker',help='optional linker binary (ld.lld with clang)')
     args=ap.parse_args()
     try:
         unused_paths([args.input,args.output,args.report])
         base=args.input.read_bytes()
         if len(base)!=BASE_SIZE or sha(base)!=BASE_SHA:raise ValueError('wrong input build/SHA-256')
         with tempfile.TemporaryDirectory(prefix='rev-local-routing-') as temp:
-            module,symbols,provenance=compile_module(Path(temp))
+            module,symbols,provenance=compile_module(Path(temp),args.clang,args.linker)
             output,report=build(base,module,symbols)
             report['provenance']=provenance
         # Serialize before creating either destination. Exclusive create is race-safe.

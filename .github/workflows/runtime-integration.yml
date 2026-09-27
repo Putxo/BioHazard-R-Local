@@ -32,3 +32,5 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y clang lld
       - name: Link every production HUD and menu gateway with the startup graph
         run: python tools/build_runtime.py "$RUNNER_TEMP/runtime-module"
+      - name: Reject missing or discarded hooks and invalid images
+        run: REV_RUNTIME_ELF="$RUNNER_TEMP/runtime-module/runtime.elf" python tests/runtime/test_runtime_image.py
