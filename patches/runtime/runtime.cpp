@@ -168,3 +168,7 @@ bool Runtime::structural(u32 frame,u32 owner,u32 frame_base) noexcept {
 extern "C" unsigned int rev_hud_heal_request(unsigned int actor) noexcept {
     return rev_runtime::HealSink && rev_runtime::HealSink->heal_event(actor) ? 1u:0u;
 }
+extern "C" unsigned int rev_genesis_camera(unsigned int widget,unsigned int manager,unsigned int* out) noexcept {
+    if(!rev_runtime::HealSink)return 0;
+    return static_cast<unsigned int>(rev_runtime::HealSink->genesis_camera(widget,manager,out));
+}
