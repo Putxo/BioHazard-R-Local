@@ -1,0 +1,15 @@
+{
+  "status": "SOURCE_ONLY_NOT_INSTALLED",
+  "original_sha256": "9124bb92d6c54a047ade47dacc8429221b18f9910b504f0e87718d5151013f69",
+  "sites": [
+    {"va":"0x01F3EF43","original":"call 0x01B9B457","bridge":"rev_menu_gate_pause_open","purpose":"pause bit 0x8; records owner"},
+    {"va":"0x01F3EF92","original":"call 0x01B9B457","bridge":"rev_menu_gate_submenu_open","purpose":"submenu bit 0x1; records owner"},
+    {"va":"0x02B6A491","original":"call 0x01C5C120","bridge":"rev_menu_gate_submenu_198","purpose":"submenu per-pad state +0x198"},
+    {"va":"0x02B6A49E","original":"call 0x01B9B457","bridge":"rev_menu_gate_submenu_1a0","purpose":"submenu per-pad state +0x1A0"},
+    {"va":"0x02B6DE91","original":"call 0x01C2C7F4","bridge":"rev_menu_gate_submenu_actor","purpose":"submenu list actor"},
+    {"va":"0x02B6EFDE","original":"call 0x01C2C7F4","bridge":"rev_menu_gate_submenu_actor","purpose":"submenu secondary list actor"}
+  ],
+  "stock_pad": {"stride":"0x2F8","start_pad":"0x970","state_198":"0x198","state_1a0":"0x1A0"},
+  "policy": "P1 priority on simultaneous open; P2 only when exact local Sub0 remains ThinkMode::Pad; no global Self or persistent mStartPadNo change",
+  "gameplay_executed": false
+}
