@@ -1,0 +1,23 @@
+{
+  "status": "PASS_READ_ONLY_EVIDENCE",
+  "sha256": "9124bb92d6c54a047ade47dacc8429221b18f9910b504f0e87718d5151013f69",
+  "checks": 12,
+  "gameplay_executed": false,
+  "game_image_modified": false,
+  "finding": "PauseHD has two live selection paths; each reads sPad via mStartPadNo at +1A0/+1AC and consumes those values for decision and selection movement.",
+  "policy": "when MenuOwnerRouter surface=Pause and owner=J2, route only these four wrapper callsites to Pad1; preserve stock otherwise",
+  "records": [
+    {"va":"0x02C3182E","label":"pause selection path A reads +1A0 then +1AC"},
+    {"va":"0x02C31FCF","label":"pause selection path B reads +1A0 then +1AC"},
+    {"va":"0x01CB3103","label":"wrapper +1A0 selects mStartPadNo"},
+    {"va":"0x01CB3163","label":"direct Pad[index]+1A0"},
+    {"va":"0x01CB31B3","label":"wrapper +1AC selects mStartPadNo"},
+    {"va":"0x01CB3213","label":"direct Pad[index]+1AC"},
+    {"va":"0x02C31A34","label":"path A +1A0 gates accept/cancel mask"},
+    {"va":"0x02C31B6D","label":"path A +1AC mask 0x10010"},
+    {"va":"0x02C31BC8","label":"path A +1AC mask 0x40040"},
+    {"va":"0x02C32221","label":"path B +1A0 gates decision mask"},
+    {"va":"0x02C32332","label":"path B +1A0 secondary decision mask"},
+    {"va":"0x02C323CD","label":"path B +1AC mask 0x50050"}
+  ]
+}
