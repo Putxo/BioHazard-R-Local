@@ -1,28 +1,23 @@
-# Trabajo y entrega del progreso
+# Trabajo y entrega
 
-Actualización solicitada por el propietario el 25 de septiembre de 2026.
+Actualización canónica: 27 de septiembre de 2026.
 
-## Entrega vigente: código y progreso en GitHub, no ejecutables
+- Rama técnica: `research/script-member-serial-validation`.
+- Último bloque integrado: PR #19, merge `b0900736d9e44a04a47f9804b75059f007dd12fd`, 15 workflows PASS.
+- Entrega: fuentes/tests/evidencia/PRs. No generar ni entregar EXE salvo petición expresa.
+- Nunca subir binarios propietarios, PDB, assets ni .obj.
 
-Continuar la implementación y guardar sus fuentes, pruebas, evidencias y estado en este repositorio. No sustituir ese trabajo por la generación o entrega de candidatos binarios.
+Leer antes de escribir:
+1. CURRENT_STATUS.md
+2. docs/45-local-menu-owner-routing.md
+3. docs/46-pause-global-submenu-handoff.md
+4. research/current_state.json
+5. START_HERE_NEW_CHAT.md
 
-Mientras el propietario no solicite expresamente un ejecutable:
+Punto exacto: terminar **Pause owner=1**. MenuOwnerRouter ya registra owner y SubMenu J2 ya usa Pad1/Sub0. Falta navegación/opciones/confirmar/cancelar de PauseHD en Pad1 cuando owner=J2 y limpiar owner al cerrar state 5/8.
 
-- No generar nuevos EXE del juego ni ejecutar constructores que creen una imagen parcheada. No entregar EXE, instaladores ni ZIP de distribución en el chat.
-- No subir EXE, DLL, PDB, assets propietarios ni objetos de compilación a GitHub. Conservar los ejecutables aportados únicamente como entradas de análisis local de solo lectura.
-- Publicar avances mediante commits de código fuente, tests e informes verificables. Las respuestas deben identificar el commit o PR real, los cambios realizados y el punto pendiente, sin enlaces a binarios.
-- Conservar fuentes y constructores históricos; que estén versionados no autoriza a ejecutarlos para producir otro EXE. No borrar archivos ni historial para aplicar esta preferencia.
+No duplicar PauseHD. No cambiar Self, mStartPadNo, GameMode, serial o Network globalmente. Los índices 0/1/2 de PauseHD::slot8 son sGameFlags, no pads.
 
-## Continuidad
+Después: Genesis -> QTE/scripts -> muerte/checkpoints -> cutscenes -> escenas sin partner -> instalación y campaña.
 
-Antes de escribir, verificar ramas y PR remotos, leer CURRENT_STATUS.md y research/current_state.json y revisar los diffs. Preservar el trabajo paralelo, evitar force-push y no aplicar dos veces los constructores alternativos del mismo cambio.
-
-Checkpoint consolidado de código anterior a esta instrucción: 9880eee389db0bde8aff42df0865f0eb0b390869, integrado mediante PR #5 en research/script-member-serial-validation. La publicación de instrucciones o índices no convierte los cambios experimentales en una implementación completa ni los fusiona automáticamente en main.
-
-Punto pendiente documentado: docs/gui-and-scheduler-ownership.md y docs/23-herb-hud-owner-audit.md. Continuar el ciclo de vida y asociación instancia de HUD -> actor -> viewport en uCockpitManagerMain, sin reemplazar globalmente Self ni interpretar uPcsInput+0x30 como jugador: la auditoría lo identifica como uScheduler.
-
-## Evidencia y pruebas
-
-Distinguir análisis estático, pruebas de componentes y ejecución real del juego. No afirmar pruebas que no se hayan ejecutado ni usar hashes reproducibles como prueba de funcionamiento de gameplay. La prohibición de generar EXE no impide seguir analizando las entradas locales y desarrollando código fuente o tests de componentes sin generar una imagen del juego.
-
-Persistir cada bloque verificable antes de avanzar demasiado. HUD/menús por jugador, comandos de scheduler compartidos, muerte/checkpoints/cutscenes, escenas sin compañero y validación conjunta en campaña siguen pendientes; no darlos por cerrados por actualizar documentación.
+Preflight remoto, preservar trabajo paralelo y distinguir CI/mocks de gameplay real.

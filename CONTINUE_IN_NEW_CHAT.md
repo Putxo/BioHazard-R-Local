@@ -1,13 +1,13 @@
 # Prompt de continuación
 
-Continúa exclusivamente Putxo/BioHazard-R-Local. Lee CURRENT_STATUS.md, docs/20-local-routing-built-and-tested.md y research/current_state.json; verifica main, ramas y PRs antes de escribir. No rehagas pickup desde v12 ni vuelvas a 0x049A8023.
+Continúa exclusivamente `Putxo/BioHazard-R-Local` desde el remoto actual. Verifica ramas/PRs antes de escribir y lee `CURRENT_STATUS.md`, `docs/45-local-menu-owner-routing.md`, `docs/46-pause-global-submenu-handoff.md`, `research/current_state.json` y `AGENTS.md`. La rama canónica es `research/script-member-serial-validation`, no `main`.
 
-El candidato LOCAL ROUTING EXPERIMENTAL construido es SHA-256 0c019d43b92c0092fa458abcf7e2990f8783895eb2bd8181f6e9f130b697d378, 60.755.456 bytes. Base inmediata owner-fix e3c5c188782309a1683d27ade0ce9e38cf1c40219de9fb5d684b3d6fda2e285a. El constructor y el módulo están en patches/build_local_routing.py y patches/local_routing/.
+Último bloque integrado: PR #19, merge `b0900736d9e44a04a47f9804b75059f007dd12fd`, 15 workflows PASS. `MenuOwnerRouter` ya registra owner J1/J2 al abrir Pause/SubMenu, da prioridad a J1, usa Pad1 para la navegación de uGUI_SubMenu cuando owner=J2 y sustituye únicamente sus dos Self finders por el Sub0 exacto para leer su propio cBioItemPack. No modifica Self ni mStartPadNo global.
 
-Ya se implementaron reenlace del mismo Sub0 local, cadena sensor/actor/serial/callback de puertas gimmick, guards del selector, cuatro montajes de ActionCommand y selección recíproca en la ruta de ayuda. Hay pruebas locales de lógica, puentes e integridad, y CI de fuentes con mocks en Linux i386 y Windows x86. No se ejecutó el juego y no está implementado el cooperativo completo.
+Continúa exactamente por **Pause owner=1**: localiza la ruta física de navegación/confirmar/cancelar/opciones mientras `sIDCockpit state=5`; owner0 debe seguir en Pad0 y owner1 usar Pad1 solo dentro de ese scope. Mantén una sola pausa global. `uGUI_PauseHD::slot8` consulta sGameFlags; no interpretes sus índices 0/1/2 como pads. Después implementa limpieza/lifetime de owner/surface al salir de states 5/8, audita states 6/7 y otros callers de la state machine.
 
-Pendientes concretos: ownership de selectores de guion cFsmAction 0x02976C30, cFsmActionPcs 0x029FF600 y uPcsInput 0x02DEE8D0; HUD/pausa/inventarios por jugador; muerte/checkpoints/cutscenes; creación y persistencia de P2 en escenas sin partner; prueba de orden de callbacks y vida de bindings en el motor real. No cambiar a ciegas todos los ceros ni reemplazar Self o el serial global.
+Después: Genesis/acciones restantes -> scheduler/QTE/scripts -> muerte/reanimación/checkpoints -> cutscenes/cámaras forzadas -> escenas sin partner -> instalación conjunta y validación de campaña.
 
-El probe tools/runtime_probe.py es de solo lectura y está limitado por hash al candidato. No hay todavía observaciones de una partida real con él. No llamar a sus tests con fixtures una validación de gameplay.
+Preserva PadData[1]/ThinkMode Pad, split/cámaras, HUD P2/lifecycle/NativeViewScope/máscara P1, pickup Sub0, ammo relief, puertas/interacciones, guards PcsSub owner+serial y MenuOwnerRouter. No rehagas esos bloques.
 
-Preserva Network y trabajo paralelo. Usa los EXE solo localmente, jamás los subas a GitHub. Publica código, tests, evidencia y rectificaciones; no prometas una versión completa basándote únicamente en hashes o CI.
+Entrega solo fuentes/tests/evidencia/commits en GitHub. No generes EXE salvo petición expresa. No llames gameplay validado a CI/mocks.
