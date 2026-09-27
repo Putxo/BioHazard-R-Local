@@ -83,6 +83,25 @@ bool effect_view(Reader r,const Effects& e,u32 view) noexcept {
     }
     return true;
 }
+bool toggle_effects(Reader r,EffectLifetime& life,const Effects& expected,bool enabled,
+                    bool (*write)(void*,u32,u32) noexcept) noexcept {
+    Effects now{};u32 values[3]{};
+    if(!write || !capture_effects(r,life,expected.scanner,&now) ||
+       !same_effects(now,expected) || !effect_view(r,now,1))return false;
+    const auto live=[&]() noexcept {for(const auto& k:now.units)if(!life.live(k))return false;return true;};
+    for(u32 i=0;i<3;++i){u32 flags=0;Guard guard{r,life,now.units[i]};
+        if(!word(guard.reader(),now.units[i].address,12,flags))return false;
+        values[i]=enabled?flags|0x4C00u:flags&~0x4C00u;
+    }
+    for(u32 i=0;i<3;++i)
+        if(!live() || !write(r.context,now.units[i].address+12,values[i]))return false;
+    Effects after{};
+    if(!live() || !capture_effects(r,life,expected.scanner,&after) || !same_effects(after,expected))return false;
+    for(u32 i=0;i<3;++i){u32 flags=0;Guard guard{r,life,now.units[i]};
+        if(!word(guard.reader(),now.units[i].address,12,flags) || flags!=values[i])return false;
+    }
+    return live();
+}
 bool retire_effects(Reader r,EffectLifetime& life,const Effects& expected,
                     bool (*write)(void*,u32,u32) noexcept) noexcept {
     Effects now{};u32 flags[3]{};

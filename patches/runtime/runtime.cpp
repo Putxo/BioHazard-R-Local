@@ -291,6 +291,25 @@ bool Runtime::genesis_weapon_retain(u32 widget,u32 weapon) noexcept {
     scanner_weapon_key_=key;scanner_weapon_widget_=widget;scanner_weapon_owner_=before.owner;scanner_weapon_ticket_=ticket;
     return true;
 }
+bool Runtime::genesis_effect_toggle(u32 widget,bool enabled) noexcept {
+    auto h=target_view_host();
+    if(!h.on_thread(h.context))return false;
+    const auto route=registry_.resolve(widget,WidgetKind::Scanner);
+    if(route.mode==Mode::Stock)return false;
+    rev_genesis::ViewFrame before{},after{};
+    // Closing the private effects is valid after equipment has changed. Opening
+    // requires the current observed Scanner weapon and its model.
+    const bool ok=route.mode==Mode::Local &&
+        h.resolve(h.context,widget,&before)==Mode::Local &&
+        scanner_effects(widget,effects_stock_.scanner,false) &&
+        (!enabled || genesis_weapon_use(widget,true)) &&
+        rev_genesis::toggle_effects(host_.memory,effects_,effects_owned_,enabled,host_.write) &&
+        h.resolve(h.context,widget,&after)==Mode::Local && same_effect_frame(before,after) &&
+        scanner_effects(widget,effects_stock_.scanner,false);
+    if(!ok){backend_.quarantine_scanner();scanner_copy_failed_=true;lifecycle_.stop();}
+    // Handled also on refusal: never fall through to shared native setters.
+    return true;
+}
 bool Runtime::genesis_weapon_use(u32 widget,bool model_required) noexcept {
     auto h=target_view_host();
     if(!h.on_thread(h.context))return true;
@@ -746,4 +765,8 @@ extern "C" unsigned int rev_genesis_weapon_retain(unsigned int widget,unsigned i
 
 extern "C" unsigned int rev_genesis_weapon_use(unsigned int widget,unsigned int model_required) noexcept {
     return !rev_runtime::HealSink || rev_runtime::HealSink->genesis_weapon_use(widget,model_required!=0)?1u:0u;
+}
+
+extern "C" unsigned int rev_genesis_effect_toggle(unsigned int widget,unsigned int enabled) noexcept {
+    return rev_runtime::HealSink && rev_runtime::HealSink->genesis_effect_toggle(widget,(enabled&255u)!=0)?1u:0u;
 }
