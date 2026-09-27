@@ -1,7 +1,7 @@
 # Estado actual del cooperativo local
 
 27/09/2026. Rama técnica: `research/script-member-serial-validation`.
-PR42 integrado: `04ac45ba60ee6882f1662d181ddc76053c610aa7`, 20 workflows aplicables PASS.
+PR43 integrado: `a4f0b02c0fd0d36a072ba590c5f1bc3858538f7f`, 21 workflows PASS.
 
 **El cooperativo completo sigue en desarrollo. El juego no se ha ejecutado.**
 El propietario prohíbe abrirlo y hará personalmente las pruebas jugando.
@@ -85,3 +85,5 @@ Genesis: [arma equipada, retención y límites de activación](docs/69-genesis-e
 Apuntar: [visibilidad de personaje y arma en la segunda cámara](docs/70-aim-secondary-visibility.md).
 
 Visor de arma: [octavo widget, recursos y actor propios](docs/71-scope-widget.md).
+
+Visor de arma: [apertura y cierre al apuntar con J2](docs/72-scope-aim-events.md).

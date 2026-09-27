@@ -49,6 +49,8 @@ rev_aim_visibility:
     movzx eax,byte ptr [argument]
     cmp [esp+8],eax
     jne fail
+    cmp dword ptr [esp+12],0xEF
+    jne fail
     inc dword ptr [calls]
     xor eax,eax
     xor ecx,ecx

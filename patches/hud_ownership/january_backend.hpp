@@ -42,6 +42,7 @@ struct HudEventFeed {
     bool (*heal)(void*,u32 unit,u32 actor) noexcept=nullptr;
     bool (*scanner_begin)(void*,u32 unit) noexcept=nullptr;
     bool (*scanner_end)(void*,u32 unit) noexcept=nullptr;
+    bool (*scope)(void*,u32 unit,u32 actor) noexcept=nullptr;
 };
 class JanuaryBackend {
 public:

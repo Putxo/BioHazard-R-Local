@@ -58,6 +58,17 @@ bool aim_weapon_hidden(void*,u32 actor) noexcept {
     using Predicate=unsigned char(__attribute__((thiscall))*)(u32);
     return reinterpret_cast<Predicate>(0x01BB2FE4u)(actor)!=0;
 }
+bool weapon_class(void*,u32 weapon,u32* out) noexcept {
+    u32 vt=0,method=0;
+    if(!out || !word(nullptr,weapon,&vt) || vt>0xFFFFFFEFu || !word(nullptr,vt+0x10,&method) || !method)return false;
+    using Type=u32(__attribute__((thiscall))*)(u32);
+    const u32 dti=reinterpret_cast<Type>(method)(weapon);
+    return dti && dti<=0xFFFFFFDFu && word(nullptr,dti+0x1C,out);
+}
+void scope_activate(void*,u32 unit,u32 weapon,u32 flag) noexcept {
+    using Activate=void(__attribute__((thiscall))*)(u32,u32,u32);
+    reinterpret_cast<Activate>(0x01BE9C6Fu)(unit,weapon,flag);
+}
 alignas(rev_runtime::Runtime) unsigned char storage[sizeof(rev_runtime::Runtime)];
 bool attempted=false;
 }
@@ -81,6 +92,8 @@ extern "C" u32 rev_runtime_initialize() noexcept {
     h.action={nullptr,action_member,action_draw};
     h.action_rank=action_rank;
     h.aim_weapon_hidden=aim_weapon_hidden;
+    h.weapon_class=weapon_class;
+    h.scope_activate=scope_activate;
     auto* r=new(storage) rev_runtime::Runtime(rev_hud::registry(),h,rev_hud::WidgetKinds);
     if(!r->start() || !r->bind()){accepted=false;return 0;}
     return 1;
