@@ -146,6 +146,24 @@ struct Fixture {
     }
 };
 int main(){
+    for(u32 fault=0;fault<8;++fault){Fixture x(8);x.prepare();x.begin();
+        const u32 scanner=x.r.lifecycle().unit(6);u32 roots[3]{};
+        for(u32 i=0;i<3;++i)roots[i]=x.f.m[scanner+effect_fixture::Offsets[i]];
+        const u32 addresses[]={roots[0]+0x44,roots[0]+12,roots[1]+12,roots[2]+12,scanner+0x2F0,scanner+0x33C,scanner+0x338};
+        if(fault)x.f.write_fail=addresses[fault-1];
+        const auto before=x.f.m;x.f.m[0x055623C4]=0;
+        C(x.r.clock().event(PipelineEnd,0xC00000,0xD00000));
+        C(x.r.window().event(PipelineEnd,0xC00000,0xD00000)==!fault);
+        bool deleted=false;for(u32 p:x.f.deleted)if(p==scanner)deleted=true;
+        C(deleted==!fault);
+        C(x.f.scanner_retirements==(fault?0u:1u));
+        C(x.r.lifecycle().state()==(fault?LifeState::Quarantined:LifeState::Empty));
+        if(!fault){C(x.f.m[roots[0]+0x44]==0);
+            for(u32 i=0;i<3;++i){C(!x.f.m.count(scanner+effect_fixture::Offsets[i]));C((x.f.m[roots[i]+12]&0xFC07)==3);
+                C(x.r.genesis_effects().capture(roots[i],static_cast<rev_genesis::EffectKind>(i)).valid());}}
+        for(u32 i=0;i<3;++i){const u32 p=before.at(x.f.original[6]+effect_fixture::Offsets[i]);C(x.f.m[p+12]==before.at(p+12));}
+        ++scenarios;
+    }
     // Auxiliary roots are private View1 objects; loss or ABA never reaches the
     // Scanner's native phase, even when an address still has the expected VT.
     for(u32 fault=0;fault<9;++fault){Fixture x(8);const auto stock=x.f.m;

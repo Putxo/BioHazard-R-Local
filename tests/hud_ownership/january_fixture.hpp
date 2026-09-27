@@ -34,7 +34,7 @@ struct Fake {
     bool removal_noop=false;
     u32 completion_calls=0;
     void (*completion_observer)(void*,u32) noexcept=nullptr;
-    u32 notification_calls=0,resource_releases=0;
+    u32 notification_calls=0,resource_releases=0,scanner_retirements=0;
     void* init_observer_context=nullptr;
     void (*init_observer)(void*,u32) noexcept=nullptr;
     void* effect_context=nullptr;
@@ -165,8 +165,12 @@ struct Fake {
         if(target==t->destroy){
             C(arg==1);for(u32 a:f.original)C(a!=self);for(u32 a:f.deleted)C(a!=self);
             if(f.life)C(!f.life->collect());
+            if(i==6){for(u32 off:effect_fixture::Offsets)C(f.m[self+off]==0);++f.scanner_retirements;}
             f.deleted.push_back(self);
-            for(auto it=f.m.begin();it!=f.m.end();)if(it->first>=self && it->first<self+0x10000)it=f.m.erase(it);else ++it;
+            // Scheduled auxiliaries are distinct allocations, despite the
+            // fixture placing them in the same synthetic address neighborhood.
+            const u32 end=self+(i==6?0xE000:0x10000);
+            for(auto it=f.m.begin();it!=f.m.end();)if(it->first>=self && it->first<end)it=f.m.erase(it);else ++it;
         }else{C(target==t->draw);C(arg==f.context);f.m[self+0xC]^=0x80000000;
             if(f.phase_observer)f.phase_observer(f.phase_observer_context,target,self);}
     }

@@ -14,6 +14,13 @@ bool key(const EffectKey& a,const EffectKey& b) noexcept {
 }
 struct Range {u32 p,n;};
 struct Regions {Range a[FilterResource::Limit+6]{};u32 count=0;};
+struct Guard {
+    Reader base;EffectLifetime& life;EffectKey key;
+    Reader reader() noexcept {return {this,[](void* p,u32 a,u32* out) noexcept {
+        auto& g=*static_cast<Guard*>(p);
+        return g.life.live(g.key) && g.base.word && g.base.word(g.base.context,a,out) && g.life.live(g.key);
+    }};}
+};
 bool append(Regions& r,u32 p,u32 n) noexcept {
     if(!p || !n || p>~0u-n || r.count>=FilterResource::Limit+6)return false;
     for(u32 i=0;i<r.count;++i)if(overlap(p,n,r.a[i].p,r.a[i].n))return false;
@@ -38,13 +45,15 @@ bool capture(Reader r,EffectLifetime& life,u32 scanner,Effects& out) noexcept {
     for(u32 i=0;i<3;++i){u32 p=0,flags=0;
         if(!word(r,scanner,Offsets[i],p))return false;
         out.units[i]=life.capture(p,static_cast<EffectKind>(i));
-        if(!out.units[i].valid() || !word(r,p,0,vt) || vt!=VT[i] || !word(r,p,12,flags) ||
+        Guard guard{r,life,out.units[i]};const auto memory=guard.reader();
+        if(!out.units[i].valid() || !word(memory,p,0,vt) || vt!=VT[i] || !word(memory,p,12,flags) ||
            ((flags>>3)&127)!=6 || (flags&7)<1 || (flags&7)>2)return false;
     }
     u32 callback=0,parent=0,resource=0;
-    if(!word(r,out.units[0].address,0x44,callback) || callback!=scanner+0x2F4 ||
-       !word(r,callback,0,vt) || vt!=0x04DE4564 || !word(r,callback,4,parent) || parent!=scanner ||
-       !word(r,out.units[0].address,0x40,resource) || !capture_filter_resource(r,resource,&out.resource))return false;
+    Guard guard{r,life,out.units[0]};const auto memory=guard.reader();
+    if(!word(memory,out.units[0].address,0x44,callback) || callback!=scanner+0x2F4 ||
+       !word(memory,callback,0,vt) || vt!=0x04DE4564 || !word(memory,callback,4,parent) || parent!=scanner ||
+       !word(memory,out.units[0].address,0x40,resource) || !capture_filter_resource(memory,resource,&out.resource))return false;
     Regions all{};if(!regions(out,all))return false;
     for(const auto& k:out.units)if(!life.live(k))return false;
     return true;
@@ -73,5 +82,29 @@ bool effect_view(Reader r,const Effects& e,u32 view) noexcept {
         if(!k.valid() || !word(r,k.address,12,flags) || ((flags>>16)&0x3FF)!=(1u<<view))return false;
     }
     return true;
+}
+bool retire_effects(Reader r,EffectLifetime& life,const Effects& expected,
+                    bool (*write)(void*,u32,u32) noexcept) noexcept {
+    Effects now{};u32 flags[3]{};
+    if(!write || !capture_effects(r,life,expected.scanner,&now) || !same_effects(now,expected))return false;
+    for(u32 i=0;i<3;++i){Guard guard{r,life,now.units[i]};
+        if(!word(guard.reader(),now.units[i].address,12,flags[i]))return false;}
+    const auto live=[&]() noexcept {for(const auto& k:now.units)if(!life.live(k))return false;return true;};
+    // This callback points inside the Scanner being retired. Break it before
+    // marking any unit for deferred destruction; the scheduler owns each unit.
+    if(!live() || !write(r.context,now.units[0].address+0x44,0))return false;
+    for(u32 i=0;i<3;++i){
+        // All six cUnit activity bits off, including keep-alive; native kill
+        // transitions low three state bits 1/2 -> 3. Group/view bits survive.
+        if(!live() || !write(r.context,now.units[i].address+12,(flags[i]&~0xFC07u)|3u))return false;
+    }
+    for(u32 i=0;i<3;++i)
+        if(!live() || !write(r.context,now.scanner+Offsets[i],0))return false;
+    u32 value=0;
+    if(!live() || !word(r,now.units[0].address,0x44,value) || value)return false;
+    for(u32 i=0;i<3;++i)
+        if(!live() || !word(r,now.scanner,Offsets[i],value) || value || !live() ||
+           !word(r,now.units[i].address,12,value) || value!=((flags[i]&~0xFC07u)|3u))return false;
+    return live();
 }
 }
