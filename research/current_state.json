@@ -2,9 +2,9 @@
   "schema_version": 4,
   "canonical_branch": "research/script-member-serial-validation",
   "checkpoint": {
-    "merged_pr": 49,
-    "merge_sha": "2ee12d6a327eeb739f04d3be1b73e980c2dcbc12",
-    "tested_head": "b49d1033a08d82f0d2d2643987727bc8f550ce07",
+    "merged_pr": 50,
+    "merge_sha": "38380faeb6b8fdec31f8a06ef297b8da4dabb14a",
+    "tested_head": "b5d1ec1099261e56ec9c60415a48807a876d5b12",
     "ci": "21 workflows PASS"
   },
   "user_constraints": {
@@ -78,7 +78,9 @@
     "genesis_auxiliary_effect_ownership_view_retirement_connected": false,
     "genesis_auxiliary_effect_ownership_guard_connected": true,
     "genesis_auxiliary_root_view1_masks_connected": true,
-    "genesis_auxiliary_effect_retirement_connected": true
+    "genesis_auxiliary_effect_retirement_connected": true,
+    "genesis_auxiliary_effect_scheduler_view_mask_connected": true,
+    "genesis_auxiliary_effect_render_clipping_complete": false
   },
   "pending": [
     "full HUD and interaction prompts",
@@ -118,6 +120,7 @@
     "docs/75-genesis-private-filter-resource.md",
     "docs/76-genesis-effect-lifetimes.md",
     "docs/77-genesis-effect-ownership.md",
-    "docs/78-genesis-effect-retirement.md"
+    "docs/78-genesis-effect-retirement.md",
+    "docs/79-genesis-effect-views.md"
   ]
 }

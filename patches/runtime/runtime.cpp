@@ -96,6 +96,38 @@ bool Runtime::scanner_retire(u32 unit,u32 stock) noexcept {
     return scanner_effects(unit,stock,false) &&
         rev_genesis::retire_effects(host_.memory,effects_,effects_owned_,host_.write);
 }
+u32 Runtime::unit_mask(u32 unit,u32 original) noexcept {
+    auto h=target_view_host();
+    // Local views use the native immediate draw path. Other threads must not
+    // inspect these owner-thread certificates, including during replacement.
+    if(!h.on_thread(h.context))return action_.mask(unit,original);
+    rev_genesis::EffectKey key{};bool owned=false,found=false;
+    for(const auto& k:effects_owned_.units)if(k.valid() && k.address==unit){key=k;owned=true;found=true;}
+    if(!found)for(const auto& k:effects_stock_.units)if(k.valid() && k.address==unit){key=k;found=true;}
+    if(!found)return action_.mask(unit,original);
+    const u32 refused=owned?0:original;
+    if(!effects_.healthy())return refused;
+    const auto now=effects_.capture(unit,key.kind);
+    // A new observed allocation at the same address is not our old effect.
+    if(now.valid() && now.generation!=key.generation)return original;
+    if(!effects_.live(key) || effect_mask_busy_)return refused;
+    struct Busy {bool& value;explicit Busy(bool& v):value(v){value=true;}~Busy(){value=false;}} busy(effect_mask_busy_);
+    rev_genesis::ViewFrame before{},after{};
+    const u32 scanner=effects_owned_.scanner;
+    if(h.resolve(h.context,scanner,&before)!=Mode::Local ||
+       !scanner_effects(scanner,effects_stock_.scanner,false) ||
+       h.resolve(h.context,scanner,&after)!=Mode::Local || !effects_.live(key))return refused;
+    const auto same_actor=[](const Actor& a,const Actor& b) noexcept {
+        return a.address==b.address && a.lifetime==b.lifetime && a.serial==b.serial && a.think_mode==b.think_mode;
+    };
+    const auto& a=before.owner;const auto& b=after.owner;
+    if(before.number!=after.number || a.actor!=b.actor || a.session.active!=b.session.active ||
+       a.session.epoch!=b.session.epoch || !same_actor(a.session.self,b.session.self) ||
+       !same_actor(a.session.sub0,b.session.sub0))return refused;
+    // Never widen an inactive mask, and never rewrite J1's native flags.
+    // Auxiliary views retain their stock bits for J1; J2 owns only View1.
+    return owned?(original&2u):(original&~2u);
+}
 u32 Runtime::genesis_filter_loaded(u32 widget,u32 resource) noexcept {
     if(!widget || widget!=backend_.retained(WidgetKind::Scanner))return resource;
     auto h=target_view_host();
@@ -628,4 +660,7 @@ extern "C" unsigned int rev_scope_actor(unsigned int widget,unsigned int* out) n
 }
 extern "C" unsigned int rev_genesis_filter_loaded(unsigned int widget,unsigned int resource) noexcept {
     return rev_runtime::HealSink?rev_runtime::HealSink->genesis_filter_loaded(widget,resource):resource;
+}
+extern "C" unsigned int rev_runtime_unit_mask(unsigned int unit,unsigned int original) noexcept {
+    return rev_runtime::HealSink?rev_runtime::HealSink->unit_mask(unit,original):original;
 }

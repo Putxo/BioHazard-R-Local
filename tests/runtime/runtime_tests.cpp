@@ -10,6 +10,7 @@ struct Fixture {
     u32 scope_calls=0,scope_last_weapon=0,scope_last_flag=0,class_queries=0;
     u32 class_value=0x80050001,class_fault=0,scope_fault=0;
     u32 filter_created=0,filter_copied=0,filter_released=0,filter_returned=0,filter_fault=0;
+    u32 mask_read_at=0,mask_read_fault=0,mask_nested=99;
     static constexpr u32 FilterSource=0xF00000,FilterCopy=0xF10000;
     static void filter_graph(std::map<u32,u32>& m,u32 p,u32 count) {
         m[p]=0x04DB7A34;m[p+0x48]=1;m[p+0x54]=m[p+0x58]=m[p+0x5c]=0;
@@ -32,7 +33,12 @@ struct Fixture {
     Runtime r;
     Host host() {
         return {{this,[](void* p,u32 a,u32* v) noexcept {
-            return Fake::read(&static_cast<Fixture*>(p)->f,a,v);
+            auto& z=*static_cast<Fixture*>(p);const bool ok=Fake::read(&z.f,a,v);
+            if(a==z.mask_read_at){z.mask_read_at=0;
+                if(z.mask_read_fault==1)(void)z.r.source().event(0x0277DC70,z.f.session.sub0.address);
+                if(z.mask_read_fault==2)z.mask_nested=z.r.unit_mask(a-0x40,3);
+            }
+            return ok;
         }},[](void* p,u32 a,u32 v) noexcept {
             auto& z=*static_cast<Fixture*>(p);
             if(z.aim_fail_write && ++z.aim_writes>=z.aim_fail_write)return false;
@@ -146,6 +152,32 @@ struct Fixture {
     }
 };
 int main(){
+    {Fixture x(8);x.prepare();x.begin();const auto before=x.f.m;
+     const u32 scanner=x.r.lifecycle().unit(6);
+     for(u32 i=0;i<3;++i){const u32 own=x.f.m[scanner+effect_fixture::Offsets[i]],stock=x.f.m[x.f.original[6]+effect_fixture::Offsets[i]];
+         for(u32 mask=0;mask<1024;++mask){C(x.r.unit_mask(own,mask)==(mask&2));C(x.r.unit_mask(stock,mask)==(mask&~2u));}}
+     C(x.f.m==before);C(x.r.unit_mask(x.f.original[0],0x3FF)==0x3FF);
+     x.end();++scenarios;}
+    for(u32 fault=0;fault<11;++fault){Fixture x(8);x.prepare();x.begin();
+     const u32 scanner=x.r.lifecycle().unit(6),root=x.f.m[scanner+0x2F0],stock=x.f.m[x.f.original[6]+0x2F0];
+     if(fault==0)x.r.lifecycle().stop();
+     if(fault==1)x.image=false;
+     if(fault==2)C(x.r.source().event(0x0277DC70,x.f.session.sub0.address));
+     if(fault==3)x.f.m[root+12]|=0x10000;
+     if(fault==4)x.f.reader_fail=root+0x40;
+     if(fault==5)x.f.m[root+0x40]=x.f.m[stock+0x40];
+     if(fault==6)x.f.m[scanner+0x2F0]=stock;
+     if(fault==7)C(x.r.genesis_effects().event(effect_fixture::Death[0],root));
+     if(fault==8){C(x.r.genesis_effects().event(effect_fixture::Death[0],root));C(x.r.genesis_effects().event(effect_fixture::Birth[0],root));}
+     if(fault==9){x.thread=8;C(!x.r.genesis_effects().event(effect_fixture::Birth[0],root));x.thread=7;}
+     if(fault==10){x.mask_read_at=root+0x40;x.mask_read_fault=1;}
+     C(x.r.unit_mask(root,3)==(fault==8?3u:0u));C(x.r.unit_mask(stock,3)==3);
+     ++scenarios;}
+    {Fixture x(8);x.prepare();const u32 root=x.f.m[x.r.lifecycle().unit(6)+0x2F0];
+     C(x.r.unit_mask(root,3)==0);x.begin();x.mask_read_at=root+0x40;x.mask_read_fault=2;
+     C(x.r.unit_mask(root,3)==2);C(x.mask_nested==0);
+     x.thread=8;C(x.r.unit_mask(root,3)==3);x.thread=7;
+     C(x.r.unit_mask(root,3)==2);x.end();++scenarios;}
     for(u32 fault=0;fault<8;++fault){Fixture x(8);x.prepare();x.begin();
         const u32 scanner=x.r.lifecycle().unit(6);u32 roots[3]{};
         for(u32 i=0;i<3;++i)roots[i]=x.f.m[scanner+effect_fixture::Offsets[i]];
