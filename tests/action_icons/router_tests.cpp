@@ -15,9 +15,11 @@ struct Fake {
     SnapshotMode mode=SnapshotMode::Local;
     u32 member=0,member_calls=0,draws=0,writes=0,fail_write=0,fail_read=0;
     bool mutate_member=false,mutate_frame=false,replace_manager=false,nested=false;
+    bool priority_ready=true;
+    u32 seen_priority=0;
     std::vector<u32> seen;
     Router router;
-    Host host(){return {{this,[](void* p,u32 a,u32* v) noexcept {
+    Host host(bool priorities){Host h{{this,[](void* p,u32 a,u32* v) noexcept {
         auto& f=*static_cast<Fake*>(p);auto i=f.mem.find(a);
         if(a==f.fail_read || i==f.mem.end())return false;
         *v=i->second;return true;
@@ -34,16 +36,29 @@ struct Fake {
     },[](void* p,u32 i,u32 r) noexcept {
         auto& f=*static_cast<Fake*>(p);C(i==I);C(r==R);++f.draws;
         if(f.mode==SnapshotMode::Stock)return;
+        f.seen_priority=f.router.draw_priority(M,77);
+        C(f.router.draw_priority(M+4,77)==77);
         f.seen.push_back(f.mem[M+0x174]&255);
         // The native draw claims the slot and may alter adjacent flag bytes.
         f.mem[M+0x174]=0x11223301;
         if(f.replace_manager)f.mem[0x0556279C]=M+0x1000;
         if(f.nested)C(f.router.draw(I,R)==Result::Refused);
-    }}};}
-    Fake():router(host()){}
+    }}};
+        if(priorities)h.priority=[](void* p,const Frame& frame,u32 manager,u32 member,u32* out) noexcept {
+            auto& f=*static_cast<Fake*>(p);C(manager==M);C(frame.number==f.frame.number);C(member<=1);
+            if(!f.priority_ready)return false;
+            *out=member?0x202:0x208;return true;
+        };
+        return h;
+    }
+    explicit Fake(bool priorities=false):router(host(priorities)){}
     Result draw(){return router.draw(I,R);}
 };
 int main(){
+    {Fake f(true);C(f.draw()==Result::Drawn);C(f.seen_priority==0x208);
+     C(f.router.draw_priority(M,77)==77);f.member=1;f.mem[R+0x158]=1;
+     C(f.draw()==Result::Drawn);C(f.seen_priority==0x202);++scenarios;}
+    {Fake f(true);f.priority_ready=false;C(f.draw()==Result::Refused);C(!f.writes&&!f.draws);++scenarios;}
     {Fake f;f.member=1;auto before=f.mem;C(f.router.mask(I,1)==2);C(f.mem==before);C(!f.writes&&!f.draws);++scenarios;}
     {Fake f;C(f.router.mask(I,2)==1);C(f.router.mask(I,0x103)==0x101);++scenarios;}
     {Fake f;f.member=1;C(f.router.mask(I,0)==0);C(f.router.mask(I,0x100)==0x100);C(!f.member_calls);++scenarios;}

@@ -17,6 +17,8 @@ def sources():
         ROOT/'patches/menu_routing/menu_owner.cpp',
         ROOT/'patches/menu_routing/menu_gateways.S',
         ROOT/'patches/action_icons/router.cpp', ROOT/'patches/action_icons/gateway.S',
+        ROOT/'patches/action_icons/arbitration.cpp',ROOT/'patches/action_icons/priority_driver.cpp',
+        ROOT/'patches/action_icons/priority_gateways.S',
         ROOT/'patches/runtime/runtime.cpp', ROOT/'patches/runtime/native_host.cpp',
         ROOT/'patches/runtime/entry.S']
 

@@ -53,6 +53,7 @@ u32 action_member(void*,u32 command) noexcept {
 void action_draw(void*,u32 icon,u32 context) noexcept {
     rev_action_stock_draw(icon,context);
 }
+u32 action_rank(void*,u32 raw) noexcept {return reinterpret_cast<u32(*)(u32)>(0x01E87DB0u)(raw);}
 alignas(rev_runtime::Runtime) unsigned char storage[sizeof(rev_runtime::Runtime)];
 bool attempted=false;
 }
@@ -74,6 +75,7 @@ extern "C" u32 rev_runtime_initialize() noexcept {
     accepted=true;
     rev_runtime::Host h{{nullptr,word},write,thread,image,self,rev_hud::january_native_calls()};
     h.action={nullptr,action_member,action_draw};
+    h.action_rank=action_rank;
     auto* r=new(storage) rev_runtime::Runtime(rev_hud::registry(),h,rev_hud::WidgetKinds);
     if(!r->start() || !r->bind()){accepted=false;return 0;}
     return 1;
