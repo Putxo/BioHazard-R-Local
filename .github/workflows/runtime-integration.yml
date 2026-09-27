@@ -22,6 +22,8 @@ jobs:
           "$RUNNER_TEMP/runtime-tests"
           g++ $FLAGS patches/runtime/draw_schedule.cpp tests/runtime/draw_schedule_tests.cpp -o "$RUNNER_TEMP/draw-schedule-tests"
           "$RUNNER_TEMP/draw-schedule-tests"
+          g++ $FLAGS patches/runtime/draw_schedule.cpp tests/runtime/hunter_cache_tests.cpp -o "$RUNNER_TEMP/hunter-cache-tests"
+          "$RUNNER_TEMP/hunter-cache-tests"
       - name: Heal visual notification queue
         run: |
           g++ -std=c++17 -Wall -Wextra -Werror -Ipatches/hud_ownership patches/hud_ownership/heal_queue.cpp tests/hud_ownership/heal_queue_tests.cpp -o "$RUNNER_TEMP/heal-queue"
@@ -36,6 +38,10 @@ jobs:
           as --32 tests/runtime/draw_schedule_abi.S -o "$RUNNER_TEMP/draw-schedule-test.o"
           ld -m elf_i386 -o "$RUNNER_TEMP/draw-schedule-abi" "$RUNNER_TEMP/draw-schedule.o" "$RUNNER_TEMP/draw-schedule-test.o"
           "$RUNNER_TEMP/draw-schedule-abi"
+          as --32 patches/genesis/hunter_cache_gateway.S -o "$RUNNER_TEMP/hunter-cache.o"
+          as --32 tests/genesis/hunter_cache_abi.S -o "$RUNNER_TEMP/hunter-cache-test.o"
+          ld -m elf_i386 -o "$RUNNER_TEMP/hunter-cache-abi" "$RUNNER_TEMP/hunter-cache.o" "$RUNNER_TEMP/hunter-cache-test.o"
+          "$RUNNER_TEMP/hunter-cache-abi"
       - name: Lifetime regression
         run: |
           g++ -std=c++17 -Wall -Wextra -Werror -Ipatches/hud_ownership patches/hud_ownership/{ownership,lifetime_source}.cpp tests/hud_ownership/lifetime_source_tests.cpp -o "$RUNNER_TEMP/lifetime-tests"

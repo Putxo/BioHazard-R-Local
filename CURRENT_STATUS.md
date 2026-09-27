@@ -1,7 +1,7 @@
 # Estado actual del cooperativo local
 
 27/09/2026. Rama técnica: `research/script-member-serial-validation`.
-PR56 integrado: `d39367f1734f650105f980b89a892d38247120d4`, 20 workflows PASS.
+PR57 integrado: `770d79aa8adca7701af3dd32747c5a73c2e55934`, 20 workflows PASS.
 
 **El cooperativo completo sigue en desarrollo. El juego no se ha ejecutado.**
 El propietario prohíbe abrirlo y hará personalmente las pruebas jugando.
@@ -20,7 +20,7 @@ El propietario prohíbe abrirlo y hará personalmente las pruebas jugando.
 | Guiones | Dos callbacks PcsSub con owner+serial; cobertura QTE parcial |
 | Rescate | Routing parcial existente; muerte/checkpoints pendientes |
 
-La compilación acumulativa nueva conecta 181 hooks HUD/menú/ActionIcon sobre la base de
+La compilación acumulativa nueva conecta 182 hooks HUD/menú/ActionIcon sobre la base de
 input, cámara, pickup, puertas y serial de guion. Se ha generado y verificado
 estáticamente una copia local de trabajo. No se ha instalado en Steam ni abierto.
 No constituye una entrega final.
@@ -111,3 +111,5 @@ Genesis: [barreras en los usos intermedios del arma](docs/83-genesis-weapon-use-
 Genesis: [encendido privado de efectos sin escrituras globales de J2](docs/84-genesis-private-effect-toggle.md).
 
 Genesis: [corrección de color por vista y admisión de dibujo](docs/85-genesis-color-per-view.md).
+
+Genesis: [dibujo Hunter sin reutilizar la caché entre vistas locales](docs/86-genesis-hunter-draw-cache.md).
