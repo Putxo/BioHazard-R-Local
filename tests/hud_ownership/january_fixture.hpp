@@ -26,6 +26,9 @@ struct Fake {
     bool stop_in_construct=false,alias_tree=false,attach_in_phase=false;
     void* phase_observer_context=nullptr;
     void (*phase_observer)(void*,u32,u32) noexcept=nullptr;
+    void* detector_context=nullptr;
+    void (*detector_observer)(void*,u32) noexcept=nullptr;
+    u32 detector_calls=0;
     Lifecycle* life=nullptr;
     Fake(u32 count=LegacyWidgetKinds){
         if(!valid_widget_count(count))count=LegacyWidgetKinds;
@@ -86,6 +89,11 @@ struct Fake {
     }
     static void method0(void* c,u32 target,u32 self) noexcept {
         auto& f=*static_cast<Fake*>(c);f.events.push_back({target,self,0,0});
+        if(target==0x01BBECD1){
+            ++f.detector_calls;
+            if(f.detector_observer)f.detector_observer(f.detector_context,self);
+            return;
+        }
         u32 i=WidgetKinds;for(u32 j=0;j<WidgetKinds;++j)if(kind_info(static_cast<WidgetKind>(j))->vtable==f.m[self])i=j;
         C(i<WidgetKinds);const auto k=static_cast<WidgetKind>(i);const auto* t=january_type(k);
         if(target==0x01C88B6C){C(k==WidgetKind::Heal);++f.heal_calls;f.heal_unit=self;}

@@ -65,6 +65,16 @@ def read_module(data):
 
 def hook_sites():
     out=[(0x01EB73A0,bytes.fromhex('558bec81ecfc000000'),'rev_action_draw_gate',0xE9)]
+    for va in (0x023CEA44,0x023D4449,0x027EBD87,0x027EBE4C,0x027EBEAA,0x027EBED8):
+        out.append((va,rel(va,0x01BBECD1),'rev_genesis_detect_gate',0xE8))
+    for va,target,name in ((0x0281FB8A,0x01C5741D,'detector_camera'),
+                          (0x0282006F,0x01C2C7F4,'detector_actor'),
+                          (0x028206F5,0x01B86273,'detector_widget'),
+                          (0x02820738,0x01B86273,'detector_widget'),
+                          (0x02820716,0x01C0582A,'candidate')):
+        out.append((va,rel(va,target),'rev_genesis_'+name+'_gate',0xE8))
+    for va,name in ((0x0281F510,'focus'),(0x0281DDE0,'position')):
+        out.append((va,bytes.fromhex('558bec81eccc000000'),'rev_genesis_set_'+name+'_gate',0xE9))
     out.append((0x0281F560,bytes.fromhex('558bec81eccc000000'),'rev_genesis_target_focus_gate',0xE9))
     out.append((0x02823220,bytes.fromhex('558bec81eccc000000'),'rev_genesis_target_position_gate',0xE9))
     out.append((0x02B25D8B,rel(0x02B25D8B,0x01C5741D),'rev_genesis_camera_gate',0xE8))

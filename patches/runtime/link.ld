@@ -46,3 +46,10 @@ SECTIONS {
 
 rev_genesis_target_focus_resume = 0x0281F569;
 rev_genesis_target_position_resume = 0x02823229;
+rev_genesis_detect_stock = 0x01BBECD1;
+rev_genesis_detector_camera_stock = 0x01C5741D;
+rev_genesis_detector_actor_stock = 0x01C2C7F4;
+rev_genesis_detector_widget_stock = 0x01B86273;
+rev_genesis_candidate_stock = 0x01C0582A;
+rev_genesis_set_focus_resume = 0x0281F519;
+rev_genesis_set_position_resume = 0x0281DDE9;

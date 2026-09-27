@@ -52,6 +52,10 @@ public:
     Backend callbacks();
     NativeFault fault() const { return fault_; }
     u32 retained(WidgetKind k) const;
+    // Runtime-only preflight for synchronous actor-update producers. Caller
+    // certifies the owner thread, image and live registry/session first. This
+    // does not grant a HUD phase or structural/allocation permission.
+    bool scanner_producer_ready(Reader,u32 unit) noexcept;
 private:
     rev_genesis::Resources scanner_original_{},scanner_owned_{};
     bool scanner_valid(u32 unit) noexcept;

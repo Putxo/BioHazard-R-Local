@@ -70,7 +70,7 @@ bool Runtime::scanner_begin(u32 widget) noexcept {
 bool Runtime::scanner_current() noexcept {
     auto h=target_view_host();rev_genesis::ViewFrame f{};
     if(!h.on_thread(h.context) || !scanner_scope_ ||
-       !gate().unit(this,WidgetKind::Scanner,scanner_scope_) ||
+       (!detector_producing_ && !gate().unit(this,WidgetKind::Scanner,scanner_scope_)) ||
        h.resolve(h.context,scanner_scope_,&f)!=Mode::Local)return false;
     const auto equal=[](const Actor& a,const Actor& b) noexcept {
         return a.address==b.address && a.lifetime==b.lifetime && a.serial==b.serial && a.think_mode==b.think_mode;
@@ -90,7 +90,7 @@ Mode Runtime::scanner_sample(u32 target,rev_genesis::ViewSample* out) noexcept {
     // Other threads and ordinary stock callbacks do not inspect scope state.
     if(!h.on_thread(h.context) || !scanner_scope_)return Mode::Stock;
     if(out)*out={};
-    if(!out || !scanner_current())return Mode::Hidden;
+    if(!out || scanner_copy_failed_ || !scanner_current())return Mode::Hidden;
     return target_views_.read(scanner_scope_,targets_.capture(target),out);
 }
 Mode Runtime::genesis_target_focus(u32 target,u32* out) noexcept {
@@ -111,6 +111,95 @@ Mode Runtime::genesis_target_position(u32 target,u32 destination) noexcept {
         scanner_copy_failed_=true;return Mode::Hidden;
     }
     return mode;
+}
+Mode Runtime::detector_mode() noexcept {
+    auto h=target_view_host();
+    if(!h.on_thread(h.context) || !detector_producing_)return Mode::Stock;
+    if(scanner_copy_failed_ || !scanner_current() || !targets_.healthy()){
+        scanner_copy_failed_=true;return Mode::Hidden;
+    }
+    return Mode::Local;
+}
+void Runtime::genesis_detect(u32 manager) noexcept {
+    if(!host_.native.method0)return;
+    auto h=target_view_host();
+    if(!h.on_thread(h.context)){
+        host_.native.method0(host_.native.context,0x01BBECD1,manager);return;
+    }
+    const bool nested=detector_busy_;detector_busy_=true;
+    const u32 saved_scope=scanner_scope_;const auto saved_frame=scanner_frame_;
+    const bool saved_producing=detector_producing_,saved_failed=scanner_copy_failed_;
+    // A reentrant ordinary engine call must not inherit the surrounding J2
+    // target getter overrides. Preserve the outer scope after its stock pass.
+    scanner_scope_=0;scanner_frame_={};detector_producing_=false;scanner_copy_failed_=false;
+    host_.native.method0(host_.native.context,0x01BBECD1,manager);
+    scanner_scope_=saved_scope;scanner_frame_=saved_frame;
+    detector_producing_=saved_producing;scanner_copy_failed_=saved_failed;
+    if(nested || saved_scope){detector_busy_=nested;return;}
+    const u32 widget=lifecycle_.unit(6);rev_genesis::ViewFrame frame{};
+    u32 camera_manager=0,camera=0;
+    if(!host_.image || !host_.image(host_.memory.context) || !targets_.healthy() ||
+       driver_.in_event() || view_.active() || h.resolve(h.context,widget,&frame)!=Mode::Local ||
+       !word(0x05799D3C,camera_manager) || genesis_camera(widget,camera_manager,&camera)!=Mode::Local ||
+       !backend_.scanner_producer_ready(host_.memory,widget)){
+        detector_busy_=false;return;
+    }
+    scanner_scope_=widget;scanner_frame_=frame;detector_producing_=true;scanner_copy_failed_=false;
+    if(scanner_current())host_.native.method0(host_.native.context,0x01BBECD1,manager);
+    const bool ok=!scanner_copy_failed_ && scanner_current() && targets_.healthy() &&
+        backend_.scanner_producer_ready(host_.memory,widget);
+    scanner_scope_=0;scanner_frame_={};detector_producing_=false;
+    scanner_copy_failed_=false;detector_busy_=false;
+    if(!ok)lifecycle_.stop();
+}
+Mode Runtime::genesis_detector_camera(u32 manager,u32* out) noexcept {
+    const auto mode=detector_mode();
+    if(mode==Mode::Stock)return mode;
+    if(out)*out=0;
+    const auto result=mode==Mode::Local?genesis_camera(scanner_scope_,manager,out):Mode::Hidden;
+    if(result!=Mode::Local)scanner_copy_failed_=true;
+    return result;
+}
+Mode Runtime::genesis_detector_actor(u32* out) noexcept {
+    const auto mode=detector_mode();
+    if(mode!=Mode::Stock && out)*out=mode==Mode::Local?scanner_frame_.owner.actor:0;
+    return mode;
+}
+Mode Runtime::genesis_detector_widget(u32* out) noexcept {
+    const auto mode=detector_mode();
+    if(mode!=Mode::Stock && out)*out=mode==Mode::Local?scanner_scope_:0;
+    return mode;
+}
+bool Runtime::genesis_candidate(u32 target) noexcept {
+    const auto mode=detector_mode();
+    if(mode==Mode::Stock)return true;
+    rev_genesis::ViewSample sample{};
+    return mode==Mode::Local && target_views_.read(scanner_scope_,targets_.capture(target),&sample)==Mode::Local;
+}
+Mode Runtime::genesis_set_focus(u32 target,u32 value) noexcept {
+    const auto mode=detector_mode();
+    if(mode!=Mode::Local)return mode;
+    const auto key=targets_.capture(target);rev_genesis::ViewSample sample{};
+    if(target_views_.read(scanner_scope_,key,&sample)!=Mode::Local)return Mode::Hidden;
+    sample.focus=value;const auto result=target_views_.publish(scanner_scope_,key,sample);
+    if(result!=Mode::Local)scanner_copy_failed_=true;
+    return result;
+}
+Mode Runtime::genesis_set_position(u32 target,u32 source) noexcept {
+    const auto mode=detector_mode();
+    if(mode!=Mode::Local)return mode;
+    const auto key=targets_.capture(target);
+    if(!key.valid())return Mode::Hidden;
+    rev_genesis::ViewSample sample{};
+    // Every detector pass writes position before classifying focus. Start that
+    // pass unfocused instead of carrying a previous view's classification.
+    if(!source || source>Invalid-11){scanner_copy_failed_=true;return Mode::Hidden;}
+    for(u32 i=0;i<3;++i)if(!word(source+i*4,sample.position[i])){
+        scanner_copy_failed_=true;return Mode::Hidden;
+    }
+    const auto result=target_views_.publish(scanner_scope_,key,sample);
+    if(result!=Mode::Local)scanner_copy_failed_=true;
+    return result;
 }
 bool Runtime::heal_event(u32 actor) noexcept {
     auto h=action_host();rev_action::Frame f{};
@@ -246,4 +335,27 @@ extern "C" unsigned int rev_genesis_target_focus(unsigned int target,unsigned in
 }
 extern "C" unsigned int rev_genesis_target_position(unsigned int target,unsigned int destination) noexcept {
     return rev_runtime::HealSink?static_cast<unsigned int>(rev_runtime::HealSink->genesis_target_position(target,destination)):0;
+}
+
+extern "C" unsigned int rev_genesis_detect(unsigned int manager) noexcept {
+    if(!rev_runtime::HealSink)return 0;
+    rev_runtime::HealSink->genesis_detect(manager);return 1;
+}
+extern "C" unsigned int rev_genesis_detector_camera(unsigned int manager,unsigned int* out) noexcept {
+    return rev_runtime::HealSink?static_cast<unsigned int>(rev_runtime::HealSink->genesis_detector_camera(manager,out)):0;
+}
+extern "C" unsigned int rev_genesis_detector_actor(unsigned int* out) noexcept {
+    return rev_runtime::HealSink?static_cast<unsigned int>(rev_runtime::HealSink->genesis_detector_actor(out)):0;
+}
+extern "C" unsigned int rev_genesis_detector_widget(unsigned int* out) noexcept {
+    return rev_runtime::HealSink?static_cast<unsigned int>(rev_runtime::HealSink->genesis_detector_widget(out)):0;
+}
+extern "C" unsigned int rev_genesis_candidate(unsigned int target) noexcept {
+    return !rev_runtime::HealSink || rev_runtime::HealSink->genesis_candidate(target)?1:0;
+}
+extern "C" unsigned int rev_genesis_set_focus(unsigned int target,unsigned int value) noexcept {
+    return rev_runtime::HealSink?static_cast<unsigned int>(rev_runtime::HealSink->genesis_set_focus(target,value)):0;
+}
+extern "C" unsigned int rev_genesis_set_position(unsigned int target,unsigned int source) noexcept {
+    return rev_runtime::HealSink?static_cast<unsigned int>(rev_runtime::HealSink->genesis_set_position(target,source)):0;
 }
