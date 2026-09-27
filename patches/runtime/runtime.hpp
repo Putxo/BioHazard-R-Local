@@ -6,6 +6,7 @@
 #include "../action_icons/priority_driver.hpp"
 #include "draw_schedule.hpp"
 #include "../genesis/progress.hpp"
+#include "../genesis/camera.hpp"
 #include "../hud_ownership/heal_queue.hpp"
 
 namespace rev_runtime {
@@ -41,6 +42,9 @@ public:
     rev_action::Router& action() noexcept { return action_; }
     rev_action::PriorityDriver& priority() noexcept { return priority_; }
     rev_genesis::Progress& genesis_progress() noexcept {return genesis_;}
+    Mode genesis_camera(u32 widget,u32 manager,u32* out) noexcept {
+        return rev_genesis::camera(genesis_host(),host_.memory,widget,manager,out);
+    }
     bool heal_event(u32 actor) noexcept; // true means call stock activation
     u32 draw_schedule(u32 context,u32 stock) noexcept {
         return choose_draw_schedule(action_host(),context,stock);

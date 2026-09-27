@@ -52,6 +52,21 @@ struct Fixture {
     void prepare(){start();births();begin();C(f.allocations.empty());end();C(r.lifecycle().state()==LifeState::Live);C(f.allocations.size()==(f.original[6]?7u:f.original[5]?6u:f.original[4]?5u:f.original[3]?4u:LegacyWidgetKinds));}
 };
 int main(){
+    {Fixture x(7);x.prepare();x.begin();const u32 widget=x.r.lifecycle().unit(6);
+     constexpr u32 camera_manager=0xE10000,camera_self=0xE20000,camera_sub=0xE30000;
+     x.f.m[0x05799D3C]=camera_manager;x.f.m[camera_manager+0xCE0]=camera_self;
+     x.f.m[camera_manager+0xCE4]=camera_sub;x.f.m[camera_sub]=0x04CF2B1C;
+     x.f.m[camera_sub+0x74]=x.f.session.sub0.address;
+     const auto before=x.f.m;u32 out=0;
+     C(x.r.genesis_camera(widget,camera_manager,&out)==Mode::Local);C(out==camera_sub);C(x.f.m==before);
+     C(x.r.genesis_camera(x.f.original[6],camera_manager,&out)==Mode::Stock);
+     x.thread=9;C(x.r.genesis_camera(widget,camera_manager,&out)==Mode::Hidden);C(out==0);x.thread=7;
+     x.f.m[camera_sub+0x74]=x.f.session.self.address;
+     C(x.r.genesis_camera(widget,camera_manager,&out)==Mode::Hidden);C(out==0);
+     x.f.m[camera_sub+0x74]=x.f.session.sub0.address;
+     C(x.r.source().event(0x0277DC70,x.f.session.sub0.address));
+     C(x.r.genesis_camera(widget,camera_manager,&out)==Mode::Hidden);C(out==0);x.end();++scenarios;}
+
     {Fixture x(6);x.prepare();x.begin();const u32 p2=x.f.session.sub0.address;
      C(x.r.heal_event(x.f.session.self.address));C(!x.r.heal_event(p2));C(!x.r.heal_event(p2));
      C(x.f.heal_calls==0);C(x.r.driver().event(0x02B497CA,x.f.p[0],0));

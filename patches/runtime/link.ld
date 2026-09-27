@@ -21,6 +21,7 @@ rev_genesis_stock_read = 0x01B82362;
 rev_genesis_stock_set = 0x01BFA407;
 rev_genesis_stock_add = 0x01BB2404;
 rev_genesis_stock_selected_actor = 0x01C07341;
+rev_genesis_stock_camera = 0x01C5741D;
 rev_hud_stock_heal = 0x01C88B6C;
 rev_hud_stock_self = 0x01C2C7F4;
 rev_menu_stock_self = 0x01C2C7F4;

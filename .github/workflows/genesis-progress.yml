@@ -34,3 +34,11 @@ jobs:
           as --32 tests/genesis/actor_abi.S -o "$RUNNER_TEMP/scanner-abi.o"
           ld -m elf_i386 "$RUNNER_TEMP/scanner-self.o" "$RUNNER_TEMP/scanner-actor.o" "$RUNNER_TEMP/scanner-abi.o" -o "$RUNNER_TEMP/scanner-abi"
           "$RUNNER_TEMP/scanner-abi"
+      - name: Scanner owner camera and x86 gateway ABI
+        run: |
+          g++ -std=c++17 -Wall -Wextra -Werror patches/genesis/camera.cpp tests/genesis/camera_tests.cpp -o "$RUNNER_TEMP/scanner-camera"
+          "$RUNNER_TEMP/scanner-camera"
+          as --32 patches/genesis/camera_gateway.S -o "$RUNNER_TEMP/camera-gate.o"
+          as --32 tests/genesis/camera_abi.S -o "$RUNNER_TEMP/camera-abi.o"
+          ld -m elf_i386 "$RUNNER_TEMP/camera-gate.o" "$RUNNER_TEMP/camera-abi.o" -o "$RUNNER_TEMP/camera-abi"
+          "$RUNNER_TEMP/camera-abi"
