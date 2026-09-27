@@ -59,13 +59,16 @@ public:
     // does not grant a HUD phase or structural/allocation permission.
     bool scanner_producer_ready(Reader,u32 unit) noexcept;
     bool scanner_remove_target(Reader,u32 target) noexcept;
+    // The exact target-completion gateway pauses phase9's native consumer.
+    bool scanner_completion_begin(u32 unit) noexcept;
+    bool scanner_completion_end(u32 unit) noexcept;
     void quarantine_scanner() noexcept {if(count_>=7)entries_[6].quarantine=true;}
 private:
     rev_genesis::Resources scanner_original_{},scanner_owned_{};
     bool scanner_valid(u32 unit) noexcept;
     ScopeResources scope_original_{},scope_owned_{};
     bool scope_valid(u32 unit) noexcept;
-    bool scanner_external_ready(Reader,u32 unit,bool active) noexcept;
+    bool scanner_external_ready(Reader,u32 unit,bool active,bool completion=false) noexcept;
     struct Entry { u32 unit = 0; bool constructed = false, ready = false, quarantine = false; };
     JanuaryHost host_; JanuaryCalls calls_;
     const u32 count_;
@@ -73,7 +76,8 @@ private:
     HudEventFeed events_;
     Entry entries_[WidgetKinds]{};
     u32 parents_[2]{}, originals_[WidgetKinds]{};
-    bool configured_ = false, busy_ = false;
+    bool configured_ = false, busy_ = false, removing_=false;
+    u32 scanner_phase9_=0,scanner_completion_=0;
     NativeFault fault_ = NativeFault::None;
     bool allow(NativeOp, WidgetKind, u32 unit=0, u32 phase=0, u32 context=0);
     bool word(u32, u32&); bool field(u32, u32, u32&);

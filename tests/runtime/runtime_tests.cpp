@@ -121,6 +121,73 @@ struct Fixture {
     }
 };
 int main(){
+    for(u32 kind=0;kind<5;++kind){Fixture x(7);x.detector_setup();const u32 unit=x.r.lifecycle().unit(6);
+     constexpr u32 vtables[]={0x04DA8570,0x04DA8594,0x04DA85B8,0x04DA85DC,0x04DA8600};
+     constexpr u32 methods[]={0x01C7F35A,0x01C359C1,0x01C392BF,0x01C19CA8,0x01B880C8};
+     scanner_fixture::collections(x.f.m,unit,1);x.f.m[0xEF0000]=vtables[kind];
+     x.f.m[vtables[kind]+0x14]=methods[kind];x.f.m[0xEF0008]=0xEA0000;
+     x.f.completion_observer=[](void* p,u32 target) noexcept {
+         auto& z=*static_cast<Fixture*>(p);C(target==0xEF0000);u32 v=99;
+         C(z.r.genesis_target_focus(target,&v)==Mode::Stock);C(v==99);
+         C(z.r.genesis_complete(z.f.original[6],target)==Mode::Stock);
+     };
+     x.f.phase_observer_context=&x;x.f.phase_observer=[](void* p,u32,u32 unit) noexcept {
+         auto& z=*static_cast<Fixture*>(p);if(unit!=z.r.lifecycle().unit(6))return;
+         C(z.r.genesis_complete(unit,0xEF0000)==Mode::Local);
+         C(!z.r.genesis_scan_aborted(unit));
+     };
+     C(x.r.driver().event(0x02B49C5B,x.f.p[0],0));C(x.f.completion_calls==1);x.end();++scenarios;}
+    for(u32 variant=0;variant<2;++variant){Fixture x(7);x.detector_setup();const u32 unit=x.r.lifecycle().unit(6);
+     scanner_fixture::collections(x.f.m,unit,2);x.f.m[0xEF0008]=0xEA0000;x.f.m[0x04DA8584]=0x01C7F35A;
+     x.f.m[0xEF0100]=0x04DA8570;C(x.r.genesis_targets().event(0x0281AE26,0xEF0100));x.action_member=variant;
+     x.f.completion_observer=[](void* p,u32) noexcept {
+         auto& z=*static_cast<Fixture*>(p);const u32 dying=z.action_member?0xEF0100:0xEF0000;
+         C(z.r.genesis_targets().event(0x02823A53,dying));z.f.m[dying]=0x04DA8570;z.f.m[dying+8]=0;
+         z.r.genesis_remove_target(dying);C(z.f.removal_calls==1);z.f.m.erase(dying);z.f.m.erase(dying+8);
+         C(z.r.lifecycle().state()==LifeState::Live);
+     };
+     x.f.phase_observer_context=&x;x.f.phase_observer=[](void* p,u32,u32 unit) noexcept {
+         auto& z=*static_cast<Fixture*>(p);if(unit!=z.r.lifecycle().unit(6))return;
+         C(z.r.genesis_complete(unit,0xEF0000)==Mode::Hidden); // Abandon the cached native frame, keep healthy HUD.
+         C(z.r.genesis_scan_aborted(unit));C(!z.r.genesis_scan_aborted(z.f.original[6]));
+     };
+     C(x.r.driver().event(0x02B49C5B,x.f.p[0],0));C(x.f.completion_calls==1);C(x.r.lifecycle().state()==LifeState::Live);
+     C(!x.r.genesis_scan_aborted(unit));
+     x.f.phase_observer=nullptr;x.next_frame();C(x.r.driver().event(0x02B49C5B,x.f.p[0],0));x.end();++scenarios;}
+    for(u32 fault=0;fault<9;++fault){Fixture x(7);x.detector_setup();const u32 unit=x.r.lifecycle().unit(6);
+     scanner_fixture::collections(x.f.m,unit,1);x.f.m[0xEF0008]=0xEA0000;x.f.m[0x04DA8584]=0x01C7F35A;x.action_member=fault;
+     if(fault==0)x.f.m[0x04DA8584]=0x12345678;
+     if(fault==1)scanner_fixture::collections(x.f.m,unit,0);
+     if(fault==2)x.f.m[0xEF0008]=0;
+     x.f.completion_observer=[](void* p,u32 target) noexcept {
+         auto& z=*static_cast<Fixture*>(p);
+         switch(z.action_member){
+         case 3:C(z.r.genesis_targets().event(0x02823A53,target));z.f.m[target+8]=0;z.f.removal_noop=true;z.r.genesis_remove_target(target);break;
+         case 4:C(z.r.source().event(0x0277DC70,z.f.session.sub0.address));break;
+         case 5:C(z.r.genesis_complete(z.r.lifecycle().unit(6),target)==Mode::Hidden);break;
+         case 6:C(z.r.genesis_targets().event(0x02823A53,target));break; // Revocation without cleanup cannot pass.
+         case 7:z.f.m[target+8]=0xEA1000;break;
+         case 8:z.thread=8;C(!z.r.genesis_targets().event(0x02823A53,target));z.thread=7;break;
+         }
+     };
+     x.f.phase_observer_context=&x;x.f.phase_observer=[](void* p,u32,u32 unit) noexcept {
+         auto& z=*static_cast<Fixture*>(p);if(unit!=z.r.lifecycle().unit(6))return;
+         C(z.r.genesis_complete(unit,0xEF0000)==Mode::Hidden);
+     };
+     C(!x.r.driver().event(0x02B49C5B,x.f.p[0],0));C(x.f.completion_calls==(fault<3?0u:1u));
+     C(x.r.lifecycle().state()!=LifeState::Live);++scenarios;}
+    {Fixture x(7);x.detector_setup();const u32 unit=x.r.lifecycle().unit(6);
+     scanner_fixture::collections(x.f.m,unit,1);x.f.m[0xEF0008]=0xEA0000;x.f.m[0x04DA8584]=0x01C7F35A;
+     C(x.r.genesis_complete(x.f.original[6],0xEF0000)==Mode::Stock);
+     C(x.r.genesis_complete(unit,0xEF0000)==Mode::Hidden);C(x.f.completion_calls==0);++scenarios;}
+    {Fixture x(7);x.detector_setup();const u32 unit=x.r.lifecycle().unit(6);
+     scanner_fixture::collections(x.f.m,unit,1);x.f.m[0xEF0008]=0;
+     x.f.phase_observer_context=&x;x.f.phase_observer=[](void* p,u32,u32 unit) noexcept {
+         auto& z=*static_cast<Fixture*>(p);if(unit!=z.r.lifecycle().unit(6))return;
+         C(z.r.genesis_targets().event(0x02823A53,0xEF0000));z.r.genesis_remove_target(0xEF0000);
+     };
+     C(!x.r.driver().event(0x02B49C5B,x.f.p[0],0));C(x.f.removal_calls==0);++scenarios;}
+
     {Fixture x(8);x.scope_setup();const u32 ticket=x.r.activator().attached_ticket();
      x.r.aim_visibility(x.f.session.sub0.address,1);x.f.m[0x055623C4]=0;x.end();
      C(x.r.lifecycle().state()==LifeState::Empty);C(x.f.deleted.size()==8);

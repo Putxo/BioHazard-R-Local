@@ -67,6 +67,9 @@ def hook_sites():
     out=[(0x01EB73A0,bytes.fromhex('558bec81ecfc000000'),'rev_action_draw_gate',0xE9)]
     out.append((0x0279CFBD,bytes.fromhex('e958010000'),'rev_aim_visibility_gate',0xE9))
     out.append((0x02B41E36,rel(0x02B41E36,0x01C2C7F4),'rev_scope_actor_gate',0xE8))
+    out.append((0x02B26B60,bytes.fromhex('8b4214ffd0'),'rev_genesis_complete_gate',0xE8))
+    out.append((0x02B2F8ED,rel(0x02B2F8ED,0x01C41E92),'rev_genesis_scan_call_gate',0xE8))
+    out.append((0x02B1FD94,rel(0x02B1FD94,0x01C0CE54),'rev_genesis_state_call_gate',0xE8))
     out.append((0x028206D2,rel(0x028206D2,0x01C315EC),'rev_genesis_notify_gate',0xE8))
     out.append((0x02823AA8,rel(0x02823AA8,0x01C919B5),'rev_genesis_remove_target_gate',0xE8))
     for va in (0x023CEA44,0x023D4449,0x027EBD87,0x027EBE4C,0x027EBEAA,0x027EBED8):

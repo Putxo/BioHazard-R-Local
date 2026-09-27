@@ -61,6 +61,8 @@ public:
     Mode genesis_set_focus(u32 target,u32 value) noexcept;
     Mode genesis_set_position(u32 target,u32 source) noexcept;
     void genesis_remove_target(u32 target) noexcept;
+    Mode genesis_complete(u32 widget,u32 target) noexcept;
+    bool genesis_scan_aborted(u32 widget) noexcept;
     bool genesis_notify(u32 target,u32 world_owner,u32 delegate) noexcept;
     void aim_visibility(u32 actor,u32 hide,u32 flag=0) noexcept;
     Mode scope_actor(u32 widget,u32* out) noexcept;
@@ -84,6 +86,8 @@ private:
     rev_genesis::ViewFrame scanner_frame_{};
     bool scanner_copy_failed_=false;
     bool detector_busy_=false,detector_producing_=false;
+    bool completion_busy_=false,completion_removed_=false;
+    u32 scanner_abort_=0;
     bool aim_busy_=false,aim_faulted_=false;
     struct AimIntent {rev_genesis::Owner owner{};u32 ticket=0,revision=0,hide=0,flag=0;};
     AimIntent aim_intent_{};

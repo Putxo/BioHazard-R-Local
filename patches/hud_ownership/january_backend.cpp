@@ -12,7 +12,7 @@ constexpr JanuaryType Types[] = {
     {0x2B0,0x01BFFD76,0x01B83C3F,0x01C2F97C,0x01C0937B,0x01C8C799,0x01BF295F,0x01C2D0E6},
 };
 constexpr u32 GetUnit = 0x01C8C27B, Contains = 0x0326AA90;
-struct Busy { bool& flag; explicit Busy(bool& f):flag(f){flag=true;} ~Busy(){flag=false;} };
+struct Busy { bool& flag;bool saved; explicit Busy(bool& f):flag(f),saved(f){flag=true;} ~Busy(){flag=saved;} };
 bool overlap(u32 a,u32 n,u32 b,u32 m) {
     return a && b && a <= Invalid-n && b <= Invalid-m && a < b+m && b < a+n;
 }
@@ -88,8 +88,22 @@ bool JanuaryBackend::scanner_valid(u32 unit) noexcept {
 bool JanuaryBackend::scanner_producer_ready(Reader memory,u32 unit) noexcept {
     return scanner_external_ready(memory,unit,true);
 }
-bool JanuaryBackend::scanner_external_ready(Reader memory,u32 unit,bool active) noexcept {
-    if(busy_ || !configured_ || count_<7 || !unit || unit!=entries_[6].unit ||
+bool JanuaryBackend::scanner_completion_begin(u32 unit) noexcept {
+    if(!busy_ || !unit || scanner_phase9_!=unit || scanner_completion_ || removing_ ||
+       entries_[6].quarantine || !allow(NativeOp::Phase,WidgetKind::Scanner,unit,9,0) ||
+       !targets(WidgetKind::Scanner) || !detached(unit,WidgetKind::Scanner) || !scanner_valid(unit))return false;
+    scanner_completion_=unit;return true;
+}
+bool JanuaryBackend::scanner_completion_end(u32 unit) noexcept {
+    const bool matched=unit && scanner_completion_==unit && scanner_phase9_==unit && busy_;
+    scanner_completion_=0;
+    return matched && !removing_ && !entries_[6].quarantine &&
+        allow(NativeOp::Phase,WidgetKind::Scanner,unit,9,0) && targets(WidgetKind::Scanner) &&
+        detached(unit,WidgetKind::Scanner) && scanner_valid(unit);
+}
+bool JanuaryBackend::scanner_external_ready(Reader memory,u32 unit,bool active,bool completion) noexcept {
+    const bool paused=completion && unit && scanner_phase9_==unit && scanner_completion_==unit;
+    if((busy_ && !paused) || !configured_ || count_<7 || !unit || unit!=entries_[6].unit ||
        !entries_[6].constructed || !entries_[6].ready || entries_[6].quarantine ||
        !memory.word || unit>Invalid-0x400)return false;
     auto read=[&](u32 a,u32& v) noexcept {return a && a<=Invalid-3 && memory.word(memory.context,a,&v);};
@@ -116,10 +130,10 @@ bool JanuaryBackend::scanner_remove_target(Reader memory,u32 target) noexcept {
     // Only the pinned destructor boundary has cleared the native owner. The
     // native reset then cannot notify a still-live world owner through +8.
     u32 vt=0,owner=0;rev_genesis::Collections before{},after{};
-    if(!target || target>Invalid-11 || !memory.word || !calls_.method1 ||
+    if(removing_ || !target || target>Invalid-11 || !memory.word || !calls_.method1 ||
        !memory.word(memory.context,target,&vt) || vt!=0x04DA8570 ||
        !memory.word(memory.context,target+8,&owner) || owner ||
-       !scanner_external_ready(memory,unit,false) ||
+       !scanner_external_ready(memory,unit,false,true) ||
        !rev_genesis::capture_collections(memory,unit,&before)){
         entry.quarantine=true;return fail(NativeFault::Resources);
     }
@@ -127,10 +141,10 @@ bool JanuaryBackend::scanner_remove_target(Reader memory,u32 target) noexcept {
     for(u32 i=0;i<rev_genesis::Collections::Count;++i)if(before.targets[i]==target)index=i;
     if(index==Invalid)return true;
     {
-        Busy lock(busy_);
+        Busy lock(busy_);Busy removal(removing_);
         calls_.method1(calls_.context,0x01BB4079,unit,target);
     }
-    bool ok=!entry.quarantine && scanner_external_ready(memory,unit,false) &&
+    bool ok=!entry.quarantine && scanner_external_ready(memory,unit,false,true) &&
         rev_genesis::capture_collections(memory,unit,&after) &&
         before.icon_pool==after.icon_pool && before.target_pool==after.target_pool;
     if(ok){
@@ -295,7 +309,9 @@ bool JanuaryBackend::phase(u32 u,WidgetKind k,u32 phase,u32 context) {
         }
         if(k==WidgetKind::Scanner && (!events_.scanner_begin || !events_.scanner_end ||
            !events_.scanner_begin(events_.context,u))){e.quarantine=true;return fail(NativeFault::Permit);}
+        if(k==WidgetKind::Scanner && phase==9)scanner_phase9_=u;
         calls_.method0(calls_.context,phase==8?t->phase8:t->phase9,u);
+        scanner_phase9_=0;
     }
     if(k==WidgetKind::Scanner && !events_.scanner_end(events_.context,u)){
         e.quarantine=true;return fail(NativeFault::Permit);

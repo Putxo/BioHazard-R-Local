@@ -31,6 +31,8 @@ struct Fake {
     u32 detector_calls=0;
     u32 removal_calls=0,removal_unit=0;
     bool removal_noop=false;
+    u32 completion_calls=0;
+    void (*completion_observer)(void*,u32) noexcept=nullptr;
     u32 notification_calls=0;
     void (*notification_observer)(void*,u32) noexcept=nullptr;
     Lifecycle* life=nullptr;
@@ -99,6 +101,11 @@ struct Fake {
     }
     static void method0(void* c,u32 target,u32 self) noexcept {
         auto& f=*static_cast<Fake*>(c);f.events.push_back({target,self,0,0});
+        if(target==0x01C7F35A || target==0x01C359C1 || target==0x01C392BF || target==0x01C19CA8 || target==0x01B880C8){
+            ++f.completion_calls;
+            if(f.completion_observer)f.completion_observer(f.detector_context,self);
+            return;
+        }
         if(target==0x01C315EC){
             ++f.notification_calls;
             if(f.notification_observer)f.notification_observer(f.detector_context,self);
