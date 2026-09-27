@@ -1,7 +1,7 @@
 # Estado actual del cooperativo local
 
 27/09/2026. Rama técnica: `research/script-member-serial-validation`.
-PR46 integrado: `52a3b9d8ce4459ecbaf9674c9b5cae3f0839c71b`, 20 workflows PASS.
+PR47 integrado: `f82f2e1010e7be18fe4bfc82809cd6ba145e5025`, 21 workflows PASS.
 
 **El cooperativo completo sigue en desarrollo. El juego no se ha ejecutado.**
 El propietario prohíbe abrirlo y hará personalmente las pruebas jugando.
@@ -20,7 +20,7 @@ El propietario prohíbe abrirlo y hará personalmente las pruebas jugando.
 | Guiones | Dos callbacks PcsSub con owner+serial; cobertura QTE parcial |
 | Rescate | Routing parcial existente; muerte/checkpoints pendientes |
 
-La compilación acumulativa nueva conecta 125 hooks HUD/menú/ActionIcon sobre la base de
+La compilación acumulativa nueva conecta 131 hooks HUD/menú/ActionIcon sobre la base de
 input, cámara, pickup, puertas y serial de guion. Se ha generado y verificado
 estáticamente una copia local de trabajo. No se ha instalado en Steam ni abierto.
 No constituye una entrega final.
@@ -93,3 +93,5 @@ Genesis: [retirada durante la notificación de fin de escaneo](docs/73-genesis-c
 Genesis: [inventario del actor en los ocho estados internos](docs/74-genesis-state-actor-routing.md).
 
 Genesis: [copia privada del recurso mutable de filtros](docs/75-genesis-private-filter-resource.md).
+
+Genesis: [vida observada de los tres efectos auxiliares](docs/76-genesis-effect-lifetimes.md).

@@ -141,6 +141,14 @@ struct Fixture {
     }
 };
 int main(){
+    // Runtime starts the scheduled-effect observer on its admitted thread.
+    {Fixture x(8);x.start();auto& effects=x.r.genesis_effects();
+     constexpr u32 unit=0xEE0000;x.f.m[unit]=0x04DB80CC;
+     C(effects.event(0x0293344E,unit));
+     const auto old=effects.capture(unit,rev_genesis::EffectKind::FilterSet);C(effects.live(old));
+     C(effects.event(0x02933576,unit));C(!effects.live(old));
+     C(effects.event(0x0293344E,unit));C(!effects.live(old));
+     x.thread=8;C(!effects.event(0x02933576,unit));x.thread=7;C(!effects.healthy());++scenarios;}
     // Resource-load hooks only substitute at our synchronous Scanner init.
     for(u32 fault=0;fault<=4;++fault){++scenarios;Fixture x(8);x.filter_fault=fault;
         Fixture::filter_graph(x.f.m,Fixture::FilterSource,1);
