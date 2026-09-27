@@ -11,6 +11,7 @@ rev_priority_loop_end = 0x01EA6694;
 rev_priority_commit_continue = 0x01EA6681;
 rev_priority_finish_continue = 0x01EA66BF;
 rev_priority_stock_draw_priority = 0x01C6FF63;
+rev_runtime_stock_immediate = 0x01BCD42A;
 rev_hud_stock_self = 0x01C2C7F4;
 rev_menu_stock_self = 0x01C2C7F4;
 rev_menu_stock_state_transition = 0x02CDD180;

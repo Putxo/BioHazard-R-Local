@@ -4,6 +4,7 @@
 #include "../menu_routing/menu_owner.hpp"
 #include "../action_icons/router.hpp"
 #include "../action_icons/priority_driver.hpp"
+#include "draw_schedule.hpp"
 
 namespace rev_runtime {
 using namespace rev_hud;
@@ -37,6 +38,9 @@ public:
     rev_menu::MenuOwnerRouter& menu() noexcept { return menu_; }
     rev_action::Router& action() noexcept { return action_; }
     rev_action::PriorityDriver& priority() noexcept { return priority_; }
+    u32 draw_schedule(u32 context,u32 stock) noexcept {
+        return choose_draw_schedule(action_host(),context,stock);
+    }
 private:
     Host host_;
     const u32 count_;

@@ -49,6 +49,13 @@ struct Fixture {
     void prepare(){start();births();begin();C(f.allocations.empty());end();C(r.lifecycle().state()==LifeState::Live);C(f.allocations.size()==(f.original[3]?WidgetKinds:LegacyWidgetKinds));}
 };
 int main(){
+    {Fixture x;x.prepare();C(x.r.draw_schedule(x.f.context,0)==0);x.begin();
+     for(u32 view:{0u,1u}){x.f.m[x.f.context+0x158]=view;C(x.r.draw_schedule(x.f.context,0)==1);}
+     x.f.m[x.f.context+0x158]=2;C(x.r.draw_schedule(x.f.context,0)==0);
+     x.f.m[x.f.context+0x158]=1;x.thread=8;C(x.r.draw_schedule(x.f.context,0)==0);
+     x.thread=7;C(x.r.source().event(0x0277DC70,x.f.session.sub0.address));
+     C(x.r.draw_schedule(x.f.context,0)==0);C(x.r.draw_schedule(x.f.context,0xAB000001)==1);
+     x.end();++scenarios;}
     {Fixture x;x.prepare();
      constexpr u32 icon=0xF00000,command=0xF10000,manager=0xF20000;
      x.f.m[icon]=0x04CDCA9C;x.f.m[icon+0x40]=command;x.f.m[command]=0x04CDA850;
