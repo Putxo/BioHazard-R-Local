@@ -50,6 +50,16 @@ struct Fixture {
     void begin(){C(r.clock().event(PipelineBegin,0xC00000,0xD00000));C(r.activator().event(PipelineBegin,0xC00000,0xD00000));}
     void end(){C(r.clock().event(PipelineEnd,0xC00000,0xD00000));C(r.window().event(PipelineEnd,0xC00000,0xD00000));}
     void prepare(){start();births();begin();C(f.allocations.empty());end();C(r.lifecycle().state()==LifeState::Live);C(f.allocations.size()==(f.original[6]?7u:f.original[5]?6u:f.original[4]?5u:f.original[3]?4u:LegacyWidgetKinds));}
+    void equipment_setup(){
+        f.m[0x04D2D440]=0x01BFECCD;
+        for(u32 i=0;i<2;++i){
+            const u32 a=i?f.session.sub0.address:f.session.self.address,p=0xEC0000+i*0x1000;
+            f.m[a+0x1524]=p;f.m[p]=0x04D2D42C;f.m[p+0xD4]=2;
+            for(u32 j=0;j<15;++j)f.m[p+4+4*j]=0;
+            f.m[p+12]=0xED0000+i*0x1000;
+        }
+        f.m[r.lifecycle().unit(6)+0x2FC]=0xED1000;
+    }
     void detector_setup(){
         prepare();begin();
         f.m[0xB00000+0xCE0]=0xE20000;f.m[0xB00000+0xCE4]=0xE30000;
@@ -63,6 +73,34 @@ struct Fixture {
     }
 };
 int main(){
+    {Fixture x(7);x.detector_setup();x.equipment_setup();const auto before=x.f.m;
+     x.r.genesis_detect(0xEE0000);C(x.f.detector_calls==2);C(x.f.m==before);
+     C(x.r.driver().event(0x02B49C5B,x.f.p[0],0));x.end();++scenarios;}
+    for(u32 fault=0;fault<5;++fault){Fixture x(7);x.detector_setup();x.equipment_setup();
+     const u32 unit=x.r.lifecycle().unit(6);
+     switch(fault){
+     case 0:x.f.m[0xEC100C]=0;break; // Weapon removed.
+     case 1:x.f.m[0xEC10D4]=15;break; // No equipped slot.
+     case 2:x.f.m[0xEC0008]=0xED1000;break; // Shared with another P1 slot.
+     case 3:x.f.m[x.f.session.sub0.address+0x1524]=0xEC0000;break;
+     case 4:x.f.m[unit+0x2FC]=0xED0000;break; // Stock player's weapon.
+     }
+     const auto before=x.f.m;x.r.genesis_detect(0xEE0000);C(x.f.detector_calls==1);C(x.f.m==before);
+     const auto events=x.f.events.size();C(!x.r.driver().event(0x02B49C5B,x.f.p[0],0));
+     for(size_t i=events;i<x.f.events.size();++i)C(x.f.events[i].self!=unit);
+     C(x.r.lifecycle().state()!=LifeState::Live);++scenarios;
+    }
+    {Fixture x(7);x.detector_setup();x.equipment_setup();
+     x.f.phase_observer_context=&x;x.f.phase_observer=[](void* p,u32,u32 unit) noexcept {
+         auto& z=*static_cast<Fixture*>(p);if(unit==z.r.lifecycle().unit(6))z.f.m[0xEC100C]=0;
+     };
+     C(!x.r.driver().event(0x02B49C5B,x.f.p[0],0));C(x.r.lifecycle().state()!=LifeState::Live);++scenarios;}
+    {Fixture x(7);x.detector_setup();x.equipment_setup();
+     x.f.detector_observer=[](void* p,u32) noexcept {
+         auto& z=*static_cast<Fixture*>(p);if(z.f.detector_calls==2)z.f.m[0xEC100C]=0;
+     };
+     x.r.genesis_detect(0xEE0000);C(x.f.detector_calls==2);C(x.r.lifecycle().state()!=LifeState::Live);++scenarios;}
+
     for(u32 variant=0;variant<2;++variant){Fixture x(7);x.detector_setup();x.action_member=variant;x.f.m[0xED0004]=0x12345678;
      x.f.detector_observer=[](void* p,u32) noexcept {
          auto& z=*static_cast<Fixture*>(p);
