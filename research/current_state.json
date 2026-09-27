@@ -2,10 +2,10 @@
   "schema_version": 4,
   "canonical_branch": "research/script-member-serial-validation",
   "checkpoint": {
-    "merged_pr": 42,
-    "merge_sha": "04ac45ba60ee6882f1662d181ddc76053c610aa7",
-    "tested_head": "925bc0fcb330dec2a12b58234da3be54f5458da7",
-    "ci": "20 applicable workflows PASS"
+    "merged_pr": 43,
+    "merge_sha": "a4f0b02c0fd0d36a072ba590c5f1bc3858538f7f",
+    "tested_head": "c95192211d922ea46eeb0cb56e38ad76507d205f",
+    "ci": "21 workflows PASS"
   },
   "user_constraints": {
     "launch_game": false,
@@ -68,7 +68,7 @@
     "genesis_weapon_lifetime_pinned": false,
     "aim_secondary_camera_visibility": true,
     "scope_actor_and_resources_connected": true,
-    "scope_activation_connected": false
+    "scope_activation_connected": true
   },
   "pending": [
     "full HUD and interaction prompts",
@@ -101,6 +101,7 @@
     "docs/68-genesis-world-notifications.md",
     "docs/69-genesis-equipped-weapon.md",
     "docs/70-aim-secondary-visibility.md",
-    "docs/71-scope-widget.md"
+    "docs/71-scope-widget.md",
+    "docs/72-scope-aim-events.md"
   ]
 }

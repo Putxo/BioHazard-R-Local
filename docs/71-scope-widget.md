@@ -29,9 +29,9 @@ Scope: en la vista del J2 se dibuja su instancia, conservando el visor del J1.
 global de jugador ni una preferencia del visor. No se redirige. La condición
 compartida de dibujo del mundo tampoco cambia de índice.
 
-El inicializador deja Scope inactivo. **La alimentación de activación/cierre
-al apuntar sigue pendiente** y se conectará usando el arma actual del J2 y su
-segundo argumento, sin cambiar Cockpit global. Este bloque no habilita Genesis.
+El inicializador deja Scope inactivo. La alimentación de activación/cierre
+al apuntar se incorporó después en [el bloque de eventos](72-scope-aim-events.md),
+usando el arma actual del J2 y su segundo argumento. Genesis sigue pendiente.
 
 ## Validación
 

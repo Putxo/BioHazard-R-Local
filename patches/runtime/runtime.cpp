@@ -17,7 +17,8 @@ Runtime::Runtime(Registry& registry,Host host,u32 count) noexcept
       backend_(admission_.callbacks(),ledger_.callbacks(),count,&registry,
         {this,[](void* p,u32 u,u32 a) noexcept {return static_cast<Runtime*>(p)->heal_feed(u,a);},
         [](void* p,u32 u) noexcept {return static_cast<Runtime*>(p)->scanner_begin(u);},
-        [](void* p,u32 u) noexcept {return static_cast<Runtime*>(p)->scanner_end(u);}}),
+        [](void* p,u32 u) noexcept {return static_cast<Runtime*>(p)->scanner_end(u);},
+        [](void* p,u32 u,u32 a) noexcept {return static_cast<Runtime*>(p)->scope_feed(u,a);}}),
       lifecycle_(registry,backend_.callbacks(),count),
       frames_(clock_,source_,view_.services()),
       driver_(lifecycle_,frames_.callbacks()),
@@ -71,7 +72,7 @@ Mode Runtime::scope_actor(u32 widget,u32* out) noexcept {
        h.snapshot(h.memory.context,&f)!=rev_action::SnapshotMode::Local || route.actor!=f.session.sub0.address)return Mode::Hidden;
     *out=route.actor;return Mode::Local;
 }
-void Runtime::aim_visibility(u32 actor,u32 hide) noexcept {
+void Runtime::aim_visibility(u32 actor,u32 hide,u32 flag) noexcept {
     auto vh=target_view_host();
     if(!vh.on_thread(vh.context))return;
     if(aim_busy_ || aim_faulted_ || !host_.write || !host_.aim_weapon_hidden ||
@@ -109,7 +110,54 @@ void Runtime::aim_visibility(u32 actor,u32 hide) noexcept {
         if(next_actor!=actor_flags && !host_.write(host_.memory.context,actor+12,actor_flags)){
             aim_faulted_=true;lifecycle_.stop();
         }
+        return;
     }
+    const u32 ticket=activator_.attached_ticket();
+    if(count_>=8 && lifecycle_.live_ticket(ticket)) {
+        if(aim_intent_.revision==Invalid){aim_faulted_=true;lifecycle_.stop();return;}
+        aim_intent_={before.owner,ticket,aim_intent_.revision+1,hide&255,flag&255};
+    }
+}
+bool Runtime::scope_feed(u32 unit,u32 actor) noexcept {
+    if(!aim_intent_.ticket)return true; // Native constructor leaves Scope inactive.
+    const auto intent=aim_intent_;
+    const u32 ticket=activator_.attached_ticket();
+    if(intent.ticket!=ticket) {aim_intent_.ticket=0;return true;}
+    u32 resolved=0;
+    if(aim_faulted_ || !host_.weapon_class || !host_.scope_activate ||
+       !host_.image || !host_.image(host_.memory.context) || !lifecycle_.live_ticket(ticket) ||
+       scope_actor(unit,&resolved)!=Mode::Local || resolved!=actor || actor!=intent.owner.actor)return false;
+    const auto same_actor=[](const Actor& a,const Actor& b) noexcept {
+        return a.address==b.address && a.lifetime==b.lifetime && a.serial==b.serial && a.think_mode==b.think_mode;
+    };
+    const auto same_owner=[&](const rev_genesis::Owner& a,const rev_genesis::Owner& b) noexcept {
+        return a.actor==b.actor && a.session.active==b.session.active && a.session.epoch==b.session.epoch &&
+            same_actor(a.session.self,b.session.self) && same_actor(a.session.sub0,b.session.sub0);
+    };
+    auto vh=target_view_host();rev_genesis::ViewFrame before{},after{};
+    const u32 scanner=lifecycle_.unit(6);u32 weapon=0,kind=0,manager=0,camera=0;
+    if(!vh.on_thread(vh.context) || vh.resolve(vh.context,scanner,&before)!=Mode::Local ||
+       !same_owner(before.owner,intent.owner) || !word(0x05799D3C,manager) ||
+       genesis_camera(scanner,manager,&camera)!=Mode::Local ||
+       rev_genesis::equipment(genesis_host(),host_.memory,scanner,&weapon)!=Mode::Local)return false;
+    const auto current=[&]() noexcept {
+        u32 now=0,cam=0,owner=0;
+        return lifecycle_.live_ticket(ticket) && activator_.attached_ticket()==ticket &&
+            scope_actor(unit,&owner)==Mode::Local && owner==actor &&
+            vh.resolve(vh.context,scanner,&after)==Mode::Local && after.number==before.number &&
+            same_owner(after.owner,before.owner) && genesis_camera(scanner,manager,&cam)==Mode::Local && cam==camera &&
+            rev_genesis::equipment(genesis_host(),host_.memory,scanner,&now)==Mode::Local && now==weapon;
+    };
+    // DTI class identity is distinct from the item ID used by Scope's panel.
+    if(intent.hide && weapon && (!host_.weapon_class(host_.memory.context,weapon,&kind) || !current()))return false;
+    if(!current())return false;
+    if(aim_intent_.revision!=intent.revision)return true; // Newer event wins next phase.
+    if(scope_ticket_==ticket && scope_applied_==intent.revision && scope_weapon_==weapon && scope_class_==kind)return true;
+    const bool open=intent.hide && weapon && kind!=0x80051B30u;
+    host_.scope_activate(host_.memory.context,unit,open?weapon:0,open?intent.flag:1);
+    if(!current())return false;
+    scope_ticket_=ticket;scope_applied_=intent.revision;scope_weapon_=weapon;scope_class_=kind;
+    return true;
 }
 bool Runtime::scanner_weapon_current(u32 widget) noexcept {
     u32 retained=0,current=0,again=0;
@@ -468,8 +516,8 @@ extern "C" void rev_genesis_remove_target(unsigned int target) noexcept {
 extern "C" unsigned int rev_genesis_notify(unsigned int target,unsigned int owner,unsigned int delegate) noexcept {
     return rev_runtime::HealSink && rev_runtime::HealSink->genesis_notify(target,owner,delegate)?1:0;
 }
-extern "C" void rev_aim_visibility(unsigned int actor,unsigned int hide) noexcept {
-    if(rev_runtime::HealSink)rev_runtime::HealSink->aim_visibility(actor,hide);
+extern "C" void rev_aim_visibility(unsigned int actor,unsigned int hide,unsigned int flag) noexcept {
+    if(rev_runtime::HealSink)rev_runtime::HealSink->aim_visibility(actor,hide,flag);
 }
 extern "C" unsigned int rev_scope_actor(unsigned int widget,unsigned int* out) noexcept {
     return rev_runtime::HealSink?static_cast<unsigned int>(rev_runtime::HealSink->scope_actor(widget,out)):0;

@@ -7,6 +7,8 @@ struct Fixture {
     Fake f;Registry registry;u32 thread=7;bool image=true;
     u32 action_draws=0,action_member=0,action_reads=0;
     u32 aim_queries=0,aim_query_kind=0,aim_writes=0,aim_fail_write=0;
+    u32 scope_calls=0,scope_last_weapon=0,scope_last_flag=0,class_queries=0;
+    u32 class_value=0x80050001,class_fault=0,scope_fault=0;
     Runtime r;
     Host host() {
         return {{this,[](void* p,u32 a,u32* v) noexcept {
@@ -32,6 +34,29 @@ struct Fixture {
             case 5:z.r.aim_visibility(actor,0);break;
             }
             return true;
+        },[](void* p,u32 weapon,u32* out) noexcept {
+            auto& z=*static_cast<Fixture*>(p);++z.class_queries;
+            C(weapon==z.f.m[0xEC100C]);C(out!=nullptr);
+            switch(z.class_fault){
+            case 1:return false;
+            case 2:z.f.m[0xEC100C]=0;break;
+            case 3:z.f.m[z.f.session.sub0.address+0xE40]=3;break;
+            case 4:z.f.m[0xE30074]=z.f.session.self.address;break;
+            case 5:z.r.aim_visibility(z.f.session.sub0.address,0);break;
+            }
+            *out=z.class_value;return true;
+        },[](void* p,u32 unit,u32 weapon,u32 flag) noexcept {
+            auto& z=*static_cast<Fixture*>(p);C(unit==z.r.lifecycle().unit(7));
+            u32 actor=0;C(z.r.scope_actor(unit,&actor)==Mode::Local);C(actor==z.f.session.sub0.address);
+            ++z.scope_calls;z.scope_last_weapon=weapon;z.scope_last_flag=flag;
+            z.f.m[unit+12]=weapon?z.f.m[unit+12]|0x4000:z.f.m[unit+12]&~0x4000u;
+            switch(z.scope_fault){
+            case 1:z.f.m[0xEC100C]=0;break;
+            case 2:z.f.m[actor+0xE40]=3;break;
+            case 3:z.f.m[0xE30074]=z.f.session.self.address;break;
+            case 4:z.f.m[unit+0x2AC]=z.f.m[z.f.original[7]+0x2AC];break;
+            case 5:z.r.aim_visibility(actor,0);break;
+            }
         }};
     }
     Fixture(u32 count=LegacyWidgetKinds):f(count),r(registry,host(),count) {
@@ -75,6 +100,14 @@ struct Fixture {
         }
         f.m[r.lifecycle().unit(6)+0x2FC]=0xED1000;
     }
+    void scope_setup(){
+        detector_setup();equipment_setup();
+        f.m[r.lifecycle().unit(6)+0x2FC]=0;
+        f.m[r.lifecycle().unit(7)+12]&=~0x4000u;
+        f.m[f.session.sub0.address+12]=0xA5FF1111;f.m[0xED100C]=0xB6FF2222;
+    }
+    bool scope_phase(){return r.driver().event(0x02B497CA,f.p[0],0);}
+    void next_frame(){end();begin();}
     void detector_setup(){
         prepare();begin();
         f.m[0xB00000+0xCE0]=0xE20000;f.m[0xB00000+0xCE4]=0xE30000;
@@ -88,6 +121,59 @@ struct Fixture {
     }
 };
 int main(){
+    {Fixture x(8);x.scope_setup();const u32 ticket=x.r.activator().attached_ticket();
+     x.r.aim_visibility(x.f.session.sub0.address,1);x.f.m[0x055623C4]=0;x.end();
+     C(x.r.lifecycle().state()==LifeState::Empty);C(x.f.deleted.size()==8);
+     x.f.m[0x055623C4]=OWNER;x.begin();x.end();C(x.r.lifecycle().state()==LifeState::Live);x.begin();
+     C(x.r.activator().attached_ticket()!=ticket);
+     x.f.m[x.r.lifecycle().unit(6)+0x2FC]=0;x.f.m[x.r.lifecycle().unit(7)+12]&=~0x4000u;
+     C(x.scope_phase());C(x.scope_calls==0);x.next_frame();
+     x.r.aim_visibility(x.f.session.sub0.address,1);C(x.scope_phase());C(x.scope_calls==1);x.end();++scenarios;}
+    {Fixture x(8);x.scope_setup();const u32 actor=x.f.session.sub0.address,unit=x.r.lifecycle().unit(7);
+     const auto stock_flags=x.f.m[x.f.original[7]+12],stock_anim=x.f.m[x.f.original[7]+0x2AC];
+     C(x.scope_phase());C(x.scope_calls==0);C(!(x.f.m[unit+12]&0x4000));
+     x.next_frame();x.r.aim_visibility(actor,1,0x112233EF);C(x.scope_calls==0);
+     C(x.scope_phase());C(x.scope_calls==1);C(x.scope_last_weapon==0xED1000);C(x.scope_last_flag==0xEF);
+     C(x.f.m[unit+12]&0x4000);C(x.f.m[x.f.original[7]+12]==stock_flags);C(x.f.m[x.f.original[7]+0x2AC]==stock_anim);
+     x.next_frame();C(x.scope_phase());C(x.scope_calls==1); // Held aim cannot restart animation each frame.
+     x.next_frame();x.r.aim_visibility(actor,0,0);C(x.scope_phase());C(x.scope_calls==2);
+     C(x.scope_last_weapon==0);C(x.scope_last_flag==1);C(!(x.f.m[unit+12]&0x4000));
+     x.next_frame();C(x.scope_phase());C(x.scope_calls==2);x.end();++scenarios;}
+    for(u32 kind=0;kind<5;++kind){Fixture x(8);x.scope_setup();const u32 actor=x.f.session.sub0.address;
+     switch(kind){
+     case 0:x.class_value=0x80051B30;break; // Genesis never activates the ordinary gun scope.
+     case 1:x.f.m[0xEC100C]=0;break;
+     case 2:x.r.aim_visibility(actor,1);break; // Latest close wins before phase.
+     case 3:x.r.aim_visibility(actor,0);break; // Latest open wins before phase.
+     }
+     x.r.aim_visibility(actor,kind==2?0:kind==4?255:1,2);C(x.scope_phase());C(x.scope_calls==1);
+     C(x.scope_last_weapon==(kind<3?0u:0xED1000u));C(x.scope_last_flag==(kind<3?1u:2u));
+     C(x.class_queries==(kind==1 || kind==2?0u:1u));x.end();++scenarios;}
+    {Fixture x(8);x.scope_setup();const u32 actor=x.f.session.sub0.address;
+     x.r.aim_visibility(actor,1);C(x.scope_phase());C(x.scope_calls==1);
+     x.next_frame();x.f.m[0xEC100C]=0xED2000;C(x.scope_phase());C(x.scope_calls==2);C(x.scope_last_weapon==0xED2000);
+     x.next_frame();x.class_value=0x80051B30;C(x.scope_phase());C(x.scope_calls==3);C(x.scope_last_weapon==0);
+     x.next_frame();x.f.m[0xEC100C]=0;C(x.scope_phase());C(x.scope_calls==4);C(x.scope_last_weapon==0);
+     x.end();++scenarios;}
+    for(u32 fault=1;fault<=4;++fault){Fixture x(8);x.scope_setup();x.class_fault=fault;
+     x.r.aim_visibility(x.f.session.sub0.address,1);C(!x.scope_phase());C(x.scope_calls==0);
+     C(x.r.lifecycle().state()!=LifeState::Live);++scenarios;}
+    for(u32 fault=1;fault<=4;++fault){Fixture x(8);x.scope_setup();x.scope_fault=fault;
+     x.r.aim_visibility(x.f.session.sub0.address,1);C(!x.scope_phase());C(x.scope_calls==1);
+     C(x.r.lifecycle().state()!=LifeState::Live);++scenarios;}
+    {Fixture x(8);x.scope_setup();x.class_fault=5;x.r.aim_visibility(x.f.session.sub0.address,1);
+     C(x.scope_phase());C(x.scope_calls==0);x.class_fault=0;x.next_frame();C(x.scope_phase());
+     C(x.scope_calls==1);C(x.scope_last_weapon==0);x.end();++scenarios;}
+    {Fixture x(8);x.scope_setup();x.scope_fault=5;x.r.aim_visibility(x.f.session.sub0.address,1);
+     C(x.scope_phase());C(x.scope_calls==1);C(x.scope_last_weapon==0xED1000);
+     x.scope_fault=0;x.next_frame();C(x.scope_phase());C(x.scope_calls==2);C(x.scope_last_weapon==0);x.end();++scenarios;}
+    {Fixture x(8);x.scope_setup();x.f.write_fail=0xED100C;x.r.aim_visibility(x.f.session.sub0.address,1);
+     x.f.write_fail=0;C(x.scope_phase());C(x.scope_calls==0);x.end();++scenarios;}
+    {Fixture x(8);x.scope_setup();x.r.aim_visibility(x.f.session.self.address,1);
+     C(x.scope_phase());C(x.scope_calls==0);x.end();++scenarios;}
+    {Fixture x(8);x.scope_setup();x.r.aim_visibility(x.f.session.sub0.address,1);
+     x.f.m[0xE30074]=x.f.session.self.address;C(!x.scope_phase());C(x.scope_calls==0);++scenarios;}
+
     {Fixture x(8);x.prepare();x.begin();const u32 scope=x.r.lifecycle().unit(7);C(scope!=0);
      u32 out=99;C(x.r.scope_actor(x.f.original[7],&out)==Mode::Stock);C(out==99);
      C(x.r.scope_actor(scope,&out)==Mode::Hidden);C(out==0);

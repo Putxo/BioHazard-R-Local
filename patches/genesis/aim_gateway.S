@@ -7,11 +7,13 @@ rev_aim_visibility_gate:
     # Preserve the original function frame and its caller-visible return state.
     pushfd
     pushad
+    movzx eax,byte ptr [ebp+12]
+    push eax
     movzx eax,byte ptr [ebp+8]
     push eax
     push dword ptr [ebp-8]
     call rev_aim_visibility
-    add esp,8
+    add esp,12
     popad
     popfd
     jmp rev_aim_visibility_resume

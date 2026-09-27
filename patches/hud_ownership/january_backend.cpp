@@ -258,6 +258,18 @@ bool JanuaryBackend::phase(u32 u,WidgetKind k,u32 phase,u32 context) {
             e.quarantine=true;return fail(NativeFault::Permit);
         }
     }
+    if(k==WidgetKind::Scope && phase==8) {
+        const Route route=owners_?owners_->resolve(u,k):Route{};
+        if(route.mode!=Mode::Local || route.member!=1 || route.view!=1 || !route.actor ||
+           !events_.scope || !events_.scope(events_.context,u,route.actor)) {
+            e.quarantine=true;return fail(NativeFault::Permit);
+        }
+        const Route after=owners_->resolve(u,k);
+        if(!allow(NativeOp::Phase,k,u,phase,context) || !detached(u,k) || !scope_valid(u) ||
+           after.mode!=Mode::Local || after.member!=1 || after.view!=1 || after.actor!=route.actor) {
+            e.quarantine=true;return fail(NativeFault::Permit);
+        }
+    }
     u32 flags=0,skip=0;
     if (!field(u,0xC,flags)) return false;
     if (k!=WidgetKind::MapHerb) {
