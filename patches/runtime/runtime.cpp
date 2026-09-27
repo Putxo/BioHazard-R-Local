@@ -102,7 +102,8 @@ bool Runtime::bind() noexcept {
         bind_structural_sink(window_) && bind_manager_sink(driver_) &&
         bind_begin_activator_sink(activator_) && bind_p1_mask_sink(mask_) &&
         rev_menu::bind_menu_owner_sink(menu_) && host_.action_rank &&
-        rev_action::bind_priority(priority_) && rev_action::bind(action_);
+        rev_action::bind_priority(priority_) && rev_action::bind(action_) &&
+        bind_draw_schedule(action_host());
 }
 bool Runtime::select_managers() noexcept {
     // sIDCockpit[0], verified through 01BE32C5 -> 01CB57A0 and

@@ -65,6 +65,7 @@ def read_module(data):
 
 def hook_sites():
     out=[(0x01EB73A0,bytes.fromhex('558bec81ecfc000000'),'rev_action_draw_gate',0xE9)]
+    out.append((0x0326862E,rel(0x0326862E,0x01BCD42A),'rev_runtime_draw_schedule_gate',0xE8))
     for va in (0x03268708,0x03268918):
         out.append((va,rel(va,0x01BE2D20),'rev_action_mask_gate',0xE8))
     for va,old,name in ((0x01EA61A7,'8d85e4feffff50','begin'),

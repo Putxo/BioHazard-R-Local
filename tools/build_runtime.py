@@ -20,6 +20,7 @@ def sources():
         ROOT/'patches/action_icons/arbitration.cpp',ROOT/'patches/action_icons/priority_driver.cpp',
         ROOT/'patches/action_icons/priority_gateways.S',
         ROOT/'patches/runtime/runtime.cpp', ROOT/'patches/runtime/native_host.cpp',
+        ROOT/'patches/runtime/draw_schedule.cpp',ROOT/'patches/runtime/draw_schedule.S',
         ROOT/'patches/runtime/entry.S']
 
 def build(out,clang='clang',linker='ld.lld'):

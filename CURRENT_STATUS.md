@@ -1,7 +1,7 @@
 # Estado actual del cooperativo local
 
 27/09/2026. Rama técnica: `research/script-member-serial-validation`.
-PR27 integrado: `91fad6cdd3ceb7551705b9f234305dae52970e64`, 19 workflows PASS.
+PR28 integrado: `f99702b580191bccf445a90dd4bf891af6ec772a`, 19 workflows PASS.
 
 **El cooperativo completo sigue en desarrollo. El juego no se ha ejecutado.**
 El propietario prohíbe abrirlo y hará personalmente las pruebas jugando.
@@ -20,7 +20,7 @@ El propietario prohíbe abrirlo y hará personalmente las pruebas jugando.
 | Guiones | Dos callbacks PcsSub con owner+serial; cobertura QTE parcial |
 | Rescate | Routing parcial existente; muerte/checkpoints pendientes |
 
-La compilación acumulativa nueva conecta 45 hooks HUD/menú/ActionIcon sobre la base de
+La compilación acumulativa nueva conecta 46 hooks HUD/menú/ActionIcon sobre la base de
 input, cámara, pickup, puertas y serial de guion. Se ha generado y verificado
 estáticamente una copia local de trabajo. No se ha instalado en Steam ni abierto.
 No constituye una entrega final.
@@ -53,6 +53,7 @@ Panel de subarmas y rollback de máscaras: [detalle](docs/52-subweapon-hud.md).
 Icono de interacción: [productor y arbitraje pendientes](docs/53-action-icon-findings.md).
 
 Nuevo aislamiento del dibujo: [ActionIcon por vista](docs/54-action-icon-view-routing.md).
-PR27 pasó 19 workflows. Nuevo bloque: [prioridad del bucle por miembro](docs/55-action-priority-loop.md).
-Persisten gates globales y el soporte de ejecución del icono en workers.
+PR28 pasó 19 workflows: [prioridad del bucle por miembro](docs/55-action-priority-loop.md).
+Nuevo bloque: [dibujo inmediato local](docs/56-local-draw-scheduling.md).
+Persisten gates/flags globales, historial y productores 3D por completar.
 El juego no se ha ejecutado.

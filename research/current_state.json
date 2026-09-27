@@ -2,9 +2,9 @@
   "schema_version": 4,
   "canonical_branch": "research/script-member-serial-validation",
   "checkpoint": {
-    "merged_pr": 27,
-    "merge_sha": "91fad6cdd3ceb7551705b9f234305dae52970e64",
-    "tested_head": "79060a59a48d1124b7d13369db149b81f2bf49ad",
+    "merged_pr": 28,
+    "merge_sha": "f99702b580191bccf445a90dd4bf891af6ec772a",
+    "tested_head": "e679d5d8ab72bb7526fdf080c2c36f0fe264403e",
     "ci": "19 workflows PASS"
   },
   "user_constraints": {
@@ -25,7 +25,8 @@
   },
   "runtime": {
     "composition_root": true,
-    "hud_menu_hook_count": 45,
+    "hud_menu_hook_count": 46,
+    "local_views_use_native_immediate_draw": true,
     "action_loop_priority_per_member": true,
     "action_loop_stop_per_member": true,
     "action_icon_sunit_mask_filters": true,
@@ -58,6 +59,7 @@
     "docs/52-subweapon-hud.md",
     "docs/53-action-icon-findings.md",
     "docs/54-action-icon-view-routing.md",
-    "docs/55-action-priority-loop.md"
+    "docs/55-action-priority-loop.md",
+    "docs/56-local-draw-scheduling.md"
   ]
 }

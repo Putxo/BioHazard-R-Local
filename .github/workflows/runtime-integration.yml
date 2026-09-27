@@ -18,8 +18,16 @@ jobs:
         run: |
           FLAGS="-std=c++17 -O1 -g -Wall -Wextra -Werror"
           if [ "${{ matrix.mode }}" = sanitized ]; then FLAGS="$FLAGS -fsanitize=address,undefined -fno-omit-frame-pointer"; fi
-          g++ $FLAGS -Ipatches/hud_ownership patches/hud_ownership/*.cpp patches/runtime/runtime.cpp patches/menu_routing/menu_owner.cpp patches/action_icons/*.cpp tests/runtime/runtime_tests.cpp -o "$RUNNER_TEMP/runtime-tests"
+          g++ $FLAGS -Ipatches/hud_ownership patches/hud_ownership/*.cpp patches/runtime/runtime.cpp patches/runtime/draw_schedule.cpp patches/menu_routing/menu_owner.cpp patches/action_icons/*.cpp tests/runtime/runtime_tests.cpp -o "$RUNNER_TEMP/runtime-tests"
           "$RUNNER_TEMP/runtime-tests"
+          g++ $FLAGS patches/runtime/draw_schedule.cpp tests/runtime/draw_schedule_tests.cpp -o "$RUNNER_TEMP/draw-schedule-tests"
+          "$RUNNER_TEMP/draw-schedule-tests"
+      - name: Draw selector x86 ABI with synthetic calls
+        run: |
+          as --32 patches/runtime/draw_schedule.S -o "$RUNNER_TEMP/draw-schedule.o"
+          as --32 tests/runtime/draw_schedule_abi.S -o "$RUNNER_TEMP/draw-schedule-test.o"
+          ld -m elf_i386 -o "$RUNNER_TEMP/draw-schedule-abi" "$RUNNER_TEMP/draw-schedule.o" "$RUNNER_TEMP/draw-schedule-test.o"
+          "$RUNNER_TEMP/draw-schedule-abi"
       - name: Lifetime regression
         run: |
           g++ -std=c++17 -Wall -Wextra -Werror -Ipatches/hud_ownership patches/hud_ownership/{ownership,lifetime_source}.cpp tests/hud_ownership/lifetime_source_tests.cpp -o "$RUNNER_TEMP/lifetime-tests"
