@@ -347,12 +347,12 @@ bool Runtime::genesis_effect_toggle(u32 widget,bool enabled) noexcept {
     // Handled also on refusal: never fall through to shared native setters.
     return true;
 }
-bool Runtime::genesis_weapon_use(u32 widget,bool model_required) noexcept {
+bool Runtime::genesis_weapon_use(u32 widget,bool sound_required) noexcept {
     auto h=target_view_host();
     if(!h.on_thread(h.context))return true;
     const auto route=registry_.resolve(widget,WidgetKind::Scanner);
     if(route.mode==Mode::Stock)return true;
-    rev_genesis::ViewFrame before{},after{};u32 weapon=0,model=0,again=0;
+    rev_genesis::ViewFrame before{},after{};u32 weapon=0,sound=0,again=0;
     // This admission is repeated at each native use, including calls later in
     // the same phase. It does not pin an allocation through a native callback.
     const bool ok=route.mode==Mode::Local &&
@@ -360,7 +360,7 @@ bool Runtime::genesis_weapon_use(u32 widget,bool model_required) noexcept {
         (!scanner_scope_ || (widget==scanner_scope_ && !scanner_copy_failed_ && scanner_current())) &&
         scanner_effects(widget,effects_stock_.scanner,false) && scanner_weapon_current(widget) &&
         word(widget+0x2FC,weapon) &&
-        (!model_required || (weapon && word(weapon+0xEC4,model) && model)) &&
+        (!sound_required || (weapon && word(weapon+0xEC4,sound) && sound)) &&
         scanner_weapon_current(widget) && word(widget+0x2FC,again) && weapon==again &&
         h.resolve(h.context,widget,&after)==Mode::Local && same_effect_frame(before,after);
     if(!ok){backend_.quarantine_scanner();scanner_copy_failed_=true;lifecycle_.stop();}
@@ -800,8 +800,8 @@ extern "C" unsigned int rev_genesis_weapon_retain(unsigned int widget,unsigned i
     return !rev_runtime::HealSink || rev_runtime::HealSink->genesis_weapon_retain(widget,weapon)?1u:0u;
 }
 
-extern "C" unsigned int rev_genesis_weapon_use(unsigned int widget,unsigned int model_required) noexcept {
-    return !rev_runtime::HealSink || rev_runtime::HealSink->genesis_weapon_use(widget,model_required!=0)?1u:0u;
+extern "C" unsigned int rev_genesis_weapon_use(unsigned int widget,unsigned int sound_required) noexcept {
+    return !rev_runtime::HealSink || rev_runtime::HealSink->genesis_weapon_use(widget,sound_required!=0)?1u:0u;
 }
 
 extern "C" unsigned int rev_genesis_effect_toggle(unsigned int widget,unsigned int enabled) noexcept {

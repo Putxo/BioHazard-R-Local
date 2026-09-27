@@ -2,9 +2,9 @@
   "schema_version": 4,
   "canonical_branch": "research/script-member-serial-validation",
   "checkpoint": {
-    "merged_pr": 55,
-    "merge_sha": "99b6a6472fa341d0236a0c920cf9240bac68136a",
-    "tested_head": "7820499726c6fda0038f3f3652d0d28ba0074448",
+    "merged_pr": 56,
+    "merge_sha": "d39367f1734f650105f980b89a892d38247120d4",
+    "tested_head": "2ea27503b7e2a2843b7ba5aeb4e31bd6804e0b7a",
     "ci": "20 workflows PASS"
   },
   "user_constraints": {
@@ -88,7 +88,8 @@
     "genesis_native_weapon_use_admissions_connected": 41,
     "genesis_private_effect_activity_toggle_connected": true,
     "genesis_shared_visual_consumers_per_view_complete": false,
-    "genesis_shared_color_per_view_admission_connected": true
+    "genesis_shared_color_per_view_admission_connected": true,
+    "genesis_retained_weapon_component": "app::game::sound::uBioSoundMotionSe"
   },
   "pending": [
     "full HUD and interaction prompts",

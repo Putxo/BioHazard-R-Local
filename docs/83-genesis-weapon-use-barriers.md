@@ -4,12 +4,12 @@
 
 Las comprobaciones al entrar y salir de una fase no cubrían los accesos al
 arma después de llamadas nativas dentro de esa fase. Se han conectado **40**
-lecturas de `Scanner+2FC` que obtienen el modelo y ordenan cambios en él, más
+lecturas de `Scanner+2FC` que obtienen el emisor de sonido y ordenan cambios en él, más
 el wrapper de reactivación `02B20D26`. Total acumulativo: **178 hooks**.
 
 Cada admisión local comprueba owner/sesión/frame, ticket, efectos privados,
 retención observada e inventario actual. Para un comando exige también un
-modelo no nulo en `uWpScanner+EC4`, antes del getter que ejecutaría un assert
+emisor de sonido no nulo en `uWpScanner+EC4`, antes del getter que ejecutaría un assert
 si falta. Repite la comprobación de arma y frame después de esas lecturas.
 Una destrucción, reciclado, cambio de inventario o invalidación revoca los
 siguientes accesos. Stock conserva el recorrido nativo. La ruta off-thread
@@ -26,8 +26,8 @@ Los registros y flags se restauran antes de continuar por cualquiera de las ruta
 
 El fallo pone el Scanner en cuarentena y revoca los gestores sin liberar los
 objetos sincrónicamente. La retirada se procesa en su frontera estructural.
-Esto **no fija físicamente la memoria del arma o modelo durante callbacks**.
-Los comandos de modelo todavía contienen llamadas virtuales/indirectas; la
+Esto **no fija físicamente la memoria del arma o emisor de sonido durante callbacks**.
+Los comandos de sonido todavía contienen llamadas virtuales/indirectas; la
 seguridad de toda esa cadena y los gestores visuales globales siguen pendientes.
 La activación J2 permanece deshabilitada hasta resolver esos límites.
 
@@ -39,3 +39,8 @@ estáticos ligados al SHA January, enlace freestanding, cuatro pruebas de ELF
 Módulo: `d396788c8639f270db96584955fbd75075723a167fc6ae03950136cbf4b5616d`.
 Copia: `0b27bdeda743e75359fc729ba832fe12d8f0a5757a78ffd454dcdd27a749ac10`.
 Ningún binario propietario se publica o instala en Steam.
+
+Corrección de identificación posterior a PR56: `+EC4` contiene
+`app::game::sound::uBioSoundMotionSe`, no el modelo gráfico. RTTI, constructor
+y asignación se contrastan en el auditor (111 testigos). Las barreras y su
+comportamiento se conservan; esta corrección no resuelve los materiales Hunter.

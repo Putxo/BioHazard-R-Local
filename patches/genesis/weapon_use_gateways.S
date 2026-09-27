@@ -3,12 +3,12 @@
 .text
 # A CALL plus one NOP replaces a six-byte ECX load. The return address points
 # to that NOP. On refusal skip the native use, retaining the caller's cleanup.
-.macro USE name, model, skip, args
+.macro USE name, sound, skip, args
 .global rev_genesis_weapon_\name\()_gate
 rev_genesis_weapon_\name\()_gate:
     pushfd
     pushad
-    push \model
+    push \sound
     push eax
     call rev_genesis_weapon_use
     add esp,8

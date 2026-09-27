@@ -2,7 +2,7 @@
 
 Actualización: 27/09/2026. Rama canónica: research/script-member-serial-validation.
 
-PR55 integrado: 99b6a6472fa341d0236a0c920cf9240bac68136a, 20 workflows PASS.
+PR56 integrado: d39367f1734f650105f980b89a892d38247120d4, 20 workflows PASS.
 
 Leer CURRENT_STATUS.md, docs/50-runtime-composition.md,
 

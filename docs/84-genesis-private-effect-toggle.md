@@ -13,7 +13,7 @@ sobre los tres roots. El resto de bits (estado, grupo, keep-alive, vista) se
 conserva. La ruta J2 no invoca los dos setters de gestores compartidos.
 
 Antes del cambio se comprueban frame, propietario, grafo disjunto, máscara View1
-y vidas observadas. Para encender se exige además el arma/modelo admitidos.
+y vidas observadas. Para encender se exige además el arma/emisor de sonido admitidos.
 Para apagar no se exige mantener equipada el arma anterior: solo se desactivan
 los efectos privados, sin dereferenciarla. Después se comprueba el grafo, los
 valores escritos y el mismo propietario/frame. Un fallo revoca el conjunto;
