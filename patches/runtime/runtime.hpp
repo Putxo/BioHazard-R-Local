@@ -8,6 +8,7 @@
 #include "../genesis/progress.hpp"
 #include "../genesis/camera.hpp"
 #include "../genesis/equipment.hpp"
+#include "../genesis/filter_resource.hpp"
 #include "../genesis/target_lifetime.hpp"
 #include "../genesis/target_views.hpp"
 #include "../hud_ownership/heal_queue.hpp"
@@ -27,6 +28,7 @@ struct Host {
     bool (*aim_weapon_hidden)(void*,u32 actor) noexcept=nullptr;
     bool (*weapon_class)(void*,u32 weapon,u32* out) noexcept=nullptr;
     void (*scope_activate)(void*,u32 unit,u32 weapon,u32 flag) noexcept=nullptr;
+    rev_genesis::FilterCopyHost filter_copy{};
 };
 // One process-lifetime graph. Construct and start before ANY installed gateway
 // is reachable. No callback is invoked during member construction.
@@ -66,6 +68,7 @@ public:
     bool genesis_notify(u32 target,u32 world_owner,u32 delegate) noexcept;
     void aim_visibility(u32 actor,u32 hide,u32 flag=0) noexcept;
     Mode scope_actor(u32 widget,u32* out) noexcept;
+    u32 genesis_filter_loaded(u32 widget,u32 resource) noexcept;
     Mode genesis_camera(u32 widget,u32 manager,u32* out) noexcept {
         return rev_genesis::camera(genesis_host(),host_.memory,widget,manager,out);
     }

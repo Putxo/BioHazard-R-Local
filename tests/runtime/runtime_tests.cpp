@@ -9,6 +9,26 @@ struct Fixture {
     u32 aim_queries=0,aim_query_kind=0,aim_writes=0,aim_fail_write=0;
     u32 scope_calls=0,scope_last_weapon=0,scope_last_flag=0,class_queries=0;
     u32 class_value=0x80050001,class_fault=0,scope_fault=0;
+    u32 filter_created=0,filter_copied=0,filter_released=0,filter_returned=0,filter_fault=0;
+    static constexpr u32 FilterSource=0xF00000,FilterCopy=0xF10000;
+    static void filter_graph(std::map<u32,u32>& m,u32 p,u32 count) {
+        m[p]=0x04DB7A34;m[p+0x48]=1;m[p+0x54]=m[p+0x58]=m[p+0x5c]=0;
+        m[p+0x68]=0x04CC7278;m[p+0x6c]=m[p+0x70]=count;m[p+0x74]=1;m[p+0x78]=count?p+0x1000:0;
+        if(count){m[p+0x1000]=p+0x2000;m[p+0x2000]=0x04DB833C;}
+    }
+    rev_genesis::FilterCopyHost filter_host() {
+        return {{this,[](void* p,u32 a,u32* v) noexcept {return Fake::read(&static_cast<Fixture*>(p)->f,a,v);}},this,
+        [](void* p) noexcept ->u32 {auto& z=*static_cast<Fixture*>(p);++z.filter_created;
+            if(z.filter_fault==1)return 0;
+            filter_graph(z.f.m,FilterCopy,0);return FilterCopy;},
+        [](void* p,u32 source,u32 destination) noexcept ->bool {
+            auto& z=*static_cast<Fixture*>(p);++z.filter_copied;C(source==FilterSource && destination==FilterCopy);
+            filter_graph(z.f.m,FilterCopy,1);
+            if(z.filter_fault==2)z.f.m[FilterCopy+0x1000]=z.f.m[FilterSource+0x1000];
+            if(z.filter_fault==3)z.f.life->stop();
+            return z.filter_fault!=4;},
+        [](void* p,u32 v) noexcept {auto& z=*static_cast<Fixture*>(p);C(v==FilterCopy);++z.filter_released;}};
+    }
     Runtime r;
     Host host() {
         return {{this,[](void* p,u32 a,u32* v) noexcept {
@@ -57,7 +77,7 @@ struct Fixture {
             case 4:z.f.m[unit+0x2AC]=z.f.m[z.f.original[7]+0x2AC];break;
             case 5:z.r.aim_visibility(actor,0);break;
             }
-        }};
+        },filter_host()};
     }
     Fixture(u32 count=LegacyWidgetKinds):f(count),r(registry,host(),count) {
         f.life=&r.lifecycle();
@@ -121,6 +141,28 @@ struct Fixture {
     }
 };
 int main(){
+    // Resource-load hooks only substitute at our synchronous Scanner init.
+    for(u32 fault=0;fault<=4;++fault){++scenarios;Fixture x(8);x.filter_fault=fault;
+        Fixture::filter_graph(x.f.m,Fixture::FilterSource,1);
+        x.f.init_observer_context=&x;
+        x.f.init_observer=[](void* p,u32 unit) noexcept {
+            auto& z=*static_cast<Fixture*>(p);
+            C(z.r.genesis_filter_loaded(z.f.original[6],Fixture::FilterSource)==Fixture::FilterSource);
+            C(!z.f.resource_releases && !z.filter_created);
+            z.filter_returned=z.r.genesis_filter_loaded(unit,Fixture::FilterSource);
+        };
+        x.start();x.births();x.begin();
+        C(x.r.clock().event(PipelineEnd,0xC00000,0xD00000));
+        C(x.r.window().event(PipelineEnd,0xC00000,0xD00000)==(fault==0));
+        C(x.filter_created==1);C(x.f.resource_releases==1);
+        C(x.filter_copied==(fault==1?0u:1u));
+        C(x.filter_returned==(fault?0u:Fixture::FilterCopy));
+        C(x.filter_released==(fault==4?1u:0u));
+        if(!fault){C(x.r.lifecycle().state()==LifeState::Live);
+            C(x.r.genesis_filter_loaded(x.r.lifecycle().unit(6),Fixture::FilterSource)==0);
+            C(x.filter_created==1);C(x.f.resource_releases==2);}
+    }
+
     for(u32 kind=0;kind<5;++kind){Fixture x(7);x.detector_setup();const u32 unit=x.r.lifecycle().unit(6);
      constexpr u32 vtables[]={0x04DA8570,0x04DA8594,0x04DA85B8,0x04DA85DC,0x04DA8600};
      constexpr u32 methods[]={0x01C7F35A,0x01C359C1,0x01C392BF,0x01C19CA8,0x01B880C8};

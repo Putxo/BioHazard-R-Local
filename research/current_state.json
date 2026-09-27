@@ -2,10 +2,10 @@
   "schema_version": 4,
   "canonical_branch": "research/script-member-serial-validation",
   "checkpoint": {
-    "merged_pr": 45,
-    "merge_sha": "70796c8cb9927ef19cb46ca5ff2a81d52990fb58",
-    "tested_head": "c63cd62fcbb4d50352bd30d231b0768864ab55f2",
-    "ci": "21 workflows PASS"
+    "merged_pr": 46,
+    "merge_sha": "52a3b9d8ce4459ecbaf9674c9b5cae3f0839c71b",
+    "tested_head": "c787d97969d88e653b2b6f1f9d7f70e2a6099c89",
+    "ci": "20 workflows PASS"
   },
   "user_constraints": {
     "launch_game": false,
@@ -25,7 +25,7 @@
   },
   "runtime": {
     "composition_root": true,
-    "hud_menu_hook_count": 123,
+    "hud_menu_hook_count": 125,
     "local_views_use_native_immediate_draw": true,
     "action_loop_priority_per_member": true,
     "action_loop_stop_per_member": true,
@@ -71,7 +71,9 @@
     "scope_activation_connected": true,
     "genesis_completion_boundary_protected": true,
     "genesis_general_reentrant_destruction_supported": false,
-    "genesis_widget_actor_call_sites": 20
+    "genesis_widget_actor_call_sites": 20,
+    "genesis_private_filter_resource_copy_connected": true,
+    "genesis_auxiliary_effect_view_lifetime_complete": false
   },
   "pending": [
     "full HUD and interaction prompts",
@@ -107,6 +109,7 @@
     "docs/71-scope-widget.md",
     "docs/72-scope-aim-events.md",
     "docs/73-genesis-completion-boundary.md",
-    "docs/74-genesis-state-actor-routing.md"
+    "docs/74-genesis-state-actor-routing.md",
+    "docs/75-genesis-private-filter-resource.md"
   ]
 }
