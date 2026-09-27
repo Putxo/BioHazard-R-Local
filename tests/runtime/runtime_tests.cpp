@@ -38,6 +38,9 @@ struct Fixture {
             if(a==z.mask_read_at){z.mask_read_at=0;
                 if(z.mask_read_fault==1)(void)z.r.source().event(0x0277DC70,z.f.session.sub0.address);
                 if(z.mask_read_fault==2)z.mask_nested=z.r.unit_mask(a-0x40,3);
+                if(z.mask_read_fault==3)(void)z.r.genesis_weapons().event(0x02487426,0xED1000);
+                if(z.mask_read_fault==4){(void)z.r.genesis_weapons().event(0x02487426,0xED1000);(void)z.r.genesis_weapons().event(0x0248731E,0xED1000);}
+                if(z.mask_read_fault==5)z.f.m[0xEC100C]=0xED2000;
             }
             return ok;
         }},[](void* p,u32 a,u32 v) noexcept {
@@ -138,6 +141,7 @@ struct Fixture {
             for(u32 j=0;j<15;++j)f.m[p+4+4*j]=0;
             f.m[p+12]=0xED0000+i*0x1000;
         }
+        f.m[0xED1EC4]=0xED8000;
         f.m[0xED1000]=0x04D38EE4;C(r.genesis_weapons().event(0x0248731E,0xED1000));
         C(r.genesis_weapon_retain(r.lifecycle().unit(6),0xED1000));
         f.m[r.lifecycle().unit(6)+0x2FC]=0xED1000;
@@ -163,6 +167,27 @@ struct Fixture {
     }
 };
 int main(){
+    {Fixture x(7);x.detector_setup();x.equipment_setup();const u32 scanner=x.r.lifecycle().unit(6);
+     const auto before=x.f.m;C(x.r.genesis_weapon_use(scanner,true));C(x.r.genesis_weapon_use(scanner,false));C(x.f.m==before);
+     x.thread=8;C(x.r.genesis_weapon_use(x.f.original[6],true));x.thread=7;
+     C(x.r.genesis_weapon_use(x.f.original[6],true));
+     x.f.m[scanner+0x2FC]=0;C(x.r.genesis_weapon_use(scanner,false));x.end();++scenarios;}
+    for(u32 fault=0;fault<13;++fault){Fixture x(7);x.detector_setup();x.equipment_setup();
+     const u32 scanner=x.r.lifecycle().unit(6);const auto stock=x.f.m[x.f.original[6]+0x2FC];
+     C(x.r.genesis_weapon_use(scanner,true));
+     if(fault==0)C(x.r.genesis_weapons().event(0x02487426,0xED1000));
+     if(fault==1){C(x.r.genesis_weapons().event(0x02487426,0xED1000));C(x.r.genesis_weapons().event(0x0248731E,0xED1000));}
+     if(fault==2)x.f.m[0xEC100C]=0xED2000;
+     if(fault==3)x.f.m[scanner+0x2FC]=0;
+     if(fault==4)x.f.m[0xED1EC4]=0;
+     if(fault==5)x.f.reader_fail=0xED1EC4;
+     if(fault==6)C(x.r.clock().event(PipelineEnd,0xC00000,0xD00000));
+     if(fault==7)x.r.lifecycle().stop();
+     if(fault==8)x.image=false;
+     if(fault>=9){x.mask_read_at=0xED1EC4;x.mask_read_fault=fault==9?1:fault-7;}
+     C(!x.r.genesis_weapon_use(scanner,true));C(!x.r.genesis_weapon_use(scanner,true));
+     C(x.r.lifecycle().state()!=LifeState::Live);C(x.f.m[x.f.original[6]+0x2FC]==stock);++scenarios;}
+
     for(u32 fault=0;fault<4;++fault){Fixture x(7);x.detector_setup();x.equipment_setup();
      const u32 scanner=x.r.lifecycle().unit(6);
      if(fault==0)C(x.r.genesis_weapons().event(0x02487426,0xED1000));

@@ -291,6 +291,25 @@ bool Runtime::genesis_weapon_retain(u32 widget,u32 weapon) noexcept {
     scanner_weapon_key_=key;scanner_weapon_widget_=widget;scanner_weapon_owner_=before.owner;scanner_weapon_ticket_=ticket;
     return true;
 }
+bool Runtime::genesis_weapon_use(u32 widget,bool model_required) noexcept {
+    auto h=target_view_host();
+    if(!h.on_thread(h.context))return true;
+    const auto route=registry_.resolve(widget,WidgetKind::Scanner);
+    if(route.mode==Mode::Stock)return true;
+    rev_genesis::ViewFrame before{},after{};u32 weapon=0,model=0,again=0;
+    // This admission is repeated at each native use, including calls later in
+    // the same phase. It does not pin an allocation through a native callback.
+    const bool ok=route.mode==Mode::Local &&
+        h.resolve(h.context,widget,&before)==Mode::Local &&
+        (!scanner_scope_ || (widget==scanner_scope_ && !scanner_copy_failed_ && scanner_current())) &&
+        scanner_effects(widget,effects_stock_.scanner,false) && scanner_weapon_current(widget) &&
+        word(widget+0x2FC,weapon) &&
+        (!model_required || (weapon && word(weapon+0xEC4,model) && model)) &&
+        scanner_weapon_current(widget) && word(widget+0x2FC,again) && weapon==again &&
+        h.resolve(h.context,widget,&after)==Mode::Local && same_effect_frame(before,after);
+    if(!ok){backend_.quarantine_scanner();scanner_copy_failed_=true;lifecycle_.stop();}
+    return ok;
+}
 bool Runtime::scanner_weapon_current(u32 widget) noexcept {
     u32 retained=0,current=0,again=0;
     if(!widget || widget>Invalid-0x2FF || !word(widget+0x2FC,retained))return false;
@@ -723,4 +742,8 @@ extern "C" unsigned int rev_genesis_effect_draw(unsigned int kind,unsigned int u
 }
 extern "C" unsigned int rev_genesis_weapon_retain(unsigned int widget,unsigned int weapon) noexcept {
     return !rev_runtime::HealSink || rev_runtime::HealSink->genesis_weapon_retain(widget,weapon)?1u:0u;
+}
+
+extern "C" unsigned int rev_genesis_weapon_use(unsigned int widget,unsigned int model_required) noexcept {
+    return !rev_runtime::HealSink || rev_runtime::HealSink->genesis_weapon_use(widget,model_required!=0)?1u:0u;
 }

@@ -160,3 +160,9 @@ jobs:
           as --32 tests/genesis/notification_abi.S -o "$RUNNER_TEMP/notification-abi.o"
           ld -m elf_i386 "$RUNNER_TEMP/notification-gate.o" "$RUNNER_TEMP/notification-abi.o" -o "$RUNNER_TEMP/notification-abi"
           "$RUNNER_TEMP/notification-abi"
+      - name: Repeated retained weapon uses preserve arguments and cleanup
+        run: |
+          as --32 patches/genesis/weapon_use_gateways.S -o "$RUNNER_TEMP/weapon-use-gates.o"
+          as --32 tests/genesis/weapon_use_abi.S -o "$RUNNER_TEMP/weapon-use-abi.o"
+          ld -m elf_i386 "$RUNNER_TEMP/weapon-use-gates.o" "$RUNNER_TEMP/weapon-use-abi.o" -o "$RUNNER_TEMP/weapon-use-abi"
+          "$RUNNER_TEMP/weapon-use-abi"
