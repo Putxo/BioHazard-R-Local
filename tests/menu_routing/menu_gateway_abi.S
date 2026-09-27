@@ -30,10 +30,32 @@ call_actor_gate:
     pop ebp
     ret
 
+.global call_state_gate
+call_state_gate:
+    push ebp
+    mov ebp,esp
+    push dword ptr [ebp+16]
+    push dword ptr [ebp+12]
+    mov ecx,[ebp+8]
+    call rev_menu_gate_state_transition
+    mov esp,ebp
+    pop ebp
+    ret
+
 .global rev_menu_stock_self
 rev_menu_stock_self:
     mov eax,0x33330000
     ret
+
+.global rev_menu_stock_state_transition
+rev_menu_stock_state_transition:
+    mov [seen_state_this],ecx
+    mov eax,[esp+4]
+    mov [seen_state],eax
+    mov eax,[esp+8]
+    mov [seen_flag],eax
+    mov eax,0xC0DEC0DE
+    ret 8
 
 .macro cdecl1 name,value
 .global \name
@@ -57,8 +79,20 @@ rev_menu_submenu_actor:
     add eax,0x10
     ret
 
+.global rev_menu_state_transition
+rev_menu_state_transition:
+    mov eax,[esp+4]
+    mov [seen_observed_state],eax
+    mov eax,0xDEADBEEF
+    mov edx,0xBAADF00D
+    ret
+
 .bss
-.global seen_pad,seen_actor
+.global seen_pad,seen_actor,seen_state_this,seen_state,seen_flag,seen_observed_state
 seen_pad:.skip 4
 seen_actor:.skip 4
+seen_state_this:.skip 4
+seen_state:.skip 4
+seen_flag:.skip 4
+seen_observed_state:.skip 4
 .section .note.GNU-stack,"",@progbits
