@@ -13,6 +13,12 @@ _start:
     call rev_action_draw_gate
     cmp esp,[before]
     jne fail
+    mov ecx,0xABCD5000
+    call rev_action_mask_gate
+    cmp eax,2
+    jne fail
+    cmp esp,[before]
+    jne fail
     cmp dword ptr [seen_icon],0xABCD2000
     jne fail
     cmp dword ptr [seen_context],0xABCD1000
@@ -48,6 +54,21 @@ rev_action_draw:
     xor edx,edx
     ret
 # Synthetic continuation only; no original game code is loaded by this test.
+.global rev_action_stock_mask
+rev_action_stock_mask:
+    cmp ecx,0xABCD5000
+    jne fail
+    xor ecx,ecx
+    mov eax,1
+    ret
+.global rev_action_mask
+rev_action_mask:
+    cmp dword ptr [esp+4],0xABCD5000
+    jne fail
+    cmp dword ptr [esp+8],1
+    jne fail
+    mov eax,2
+    ret
 .global rev_action_draw_continue
 rev_action_draw_continue:
     cmp ecx,0xABCD4000

@@ -30,7 +30,7 @@ vistas, y separar la selección y publicación de comandos por jugador. Conserva
 la propiedad embebida y las rutas de destrucción existentes.
 
 El auditor reproducible `scripts/audit_action_icon.py ORIGINAL.exe` comprueba
-36 testigos contra el original January fijado por SHA. No modifica archivos.
+45 testigos contra el original January fijado por SHA. No modifica archivos.
 
 Otros campos del Cockpit localizados: Damage `+0x3C`, DamageChoke `+0x40`, Heal
 `+0x44`, GadgetScanner `+0x48`, ItemWin `+0x4C`, Scope `+0x54`. Son candidatos

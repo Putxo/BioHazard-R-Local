@@ -12,6 +12,8 @@ struct Calls {
 struct Host {
     Reader memory{};
     bool (*write)(void*,u32,u32) noexcept=nullptr;
+    // Local certifies the single owning thread. Off-thread local calls must
+    // return Unavailable, before the router accesses any mutable state.
     SnapshotMode (*snapshot)(void*,Frame*) noexcept=nullptr;
     Calls calls{};
 };
@@ -23,6 +25,8 @@ public:
     explicit Router(Host h):host_(h){}
     bool ready() const noexcept;
     Result draw(u32 icon,u32 context) noexcept;
+    // Used only by the two audited sUnit draw-list filters, not the global getter.
+    u32 mask(u32 unit,u32 original) noexcept;
     bool faulted() const noexcept {return faulted_;}
 private:
     Host host_;
@@ -35,3 +39,4 @@ private:
 bool bind(Router&) noexcept;
 }
 extern "C" void rev_action_draw(unsigned int icon,unsigned int context) noexcept;
+extern "C" unsigned int rev_action_mask(unsigned int unit,unsigned int original) noexcept;

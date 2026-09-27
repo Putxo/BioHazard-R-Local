@@ -35,15 +35,16 @@ bool Router::manager(u32& out) const noexcept {
         word(out,vt) && vt==ManagerVtable;
 }
 Result Router::draw(u32 icon,u32 context) noexcept {
-    if(!ready() || busy_ || faulted_)return Result::Refused;
-    Busy lock(busy_);
+    if(!ready())return Result::Refused;
     Frame frame{};const auto mode=host_.snapshot(host_.memory.context,&frame);
     if(mode==SnapshotMode::Stock){
-        current_={};manager_=0;claims_[0]=claims_[1]=0;
         host_.calls.draw(host_.calls.context,icon,context);return Result::Stock;
     }
     if(mode!=SnapshotMode::Local || !valid(frame) || !icon || icon>Invalid-0x43 ||
        !context || context>Invalid-0x15B)return Result::Refused;
+    // A Local snapshot certifies the owner thread before mutable router state.
+    if(busy_ || faulted_)return Result::Refused;
+    Busy lock(busy_);
     u32 vt=0,command=0,view=0,owner=0,check=0;
     if(!word(icon,vt) || vt!=IconVtable || !word(icon+0x40,command) ||
        !command || command>Invalid-0x3F || !word(command,vt) || vt!=CommandVtable ||
@@ -77,6 +78,27 @@ Result Router::draw(u32 icon,u32 context) noexcept {
     claims_[view]=now&255u;
     return Result::Drawn;
 }
+u32 Router::mask(u32 unit,u32 original) noexcept {
+    u32 vt=0;
+    if(!word(unit,vt) || vt!=IconVtable)return original;
+    if(!ready())return 0;
+    Frame frame{};const auto mode=host_.snapshot(host_.memory.context,&frame);
+    if(mode==SnapshotMode::Stock)return original;
+    if(mode!=SnapshotMode::Local || !valid(frame))return 0;
+    if(busy_ || faulted_)return 0;
+    Busy lock(busy_);
+    // Preserve explicit hiding and masks restricted to auxiliary views.
+    if(!(original&3))return original;
+    u32 command=0,check=0;
+    if(unit>Invalid-0x43 || !word(unit+0x40,command) || !command ||
+       command>Invalid-0x3F || !word(command,vt) || vt!=CommandVtable)return 0;
+    for(u32 off=0x34;off<=0x3C;off+=4)if(!word(command+off,check))return 0;
+    const u32 member=host_.calls.member(host_.calls.context,command);
+    Frame after{};
+    if(member>1 || host_.snapshot(host_.memory.context,&after)!=SnapshotMode::Local ||
+       !valid(after) || !same(frame,after) || !word(unit+0x40,check) || check!=command)return 0;
+    return (original&~3u)|(1u<<member);
+}
 bool bind(Router& r) noexcept {
     if(sink || !r.ready())return false;
     sink=&r;return true;
@@ -84,4 +106,7 @@ bool bind(Router& r) noexcept {
 }
 extern "C" void rev_action_draw(unsigned int icon,unsigned int context) noexcept {
     if(rev_action::sink)(void)rev_action::sink->draw(icon,context);
+}
+extern "C" unsigned int rev_action_mask(unsigned int unit,unsigned int original) noexcept {
+    return rev_action::sink?rev_action::sink->mask(unit,original):original;
 }

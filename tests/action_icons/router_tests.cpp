@@ -44,6 +44,18 @@ struct Fake {
     Result draw(){return router.draw(I,R);}
 };
 int main(){
+    {Fake f;f.member=1;auto before=f.mem;C(f.router.mask(I,1)==2);C(f.mem==before);C(!f.writes&&!f.draws);++scenarios;}
+    {Fake f;C(f.router.mask(I,2)==1);C(f.router.mask(I,0x103)==0x101);++scenarios;}
+    {Fake f;f.member=1;C(f.router.mask(I,0)==0);C(f.router.mask(I,0x100)==0x100);C(!f.member_calls);++scenarios;}
+    {Fake f;f.mode=SnapshotMode::Stock;f.member=1;C(f.router.mask(I,1)==1);C(!f.member_calls);++scenarios;}
+    {Fake f;f.mode=SnapshotMode::Unavailable;C(f.router.mask(I,1)==0);C(!f.member_calls);++scenarios;}
+    {Fake f;f.frame.session.sub0.think_mode=2;C(f.router.mask(I,1)==0);C(!f.member_calls);++scenarios;}
+    {Fake f;f.mem[I]=0x04DE28CC;C(f.router.mask(I,0x101)==0x101);C(!f.member_calls);++scenarios;}
+    {Fake f;f.member=2;C(f.router.mask(I,1)==0);C(!f.writes);++scenarios;}
+    {Fake f;f.mutate_member=true;C(f.router.mask(I,1)==0);C(!f.writes);++scenarios;}
+    {Fake f;f.mutate_frame=true;C(f.router.mask(I,1)==0);C(!f.writes);++scenarios;}
+    {Fake f;f.mem.erase(Q+0x38);C(f.router.mask(I,1)==0);C(!f.member_calls);++scenarios;}
+    {Fake f;f.fail_write=2;C(f.draw()==Result::RestoreFailed);C(f.router.mask(I,1)==0);++scenarios;}
     {Fake f;f.mode=SnapshotMode::Stock;f.mem.clear();C(f.draw()==Result::Stock);C(f.draws==1);C(!f.member_calls&&!f.writes);++scenarios;}
     {Fake f;C(f.draw()==Result::Drawn);C(f.seen.back()==0);C(f.mem[M+0x174]==0x11223301);
      f.member=1;f.mem[R+0x158]=1;C(f.draw()==Result::Drawn);C(f.seen.back()==0);
@@ -78,7 +90,7 @@ int main(){
     {Fake f;C(f.router.draw(Invalid,R)==Result::Refused);C(f.router.draw(I,Invalid)==Result::Refused);C(!f.draws&&!f.writes);++scenarios;}
     {Fake f;C(f.draw()==Result::Drawn);++f.frame.session.sub0.lifetime;C(f.draw()==Result::Drawn);C(f.seen.back()==0);++scenarios;}
     {Fake f;C(f.draw()==Result::Drawn);f.mode=SnapshotMode::Stock;C(f.draw()==Result::Stock);
-     f.mode=SnapshotMode::Local;C(f.draw()==Result::Drawn);C(f.seen.back()==0);++scenarios;}
+     f.mode=SnapshotMode::Local;++f.frame.session.epoch;C(f.draw()==Result::Drawn);C(f.seen.back()==0);++scenarios;}
     {Router r({});C(!r.ready());C(r.draw(I,R)==Result::Refused);++scenarios;}
     std::printf("Action icons: %d scenarios, %d checks passed\n",scenarios,checks);
 }

@@ -44,6 +44,12 @@ def audit(data):
         (0x01E8CDF5,'8b4df8518b4df883c134','delegate receives command pointer'),
         (0x01E8CE0C,'c78530ffffff00000000','empty member delegate defaults to zero'),
         (0x01E8CE2C,'8be55dc3','member accessor no stack arguments'),
+        (0x01EB6FCF,'ba010000008bc8d3e252','constructor sets a single view bit'),
+        (0x0279D1C6,'8b400cc1e81025ff030000','draw mask getter extracts ten bits'),
+        (0x0326870D,'2345d47459','sUnit immediate draw mask filter'),
+        (0x0326875F,'8b422cffd0','sUnit immediate normal draw slot11'),
+        (0x0326891D,'2345d4744f','sUnit scheduled draw mask filter'),
+        (0x0326895C,'6809e0c701','sUnit scheduled normal draw callback'),
     ):exact(va,bytes.fromhex(h),label)
     for va,target,label in (
         (0x01EB6FA8,0x01C220F6,'construct embedded GUI'),
@@ -54,6 +60,9 @@ def audit(data):
         (0x01EB7753,0x01C10D2E,'show embedded icon'),
         (0x01E8CDE9,0x01BA198D,'test empty member delegate'),
         (0x01E8CDFF,0x01C83FB8,'invoke member delegate'),
+        (0x01EB6FDC,0x01C61814,'constructor draw-mask setter'),
+        (0x03268708,0x01BE2D20,'sUnit immediate mask getter hook'),
+        (0x03268918,0x01BE2D20,'sUnit scheduled mask getter hook'),
     ):branch(va,target,label)
     return {'status':'PASS_STATIC_EVIDENCE_ONLY','checks':len(records),'records':records,
             'action_icon_patched':False,'gameplay_executed':False}

@@ -25,3 +25,17 @@ rev_action_stock_draw:
     jmp rev_action_draw_continue
 .size rev_action_stock_draw,.-rev_action_stock_draw
 .section .note.GNU-stack,"",@progbits
+.text
+.extern rev_action_stock_mask
+.extern rev_action_mask
+.global rev_action_mask_gate
+.type rev_action_mask_gate,@function
+rev_action_mask_gate:
+    push ecx
+    call rev_action_stock_mask
+    push eax
+    push dword ptr [esp+4]
+    call rev_action_mask
+    add esp,12
+    ret
+.size rev_action_mask_gate,.-rev_action_mask_gate
