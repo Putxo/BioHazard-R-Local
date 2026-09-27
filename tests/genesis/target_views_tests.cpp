@@ -14,7 +14,8 @@ struct Fixture {
     TargetKey key{};ViewSample sample{{0x3F800000,0xC0000000,0},3};
     TargetLifetime life{{{this,[](void* p,u32 a,u32* out) noexcept {
         auto& f=*static_cast<Fixture*>(p);auto it=f.memory.find(a);
-        if(it==f.memory.end())return false;*out=it->second;return true;
+        if(it==f.memory.end())return false;
+        *out=it->second;return true;
     }},[](void* p) noexcept {return static_cast<Fixture*>(p)->thread;}}};
     TargetViews views{life,{this,[](void* p) noexcept {return static_cast<Fixture*>(p)->thread==7;},
         [](void* p,u32 w,ViewFrame* out) noexcept {

@@ -62,7 +62,8 @@ Mode TargetViews::publish(u32 widget,TargetKey key,const ViewSample& sample) noe
 Mode TargetViews::read(u32 widget,TargetKey key,ViewSample* out) noexcept {
     if(!host_.resolve)return Mode::Stock;
     if(!host_.on_thread || !host_.on_thread(host_.context) || busy_){
-        if(out)*out={};return Mode::Hidden;
+        if(out)*out={};
+        return Mode::Hidden;
     }
     Busy lock(busy_);
     ViewFrame f{};const auto mode=host_.resolve(host_.context,widget,&f);
