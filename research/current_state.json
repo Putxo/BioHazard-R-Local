@@ -2,8 +2,8 @@
   "schema_version": 4,
   "canonical_branch": "research/script-member-serial-validation",
   "checkpoint": {
-    "merged_pr": 25,
-    "merge_sha": "6a7144f513f93b9128af7606c45a016973cf833d",
+    "merged_pr": 26,
+    "merge_sha": "c1b2d1b0d64f95633e81780819c70829aa2fa35d",
     "ci": "19 workflows PASS"
   },
   "user_constraints": {
@@ -47,6 +47,7 @@
   "documents": [
     "docs/50-runtime-composition.md",
     "docs/51-runtime-installer.md",
-    "docs/52-subweapon-hud.md"
+    "docs/52-subweapon-hud.md",
+    "docs/53-action-icon-findings.md"
   ]
 }

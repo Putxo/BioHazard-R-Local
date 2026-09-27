@@ -1,7 +1,7 @@
 # Estado actual del cooperativo local
 
 27/09/2026. Rama técnica: `research/script-member-serial-validation`.
-PR25 integrado: `6a7144f513f93b9128af7606c45a016973cf833d`, 19 workflows PASS.
+PR26 integrado: `c1b2d1b0d64f95633e81780819c70829aa2fa35d`, 19 workflows PASS.
 
 **El cooperativo completo sigue en desarrollo. El juego no se ha ejecutado.**
 El propietario prohíbe abrirlo y hará personalmente las pruebas jugando.
@@ -48,3 +48,6 @@ Detalle: [runtime](docs/50-runtime-composition.md), [instalador](docs/51-runtime
 
 
 Panel de subarmas y rollback de máscaras: [detalle](docs/52-subweapon-hud.md).
+
+
+Icono de interacción: [productor y arbitraje pendientes](docs/53-action-icon-findings.md).
