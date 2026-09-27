@@ -33,11 +33,11 @@ hook_candidate:
  jz .candidate_done
  mov byte ptr [ebp-0x35],1
 .candidate_done:
- jmp 0x02590429
+ jmp continue_candidate_done
 .stock_candidate:
  mov eax,dword ptr [ebp-0x50]
  mov edx,dword ptr [eax]
- jmp 0x025903F3
+ jmp continue_stock_candidate
 hook_availability:
  push dword ptr [esp+4]
  push ecx
@@ -60,7 +60,7 @@ hook_door_init:
  push dword ptr [ebp+16]
  push dword ptr [ebp+12]
  push dword ptr [ebp+8]
- call 0x01C3C5F0
+ call api_door_init
  push eax
  push ebx
  call lc_reset_owner
@@ -83,10 +83,10 @@ hook_bind_clear:
  mov dword ptr [lc_active],0
  mov dword ptr [lc_sub0],0
 .clear_done:
- jmp 0x02DF4FAE
+ jmp continue_bind_clear
 hook_bind_actor:
  mov ecx,eax
- call 0x01BEE332
+ call api_unwrap_actor
  mov ecx,dword ptr [ebp-8]
  mov dword ptr [ecx+0x44],eax
  cmp dword ptr [ecx],0x04E1649C
@@ -111,17 +111,17 @@ hook_bind_actor:
  pop eax
  push 1
  mov ecx,eax
- call 0x01BB8B60
+ call api_set_think_mode
 .activate:
  mov dword ptr [lc_active],1
- call 0x01C9504C
+ call api_ensure_split
 .bind_done:
- jmp 0x02DF5022
+ jmp continue_bind_actor
 # cVitalControl eligibility/member callbacks use the opposite local actor.
 .global hook_rescue_control,hook_rescue_partner,hook_rescue_self,hook_charge_group
 hook_rescue_control:
  push dword ptr [esp+4]
- call 0x01C2C7F4
+ call api_self_predicate
  push eax
  push dword ptr [ebp-8]
  call lc_rescue_control
@@ -129,7 +129,7 @@ hook_rescue_control:
  ret 4
 hook_rescue_partner:
  push dword ptr [esp+4]
- call 0x01BCA0C2
+ call api_partner_predicate
  push eax
  push dword ptr [ebp-8]
  call lc_rescue_other
@@ -137,7 +137,7 @@ hook_rescue_partner:
  ret 4
 hook_rescue_self:
  push dword ptr [esp+4]
- call 0x01C2C7F4
+ call api_self_predicate
  push eax
  push dword ptr [ebp-8]
  call lc_rescue_other

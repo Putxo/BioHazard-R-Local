@@ -41,6 +41,12 @@ def build(out,clang='clang',linker='ld.lld'):
     target=out/'runtime.elf'
     subprocess.run([linker,'-m','elf_i386','--no-undefined','--fatal-warnings',
         '-T','patches/runtime/link.ld','-o',str(target),*objects],check=True,cwd=ROOT)
+    from runtime_image import read_module,hook_sites
+    sections,symbols=read_module(target.read_bytes())
+    va,text=sections['.revtext']
+    for name in ['rev_runtime_entry',*(s[2] for s in hook_sites())]:
+        if not va<=symbols.get(name,0)<va+len(text):
+            raise ValueError('gateway missing from executable section: '+name)
     report={'format':'rev-runtime-build-v1','gameplay_executed':False,
             'source_sha256':hashes,'elf_sha256':hashlib.sha256(target.read_bytes()).hexdigest(),
             'compiler':subprocess.check_output([clang,'--version'],text=True).splitlines()[0],

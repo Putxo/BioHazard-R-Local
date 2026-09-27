@@ -16,6 +16,11 @@ from build_local_routing import PE, sha, pe_checksum
 
 BASE_SHA = '0c019d43b92c0092fa458abcf7e2990f8783895eb2bd8181f6e9f130b697d378'
 BASE_SIZE = 60_755_456
+BASE_PROFILES = {
+    BASE_SHA: 'published GNU build',
+    '118c06695e4a4cea8fffcc9ae5e9c8b7f4621a608f436d730d1ea4851b2b2d34':
+        'LLVM 22.1.8 ELF32; rebuilt from exact owner-corrected v14',
+}
 HELPER_VA = 0x01C95340
 ENTRY_VAS = (0x02976C30, 0x029FF600)
 HELPER = bytes.fromhex(
@@ -30,7 +35,7 @@ STOCK_BODY = bytes.fromhex(
 )
 
 def build(base: bytes) -> tuple[bytes, dict]:
-    if len(base) != BASE_SIZE or sha(base) != BASE_SHA:
+    if len(base) != BASE_SIZE or sha(base) not in BASE_PROFILES:
         raise ValueError('requires exact LOCAL ROUTING EXPERIMENTAL input')
     pe = PE(base)
     if (pe.base, pe.count) != (0x400000, 10):
@@ -71,7 +76,8 @@ def build(base: bytes) -> tuple[bytes, dict]:
         restored[c['offset']:c['offset']+c['size']] = bytes.fromhex(c['old'])
     if bytes(restored) != base:
         raise ValueError('exact reversibility failed')
-    report = dict(status='EXPERIMENTAL_COMPONENT_VALIDATION_ONLY',base_sha256=BASE_SHA,
+    report = dict(status='EXPERIMENTAL_COMPONENT_VALIDATION_ONLY',base_sha256=sha(base),
+        base_profile=BASE_PROFILES[sha(base)],
         output_sha256=sha(output),file_size=len(output),helper_va=HELPER_VA,
         helper_sha256=HELPER_SHA,helper_size=len(HELPER),changes=changes,
         changed_bytes=sum(c['changed'] for c in changes),layout_preserved=True,

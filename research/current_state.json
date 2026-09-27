@@ -1,103 +1,50 @@
 {
-  "schema_version": 3,
+  "schema_version": 4,
   "canonical_branch": "research/script-member-serial-validation",
   "checkpoint": {
-    "merged_pr": 19,
-    "merge_sha": "b0900736d9e44a04a47f9804b75059f007dd12fd",
-    "ci": "15 workflows PASS"
+    "merged_pr": 24,
+    "merge_sha": "7f1f3029ea2d63dac8527834eac51c4496381ac3",
+    "ci": "19 workflows PASS"
+  },
+  "user_constraints": {
+    "launch_game": false,
+    "gameplay_validation": "owner",
+    "publish_progress": true
   },
   "delivery": {
-    "source_only": true,
-    "generate_exe": false,
-    "gameplay_validated": false
+    "complete_local_coop": false,
+    "gameplay_validated": false,
+    "local_build_copy": true,
+    "installed_in_steam": false,
+    "proprietary_uploads": false
   },
   "source_build": {
-    "name": "BioRevHD 30-Enero-2013(1).exe",
-    "sha256": "9124bb92d6c54a047ade47dacc8429221b18f9910b504f0e87718d5151013f69",
-    "policy": "local read-only analysis"
+    "name": "BioRevHD 30-Enero-2013.exe",
+    "sha256": "9124bb92d6c54a047ade47dacc8429221b18f9910b504f0e87718d5151013f69"
   },
-  "menu_owner": {
-    "component": "patches/menu_routing/MenuOwnerRouter",
-    "owner_values": {
-      "0": "J1/Self",
-      "1": "J2/Sub0"
-    },
-    "sites": [
-      "0x01F3EF43",
-      "0x01F3EF92",
-      "0x02B6A491",
-      "0x02B6A49E",
-      "0x02B6DE91",
-      "0x02B6EFDE"
+  "runtime": {
+    "composition_root": true,
+    "hud_menu_hook_count": 35,
+    "hud_widgets": [
+      "Reticle",
+      "MainEquipment",
+      "MapHerb"
     ],
-    "behavior": [
-      "P1 priority",
-      "J2 requires exact Sub0 Pad serial 0..127",
-      "SubMenu owner1 uses Pad1",
-      "SubMenu owner1 resolves exact Sub0",
-      "Self and mStartPadNo globals unchanged"
-    ]
+    "single_pause": true,
+    "menu_owner_pad1": true,
+    "menu_owner_lifetime": true
   },
-  "pause": {
-    "global_owner": "sIDCockpit",
-    "state_machine": "0x02CDD180",
-    "states": {
-      "2": "Cockpit/MiniMap",
-      "3": "GameOver",
-      "5": "PauseHD",
-      "8": "uSubMenuManager"
-    },
-    "start_end_flags": [
-      "+0x40",
-      "+0x41"
-    ],
-    "rule": "single global pause",
-    "current_gap": "Pause owner1 navigation/options/confirm/cancel Pad1"
-  },
-  "hud_source": {
-    "chain": [
-      "LifetimeSource",
-      "StructuralWindow",
-      "AllocationLedger/JanuaryAdmission",
-      "StructuralCoordinator",
-      "Lifecycle",
-      "BeginActivator",
-      "ManagerDriver",
-      "NativeViewScope",
-      "P2 clones"
-    ],
-    "p1_mask": true,
-    "split_views": [
-      "VIEW_0 TOP",
-      "VIEW_1 BOTTOM"
-    ]
-  },
-  "implemented_summary": [
-    "Pad1/Sub0 local routing",
-    "split/cameras",
-    "P2 HUD source lifecycle",
-    "Sub0 cBioItemPack/pickup",
-    "ammo relief",
-    "audited door routing",
-    "partial rescue",
-    "PcsSub owner+serial guards",
-    "MenuOwnerRouter PR19"
-  ],
-  "pending_order": [
-    "Pause owner1 navigation/options",
-    "owner close/lifetime and state6/7 audit",
-    "Genesis/remaining actions",
-    "scheduler/QTE",
+  "pending": [
+    "full HUD and interaction prompts",
+    "Genesis and remaining actions",
+    "QTE/scripts",
     "death/revive/checkpoints",
     "cutscenes/forced cameras",
     "partnerless scenes",
-    "runtime installation/full campaign validation"
+    "owner gameplay validation"
   ],
-  "do_not_repeat": [
-    "do not replace global Self",
-    "do not set global mStartPadNo=1",
-    "do not duplicate PauseHD",
-    "do not restart pickup/HUD/door base work",
-    "do not generate EXE"
+  "documents": [
+    "docs/50-runtime-composition.md",
+    "docs/51-runtime-installer.md"
   ]
 }

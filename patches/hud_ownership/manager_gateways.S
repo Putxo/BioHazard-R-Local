@@ -64,7 +64,6 @@ manager_gateway cockpit11, 0x02B49DE3, 0, 1
 manager_gateway minimap8,  0x02B6847B, 1, 0
 manager_gateway minimap9,  0x02B685B3, 1, 0
 manager_gateway minimap11, 0x02B68724, 1, 1
-.section .note.GNU-stack,"",@progbits
 
 
 # Restore the temporary P1-only mDrawView scope after each stock draw loop.
@@ -108,3 +107,4 @@ rev_hud_mask_exit_\name:
 .endm
 p1_mask_exit cockpit11, 0x02B49E5C, 0
 p1_mask_exit minimap11, 0x02B687F0, 1
+.section .note.GNU-stack,"",@progbits

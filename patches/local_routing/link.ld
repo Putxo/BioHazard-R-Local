@@ -1,5 +1,15 @@
 OUTPUT_FORMAT(elf32-i386)
 ENTRY(hook_begin)
+continue_candidate_done = 0x02590429;
+continue_stock_candidate = 0x025903F3;
+api_door_init = 0x01C3C5F0;
+continue_bind_clear = 0x02DF4FAE;
+api_unwrap_actor = 0x01BEE332;
+api_set_think_mode = 0x01BB8B60;
+api_ensure_split = 0x01C9504C;
+continue_bind_actor = 0x02DF5022;
+api_self_predicate = 0x01C2C7F4;
+api_partner_predicate = 0x01BCA0C2;
 lc_active = 0x057D9188;
 lc_sub0 = 0x057D9184;
 api_self = 0x01C16468;
