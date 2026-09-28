@@ -24,6 +24,8 @@ jobs:
           "$RUNNER_TEMP/draw-schedule-tests"
           g++ $FLAGS patches/runtime/draw_schedule.cpp tests/runtime/hunter_cache_tests.cpp -o "$RUNNER_TEMP/hunter-cache-tests"
           "$RUNNER_TEMP/hunter-cache-tests"
+          g++ $FLAGS -Ipatches/genesis patches/genesis/hunter_materials.cpp tests/genesis/hunter_materials_tests.cpp -o "$RUNNER_TEMP/hunter-material-tests"
+          "$RUNNER_TEMP/hunter-material-tests"
       - name: Heal visual notification queue
         run: |
           g++ -std=c++17 -Wall -Wextra -Werror -Ipatches/hud_ownership patches/hud_ownership/heal_queue.cpp tests/hud_ownership/heal_queue_tests.cpp -o "$RUNNER_TEMP/heal-queue"
@@ -42,6 +44,11 @@ jobs:
           as --32 tests/genesis/hunter_cache_abi.S -o "$RUNNER_TEMP/hunter-cache-test.o"
           ld -m elf_i386 -o "$RUNNER_TEMP/hunter-cache-abi" "$RUNNER_TEMP/hunter-cache.o" "$RUNNER_TEMP/hunter-cache-test.o"
           "$RUNNER_TEMP/hunter-cache-abi"
+          g++ -m32 -std=c++17 -O2 -Wall -Wextra -Werror -ffreestanding -fno-exceptions -fno-rtti -fno-stack-protector -fno-pie -c tests/genesis/hunter_material_gateway_abi.cpp -o "$RUNNER_TEMP/hunter-material-test.o"
+          as --32 patches/genesis/hunter_material_gateway.S -o "$RUNNER_TEMP/hunter-material.o"
+          as --32 tests/genesis/hunter_material_gateway_abi.S -o "$RUNNER_TEMP/hunter-material-abi.o"
+          ld -m elf_i386 -o "$RUNNER_TEMP/hunter-material-abi" "$RUNNER_TEMP/hunter-material.o" "$RUNNER_TEMP/hunter-material-test.o" "$RUNNER_TEMP/hunter-material-abi.o"
+          "$RUNNER_TEMP/hunter-material-abi"
       - name: Lifetime regression
         run: |
           g++ -std=c++17 -Wall -Wextra -Werror -Ipatches/hud_ownership patches/hud_ownership/{ownership,lifetime_source}.cpp tests/hud_ownership/lifetime_source_tests.cpp -o "$RUNNER_TEMP/lifetime-tests"
@@ -56,4 +63,6 @@ jobs:
         run: python tools/build_runtime.py "$RUNNER_TEMP/runtime-module"
       - name: Reject missing or discarded hooks and invalid images
         run: REV_RUNTIME_ELF="$RUNNER_TEMP/runtime-module/runtime.elf" python tests/runtime/test_runtime_image.py
+      - name: Validate Hunter material audit harness
+        run: python tests/genesis/test_hunter_materials_audit.py
 

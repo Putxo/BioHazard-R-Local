@@ -13,6 +13,7 @@
 #include "../genesis/effect_lifetime.hpp"
 #include "../genesis/weapon_lifetime.hpp"
 #include "../genesis/effects.hpp"
+#include "../genesis/hunter_materials.hpp"
 #include "../genesis/target_views.hpp"
 #include "../hud_ownership/heal_queue.hpp"
 
@@ -81,6 +82,8 @@ public:
     u32 unit_mask(u32 unit,u32 original) noexcept;
     bool unit_draw_enabled(u32 unit,bool original) noexcept;
     bool effect_draw(u32 kind,u32 unit,u32 context) noexcept;
+    void hunter_material_begin(u32 hunter,u32 context) noexcept;
+    void hunter_material_end() noexcept;
     Mode genesis_camera(u32 widget,u32 manager,u32* out) noexcept {
         return rev_genesis::camera(genesis_host(),host_.memory,widget,manager,out);
     }
@@ -127,6 +130,9 @@ private:
     bool scanner_weapon_current(u32 widget) noexcept;
     bool color_policy(u32 unit,u32& views,bool& draw_override) noexcept;
     bool color_policy_busy_=false;
+    rev_genesis::HunterMaterials hunter_materials_;
+    rev_genesis::ViewFrame hunter_material_frame_{};
+    u32 hunter_material_context_=0,hunter_material_flags_=0;
     Mode scanner_sample(u32 target,rev_genesis::ViewSample*) noexcept;
     rev_genesis::ProgressHost genesis_host() noexcept;
     const u32 count_;

@@ -79,3 +79,5 @@ rev_genesis_weapon_activate_end = 0x02B21097;
 rev_genesis_effect_toggle_resume = 0x02B23129;
 rev_genesis_color_draw_enabled_stock = 0x01C42635;
 rev_genesis_hunter_cache_stock = 0x01BE0142;
+rev_genesis_hunter_material_bind_stock = 0x01C3B12D;
+rev_genesis_hunter_material_unbind_stock = 0x01B9E855;

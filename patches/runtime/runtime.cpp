@@ -139,6 +139,68 @@ bool Runtime::color_policy(u32 unit,u32& views,bool& draw_override) noexcept {
         (flags&0x4C00u)==0x4400u && ((flags>>16)&2u)!=0;
     return true;
 }
+void Runtime::hunter_material_begin(u32 hunter,u32 context) noexcept {
+    auto h=target_view_host();
+    if(!h.on_thread(h.context) || !host_.write || !hunter || !context || context>Invalid-0x158u)return;
+    const rev_genesis::MaterialAccess access{host_.memory.context,host_.memory.word,host_.write};
+    const u32 scanner=effects_owned_.scanner;
+    if(hunter_materials_.active()){
+        rev_genesis::ViewFrame now{};u32 local=0;
+        const bool stable=hunter==hunter_materials_.hunter() && context==hunter_material_context_ &&
+            effects_owned_.units[0].address && effects_owned_.units[0].address<=Invalid-12 &&
+            h.resolve(h.context,scanner,&now)==Mode::Local &&
+            same_effect_frame(now,hunter_material_frame_) &&
+            word(effects_owned_.units[0].address+12,local) && local==hunter_material_flags_;
+        if(stable)return;
+        (void)hunter_materials_.end(access);
+        hunter_material_context_=hunter_material_flags_=0;hunter_material_frame_={};
+        backend_.quarantine_scanner();lifecycle_.stop();
+        return;
+    }
+    u32 hvt=0,cvt=0,view=0;
+    if(!word(hunter,hvt) || hvt!=0x04D09FBC || !word(context,cvt) || cvt!=0x04F79014 ||
+       !word(context+0x158,view) || (view&255u)!=1u)return;
+    rev_genesis::ViewFrame before{},after{};u32 local=0;
+    if(!scanner || !effects_owned_.units[0].address ||
+       effects_owned_.units[0].address>Invalid-12 ||
+       h.resolve(h.context,scanner,&before)!=Mode::Local ||
+       !scanner_effects(scanner,effects_stock_.scanner,false) ||
+       !word(effects_owned_.units[0].address+12,local)){
+        backend_.quarantine_scanner();lifecycle_.stop();return;
+    }
+    const bool p2=(local&0x4C00u)==0x4C00u;
+    if(hunter_materials_.begin(access,hunter,p2)!=rev_genesis::MaterialResult::Applied){
+        backend_.quarantine_scanner();lifecycle_.stop();return;
+    }
+    u32 again=0;
+    const bool stable=word(hunter,again) && again==hvt &&
+        word(context,again) && again==cvt &&
+        word(context+0x158,again) && again==view &&
+        scanner_effects(scanner,effects_stock_.scanner,false) &&
+        word(effects_owned_.units[0].address+12,again) && again==local &&
+        h.resolve(h.context,scanner,&after)==Mode::Local && same_effect_frame(before,after);
+    if(!stable){
+        (void)hunter_materials_.end(access);
+        backend_.quarantine_scanner();lifecycle_.stop();return;
+    }
+    hunter_material_context_=context;hunter_material_flags_=local;hunter_material_frame_=before;
+}
+void Runtime::hunter_material_end() noexcept {
+    if(!hunter_materials_.active())return;
+    auto h=target_view_host();
+    const rev_genesis::MaterialAccess access{host_.memory.context,host_.memory.word,host_.write};
+    rev_genesis::ViewFrame now{};u32 local=0;const u32 scanner=effects_owned_.scanner;
+    const bool stable=h.on_thread(h.context) && scanner &&
+        effects_owned_.units[0].address && effects_owned_.units[0].address<=Invalid-12 &&
+        h.resolve(h.context,scanner,&now)==Mode::Local &&
+        same_effect_frame(now,hunter_material_frame_) &&
+        word(effects_owned_.units[0].address+12,local) && local==hunter_material_flags_;
+    const auto result=hunter_materials_.end(access);
+    hunter_material_context_=hunter_material_flags_=0;hunter_material_frame_={};
+    if(!stable || result!=rev_genesis::MaterialResult::Applied){
+        backend_.quarantine_scanner();lifecycle_.stop();
+    }
+}
 bool Runtime::unit_draw_enabled(u32 unit,bool original) noexcept {
     if(original)return true;
     u32 views=0;bool draw_override=false;
@@ -810,4 +872,10 @@ extern "C" unsigned int rev_genesis_effect_toggle(unsigned int widget,unsigned i
 
 extern "C" unsigned int rev_runtime_unit_draw_enabled(unsigned int unit,unsigned int original) noexcept {
     return rev_runtime::HealSink?static_cast<unsigned int>(rev_runtime::HealSink->unit_draw_enabled(unit,original!=0)):(original?1u:0u);
+}
+extern "C" void rev_runtime_hunter_material_begin(unsigned int hunter,unsigned int context) noexcept {
+    if(rev_runtime::HealSink)rev_runtime::HealSink->hunter_material_begin(hunter,context);
+}
+extern "C" void rev_runtime_hunter_material_end() noexcept {
+    if(rev_runtime::HealSink)rev_runtime::HealSink->hunter_material_end();
 }
