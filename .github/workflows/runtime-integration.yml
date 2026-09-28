@@ -24,7 +24,7 @@ jobs:
           "$RUNNER_TEMP/draw-schedule-tests"
           g++ $FLAGS patches/runtime/draw_schedule.cpp tests/runtime/hunter_cache_tests.cpp -o "$RUNNER_TEMP/hunter-cache-tests"
           "$RUNNER_TEMP/hunter-cache-tests"
-          g++ $FLAGS patches/genesis/hunter_materials.cpp tests/genesis/hunter_materials_tests.cpp -o "$RUNNER_TEMP/hunter-material-tests"
+          g++ $FLAGS -Ipatches/genesis patches/genesis/hunter_materials.cpp tests/genesis/hunter_materials_tests.cpp -o "$RUNNER_TEMP/hunter-material-tests"
           "$RUNNER_TEMP/hunter-material-tests"
       - name: Heal visual notification queue
         run: |
