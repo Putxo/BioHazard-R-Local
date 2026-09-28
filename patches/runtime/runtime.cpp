@@ -873,7 +873,6 @@ extern "C" unsigned int rev_genesis_effect_toggle(unsigned int widget,unsigned i
 extern "C" unsigned int rev_runtime_unit_draw_enabled(unsigned int unit,unsigned int original) noexcept {
     return rev_runtime::HealSink?static_cast<unsigned int>(rev_runtime::HealSink->unit_draw_enabled(unit,original!=0)):(original?1u:0u);
 }
-
 extern "C" void rev_runtime_hunter_material_begin(unsigned int hunter,unsigned int context) noexcept {
     if(rev_runtime::HealSink)rev_runtime::HealSink->hunter_material_begin(hunter,context);
 }
