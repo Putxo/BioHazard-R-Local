@@ -94,7 +94,9 @@ hook_bind_actor:
  mov dword ptr [lc_sub0],eax
  test eax,eax
  jz .bind_done
- cmp dword ptr [eax+0xE40],2
+ # January uPlayer ThinkMode: 1=Pad, 2=Network, 3=Cpu.
+ # Only the offline CPU partner may become local Pad; never hijack Network.
+ cmp dword ptr [eax+0xE40],3
  je .convert_cpu
  cmp dword ptr [eax+0xE40],1
  jne .bind_done

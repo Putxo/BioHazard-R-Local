@@ -1,7 +1,8 @@
 # Estado actual del cooperativo local
 
-27/09/2026. Rama técnica: `research/script-member-serial-validation`.
-PR57 integrado: `770d79aa8adca7701af3dd32747c5a73c2e55934`, 20 workflows PASS.
+29/09/2026. Rama técnica: `research/script-member-serial-validation`.
+PR59 integrado: `1e335fcf8ccfdb1917c02acafdf8d97be0e1044c`, 20 workflows PASS.
+Corrección de input Sub0 en rama `research/fix-sub0-cpu3-pad1`: gameplay real reveló que el hook trataba Network(2) como Cpu; ahora exige Cpu(3) -> Pad(1).
 
 **El cooperativo completo sigue en desarrollo. El juego no se ha ejecutado.**
 El propietario prohíbe abrirlo y hará personalmente las pruebas jugando.
@@ -10,7 +11,7 @@ El propietario prohíbe abrirlo y hará personalmente las pruebas jugando.
 
 | Área | Alcance real |
 |---|---|
-| Input | Sub0 exacto usa Pad1; conversión Cpu -> Pad; Network preservado; acciones específicas aún en auditoría |
+| Input | **Corrección nueva pendiente de retest gameplay:** Sub0 exacto usa Pad1; Cpu(3) -> Pad(1); Network(2) preservado. El candidato PR59 probado por el propietario dejó J2 en IA por la comparación histórica errónea con 2. |
 | Cámaras | View0 TOP y View1 BOTTOM, targets separados; cutscenes pendientes |
 | Inventario | Pack gameplay propio; menú global muestra Sub0 con owner J2 |
 | Pausa | Una pausa global; abrir/navegar/confirmar/cancelar por owner; lifetime y nested 6/7 implementados |
@@ -113,3 +114,6 @@ Genesis: [encendido privado de efectos sin escrituras globales de J2](docs/84-ge
 Genesis: [corrección de color por vista y admisión de dibujo](docs/85-genesis-color-per-view.md).
 
 Genesis: [dibujo Hunter sin reutilizar la caché entre vistas locales](docs/86-genesis-hunter-draw-cache.md).
+
+
+Corrección gameplay de input: [Cpu(3) -> Pad(1)](docs/88-sub0-cpu3-pad1-runtime-correction.md).

@@ -160,9 +160,9 @@ def tests(pe,symbols):
         sp,stop=c.run(hook);check(c.r['esp']==sp+4);check(c.r['eax']==command);cases+=1
     # Full clear/rebind bridge pair. No game code runs: conversion/ensure are stubs.
     for subtype,mode,prior_active,old_tracker,old_bound,new_actor,expected in [
-        (True,2,0,0,0,0x6000,1), (True,1,1,0x6000,0x6000,0x6000,1),
+        (True,3,0,0,0,0x6000,1), (True,1,1,0x6000,0x6000,0x6000,1),
         (True,1,0,0x6000,0x6000,0x6000,0), (True,1,1,0x7000,0x6000,0x6000,0),
-        (True,1,1,0x6000,0x7000,0x6000,0), (True,3,1,0x6000,0x6000,0x6000,0),
+        (True,1,1,0x6000,0x7000,0x6000,0), (True,2,1,0x6000,0x6000,0x6000,0),
         (True,0,1,0x6000,0x6000,0x6000,0), (True,0,1,0x6000,0x6000,0,0),
         (False,1,1,0x7000,0x7000,0x6000,1)]:
         c=fresh();owner=0x5000;c.write(owner,0x04E1649C if subtype else 0x04E1642C);c.write(owner+0x44,old_bound)
@@ -183,7 +183,7 @@ def tests(pe,symbols):
         check(c.read(owner+0x44)==new_actor);check(c.read(ACTIVE)==expected)
         check(c.read(SUB)==(new_actor if subtype else old_tracker))
         conversions=sum(a==0x01BB8B60 for a,_ in c.calls)
-        check(conversions==int(subtype and mode==2 and bool(new_actor)))
+        check(conversions==int(subtype and mode==3 and bool(new_actor)))
         cameras=sum(a==0x01C9504C for a,_ in c.calls)
         check(cameras==int(subtype and bool(expected)))
         cases+=1

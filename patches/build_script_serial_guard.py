@@ -17,9 +17,11 @@ from build_local_routing import PE, sha, pe_checksum
 BASE_SHA = '0c019d43b92c0092fa458abcf7e2990f8783895eb2bd8181f6e9f130b697d378'
 BASE_SIZE = 60_755_456
 BASE_PROFILES = {
-    BASE_SHA: 'published GNU build',
+    BASE_SHA: 'published GNU build with historical Cpu/Network enum mistake',
+    'da2d48b79366874155fdf2a115217bbdfac0263a4c59f392fc5416d68adda04f':
+        'corrected GNU build: Sub0 Cpu(3) -> Pad(1), Network(2) preserved',
     '118c06695e4a4cea8fffcc9ae5e9c8b7f4621a608f436d730d1ea4851b2b2d34':
-        'LLVM 22.1.8 ELF32; rebuilt from exact owner-corrected v14',
+        'LLVM 22.1.8 ELF32; historical Cpu/Network enum mistake',
 }
 HELPER_VA = 0x01C95340
 ENTRY_VAS = (0x02976C30, 0x029FF600)
