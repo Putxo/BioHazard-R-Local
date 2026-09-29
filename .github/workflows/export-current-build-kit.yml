@@ -1,0 +1,32 @@
+name: Export current build kit
+on:
+  push:
+    branches: [research/export-current-build-kit]
+permissions:
+  contents: read
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Install LLVM linker
+        run: sudo apt-get update && sudo apt-get install -y clang lld
+      - name: Build current runtime module
+        run: python tools/build_runtime.py "$RUNNER_TEMP/runtime-module"
+      - name: Assemble source build kit
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/kit"
+          cp "$RUNNER_TEMP/runtime-module/runtime.elf" "$RUNNER_TEMP/kit/runtime.elf"
+          cp "$RUNNER_TEMP/runtime-module/build.json" "$RUNNER_TEMP/kit/runtime-build.json"
+          cp -a tools patches scripts research "$RUNNER_TEMP/kit/"
+          git rev-parse HEAD > "$RUNNER_TEMP/kit/HEAD.txt"
+          tar -C "$RUNNER_TEMP/kit" -czf "$RUNNER_TEMP/BioHazard-R-Local-build-kit.tar.gz" .
+      - name: Upload build kit
+        uses: actions/upload-artifact@v4
+        with:
+          name: BioHazard-R-Local-build-kit
+          path: ${{ runner.temp }}/BioHazard-R-Local-build-kit.tar.gz
+          if-no-files-found: error
+          retention-days: 1
