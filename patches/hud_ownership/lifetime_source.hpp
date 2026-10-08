@@ -74,6 +74,7 @@ private:
     bool bind_end(u32 pcs);
     bool pcs_dying(u32 pcs);
     bool actor(Token, Actor&, u32& vtable, u32 revision);
+    bool local_pair(u32 sub,u32 revision);
 };
 // Bind once while no hook is reachable; no hot swap or concurrent teardown.
 bool bind_lifetime_sink(LifetimeSource&);

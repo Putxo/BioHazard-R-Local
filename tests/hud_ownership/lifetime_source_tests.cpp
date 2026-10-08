@@ -73,6 +73,49 @@ struct Fixture {
     void unchanged(LifeSnapshot& s) {s.revision=0xDEAD;CHECK(!source.capture(&s));CHECK(s.revision==0xDEAD);}
 };
 int main(){
+    // Native Invalid0 is suspension, not loss of a previously observed pair.
+    for(u32 p1:{0u,1u})for(u32 p2:{0u,1u})for(bool nested:{false,true}){
+        Fixture f;f.births();f.bind(MAIN);f.bind(SUB);const u32 epoch=f.source.epoch();
+        f.mem[PL+0xE40]=p1;f.mem[NP+0xE40]=p2;const auto before=f.mem;
+        if(nested){CHECK(f.source.event(BEGIN,MAIN));CHECK(f.source.event(BEGIN,SUB));
+            CHECK(f.source.event(END,SUB));CHECK(f.source.event(END,MAIN));}
+        else {f.bind(MAIN);f.bind(SUB);}
+        CHECK(f.source.epoch()==epoch);CHECK(f.source.local_think_mode(NP,3)==1);
+        CHECK(f.source.local_think_mode(NP,0)==0);CHECK(f.mem==before);
+        f.mem[PL+0xE40]=f.mem[NP+0xE40]=1;
+        CHECK(f.source.select_managers(CO,MM));LifeSnapshot s{};CHECK(f.source.capture(&s));
+        CHECK(s.session.sub0.address==NP && s.session.self.address==PL);++scenarios;
+    }
+    for(u32 a:{PL,NP}){Fixture f;f.ready();f.mem[a+0xE40]=0;f.bind(a==PL?MAIN:SUB);
+        LifeSnapshot s{};CHECK(!f.source.capture(&s));CHECK(f.source.local_think_mode(NP,3)==1);
+        f.mem[a+0xE40]=1;CHECK(f.source.capture(&s));++scenarios;}
+    for(u32 a:{PL,NP}){Fixture f;f.births();f.mem[a+0xE40]=0;f.bind(MAIN);f.bind(SUB);
+        CHECK(f.source.local_think_mode(NP,3)==3);
+        f.mem[a+0xE40]=1;CHECK(f.source.local_think_mode(NP,3)==3);++scenarios;}
+    for(u32 bad=0;bad<12;++bad){Fixture f;f.ready();f.mem[NP+0xE40]=0;
+        switch(bad){
+        case 0:f.mem[ACTIVE]=0;break;case 1:f.mem[TRACK]=PL;break;
+        case 2:f.mem[NP+0xE3C]=2;break;case 3:f.mem[NP]=PLAYER;break;
+        case 4:f.mem[PL+0xE3C]=5;break;case 5:f.mem[PL+0xE40]=2;break;
+        case 6:f.mem[NP+0xE40]=2;break;case 7:f.mem[NP+0xE40]=3;break;
+        case 8:CHECK(f.source.event(0x0277DC70,NP));CHECK(f.source.event(0x0277D4FB,NP));break;
+        case 9:CHECK(f.source.local_think_mode(NP,2)==2);break;
+        case 10:f.mem[MAIN+0x44]=NP;break;case 11:f.mem.erase(NP+0xE3C);break;
+        }
+        f.bind(SUB);CHECK(f.source.local_think_mode(NP,3)==3);
+        // A later raw mode change cannot repair ownership after rejected rebind.
+        f.mem[NP+0xE40]=1;f.mem[NP+0xE3C]=1;f.mem[NP]=NPC;f.mem[PL+0xE40]=1;
+        f.mem[PL+0xE3C]=0;f.mem[ACTIVE]=1;f.mem[TRACK]=NP;f.mem[MAIN+0x44]=PL;
+        CHECK(f.source.local_think_mode(NP,3)==3);++scenarios;
+    }
+    {Fixture f;f.ready();f.mem[NP+0xE40]=0;f.mem[SUB+0x10000]=f.mem[SUB];
+        f.mem[SUB+0x10044]=NP;f.bind(SUB+0x10000);f.mem[NP+0xE40]=1;
+        CHECK(f.source.local_think_mode(NP,3)==3);++scenarios;}
+    for(u32 at:{ACTIVE,TRACK,NP+0xE40,PL+0xE3C}){Fixture f;f.ready();f.mem[NP+0xE40]=0;
+        CHECK(f.source.event(BEGIN,SUB));f.trigger=at;f.event_site=0x0277DC70;f.event_object=NP;
+        CHECK(!f.source.event(END,SUB));CHECK(f.source.local_think_mode(NP,3)==3);
+        CHECK(f.source.binder_depth()==0);++scenarios;
+    }
     constexpr u32 GP=0x160000,GP_GLOBAL=0x057A7480;
     auto input=[=](Fixture& f,u32 primary){
         f.mem[GP_GLOBAL]=GP;f.mem[GP]=0x04E11D30;

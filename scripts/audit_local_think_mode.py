@@ -9,6 +9,14 @@ sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'patches'))
 from build_local_routing import PE
 ORIGINAL='9124bb92d6c54a047ade47dacc8429221b18f9910b504f0e87718d5151013f69'
 SITES=(
+    (0x04D9B36C,'608bbb01','NPC ThinkMode virtual uses full setter'),
+    (0x04D9CF04,'608bbb01','Player ThinkMode virtual uses full setter'),
+    (0x027EDD27,'6a00','native actor suspension requests Invalid0'),
+    (0x027EDD31,'8b8210010000ffd0','suspension virtual setter dispatch'),
+    (0x02DF4E6F,'e8b218e5fe','serial assignment calls binder'),
+    (0x02DF4EED,'e83418e5fe','removing direct actor assignment calls binder'),
+    (0x02DF571F,'e80210e5fe','override enable setter calls binder'),
+    (0x02DF578A,'e8970fe5fe','override serial setter calls binder'),
     (0x01BB8B60,'e9db40bd00','full setter thunk'),
     (0x0278CC40,'558bec81eccc000000','displaced full prologue'),
     (0x0278CC6A,'e8e86545ff','base player setter call'),

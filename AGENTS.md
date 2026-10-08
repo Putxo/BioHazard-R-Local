@@ -2,7 +2,7 @@
 
 Actualización: 08/10/2026. Rama canónica: research/script-member-serial-validation.
 
-PR67 integrado: 2b243d8af3814caa6aa58eeb1d70fc30b053500f, 21 workflows PASS.
+PR68 integrado: 61b704d67b2916a9fc5eeba250fc4ab7d804ae39, 20 workflows PASS.
 
 Prioridad: fallo real de J2 en IA; leer docs/88 y docs/89. Pad=1, Network=2, Cpu=3.
 No reutilizar una base con el antiguo comparador Cpu=2 para nuevas entregas.
@@ -112,3 +112,5 @@ Opciones: [cinco ajustes del mando del dueño, publicación global conservando l
 Entrada: [teclado para J1, cambio de dispositivo y restauración del mando de J2](docs/95-keyboard-owner-and-device-switch.md). Un único mando físico, reconexión y validación jugando pendientes.
 
 Guiones: [mando de uPcsInput mediante scheduler y actor/serial](docs/96-script-input-scheduler-owner.md). Sin validación jugando; reparenting, lifetime de schedulers y QTE completos pendientes.
+
+Control J2: [conservar la asociación local durante Invalid0 y reenlace al mismo actor](docs/97-suspended-local-rebind.md). La base de entrega debe conservar esta asociación; reconstruir bases anteriores. Secuencia corregida con pruebas sintéticas, sin validación jugando.

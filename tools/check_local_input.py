@@ -50,13 +50,15 @@ def inspect_binder(pe):
         rel(at+73, forget) + bytes.fromhex('586a0189c1') +
         rel(at+83, 0x01BB8B60) + bytes.fromhex('c70588917d0501000000') +
         rel(at+98, 0x01C9504C) + rel(at+103, 0x02DF5022, 0xE9))
+    suspended = bytearray(expected); suspended[46] = 0x77  # JA rather than JNE after mode<=1
     legacy = bytearray(expected); legacy[36] = 2
-    if code not in (expected, bytes(legacy)):
+    if code not in (expected, bytes(suspended), bytes(legacy)):
         raise ValueError('unrecognized binder; no input claim can be made')
-    corrected = code == expected
+    corrected = code != bytes(legacy)
     return {'status': 'CPU3_BINDER_PRESENT' if corrected else 'LEGACY_CPU2_BUG',
             'binder_va': hex(at), 'cpu_comparison': code[36],
             'native_setter': '0x01bb8b60', 'network2_preserved': corrected,
+            'suspended_rebind_preserved': code == bytes(suspended),
             'gameplay_validated': False}
 
 

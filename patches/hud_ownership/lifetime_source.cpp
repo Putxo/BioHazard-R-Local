@@ -124,6 +124,7 @@ bool LifetimeSource::bind_end(u32 pcs) {
     const Binding binding=bindings_[--depth_];
     if(!change(false))return false;
     if(binding.role==Invalid)return true;
+    const Role previous=roles_[binding.role];
     Role next{};u32 vt=0,address=0;
     const u32 revision=revision_;
     if(!word(pcs,vt,revision) || vt!=(binding.role ? SubVT : MainVT) ||
@@ -131,8 +132,19 @@ bool LifetimeSource::bind_end(u32 pcs) {
     if(address){
         next.token=find(address,LifeObject::Actor);
         if(actor(next.token,next.actor,next.vtable,revision))next.pcs=pcs;
-        else next={}; // never manufacture a birth from the pointer at +44
+        else {
+            next={}; // Never manufacture a birth from the pointer at +44.
+            u32 mode=Invalid;
+            if(!capturing_ && previous.pcs==pcs && previous.actor.address==address &&
+               field(address,0xE40,mode,revision) && mode==0){
+                // Retain only an established local pair. Suspension still fails
+                // capture(): this preserves ownership, not active gameplay/HUD.
+                CaptureGuard guard(capturing_);
+                if(local_pair(roles_[1].actor.address,revision))next=previous;
+            }
+        }
     }
+    if(revision!=revision_ || fault_!=SourceFault::None)return false;
     auto& old=roles_[binding.role];
     const bool changed=old.pcs!=next.pcs || !equal(old.token,next.token) ||
         !equal(old.actor,next.actor) || old.vtable!=next.vtable;
@@ -171,15 +183,19 @@ u32 LifetimeSource::local_think_mode(u32 address,u32 requested) {
     if(requested!=3)return requested; // Preserve Invalid(0), including suspension.
     CaptureGuard guard(capturing_);
     const u32 revision=revision_;
+    return local_pair(address,revision) && !depth_ ? 1u : requested;
+}
+bool LifetimeSource::local_pair(u32 address,u32 revision) {
     const Role roles[]={roles_[0],roles_[1]};
     if(!roles[0].pcs || !roles[1].pcs || roles[0].pcs==roles[1].pcs ||
-       roles[0].actor.address==address || roles[0].actor.serial==roles[1].actor.serial)return requested;
+       !address || roles[1].actor.address!=address || roles[0].actor.address==address ||
+       roles[0].actor.serial==roles[1].actor.serial)return false;
     u32 initial_modes[2]{};
     // No manager/frame requirement: actor input must also survive HUD teardown.
     for(u32 pass=0;pass<2;++pass){
         u32 active=0,sub=0;
         if(!word(Active,active,revision) || !active ||
-           !word(Sub,sub,revision) || sub!=address)return requested;
+           !word(Sub,sub,revision) || sub!=address)return false;
         for(u32 i=0;i<2;++i){
             const auto& role=roles[i];const auto* e=get(role.token,LifeObject::Actor);
             u32 vt=0,pcs_vt=0,bound=0,serial=0,mode=0;
@@ -189,12 +205,12 @@ u32 LifetimeSource::local_think_mode(u32 address,u32 requested) {
                !word(e->address,vt,revision) || vt!=role.vtable ||
                !field(e->address,0xE3C,serial,revision) || serial>0x7FFFFFFFu ||
                serial!=static_cast<u32>(role.actor.serial) ||
-               !field(e->address,0xE40,mode,revision) || mode>1)return requested;
-            if(pass && mode!=initial_modes[i])return requested;
+               !field(e->address,0xE40,mode,revision) || mode>1)return false;
+            if(pass && mode!=initial_modes[i])return false;
             initial_modes[i]=mode;
         }
     }
-    return revision==revision_ && !depth_ && fault_==SourceFault::None ? 1u : requested;
+    return revision==revision_ && fault_==SourceFault::None;
 }
 bool LifetimeSource::preserve_other_pad(u32 gamepad,u32 destination,u32 value,u32 size) {
     // An admitted synthesis keeps its initial slot until the native call returns,
