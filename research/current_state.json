@@ -2,10 +2,10 @@
   "schema_version": 4,
   "canonical_branch": "research/script-member-serial-validation",
   "checkpoint": {
-    "merged_pr": 61,
-    "merge_sha": "cf9a866780a4511dfa71d241928bebc7eecf1228",
-    "tested_head": "7261c5172a034cbdd30f451e1f426dfac9cdd806",
-    "ci": "20 workflows PASS"
+    "merged_pr": 62,
+    "merge_sha": "52ea2467c13bb34c542172c5a21f3ae94c8d560f",
+    "tested_head": "9d35a171962fe9a3756e8517b372b90ea6c07fe1",
+    "ci": "21 workflows PASS"
   },
   "user_constraints": {
     "launch_game": false,
@@ -91,7 +91,8 @@
     "genesis_shared_color_per_view_admission_connected": true,
     "genesis_retained_weapon_component": "app::game::sound::uBioSoundMotionSe",
     "genesis_hunter_local_uncached_draw_connected": true,
-    "genesis_hunter_per_view_materials_complete": false
+    "genesis_hunter_per_view_materials_complete": false,
+    "raw_pad_axis_argument_patches": 8
   },
   "pending": [
     "verify J2 leaves AI and responds independently to physical controller 2 in owner gameplay",
@@ -159,5 +160,21 @@
     "observed_local_sub0_preserves_pad_on_later_cpu_request": true,
     "native_network_request_relinquishes_observed_sub0_ownership": true,
     "control_ownership_independent_of_hud_readiness": true
+  },
+  "input_axis_producers": {
+    "status": "implemented_static_and_synthetic_checks",
+    "sites": [
+      "02DB1205",
+      "02DB1295",
+      "02DB1325",
+      "02DB13B5",
+      "02DB143D",
+      "02DB1461",
+      "02DB14ED",
+      "02DB1511"
+    ],
+    "gameplay_validated": false,
+    "candidate_sha256": "96cb422a44c39cc86372ca56d0c3e50b9449ff7ec35657e37358124954807b7f",
+    "remaining": "Physical device assignment, shared keyboard/mouse synthesis and complete action/mode coverage remain unvalidated."
   }
 }

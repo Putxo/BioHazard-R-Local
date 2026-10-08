@@ -2,7 +2,7 @@
 
 Actualización: 08/10/2026. Rama canónica: research/script-member-serial-validation.
 
-PR61 integrado: cf9a866780a4511dfa71d241928bebc7eecf1228, 20 workflows PASS.
+PR62 integrado: 52ea2467c13bb34c542172c5a21f3ae94c8d560f, 21 workflows PASS.
 
 Prioridad: fallo real de J2 en IA; leer docs/88 y docs/89. Pad=1, Network=2, Cpu=3.
 No reutilizar una base con el antiguo comparador Cpu=2 para nuevas entregas.
@@ -100,3 +100,5 @@ Genesis: [corrección de color por vista y admisión de dibujo](docs/85-genesis-
 Genesis: [dibujo Hunter sin reutilizar la caché entre vistas locales](docs/86-genesis-hunter-draw-cache.md).
 
 Control J2: [conservar propiedad ante solicitudes posteriores de CPU](docs/90-local-input-mode-ownership.md).
+
+Control J2: leer [productores de ejes](docs/91-pad-axis-producers.md); el instalador añade ocho reemplazos inline además de los 185 hooks.

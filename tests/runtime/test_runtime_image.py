@@ -35,6 +35,10 @@ class ImageTests(unittest.TestCase):
             self.assertLess(symbols[name],va+len(code))
             self.assertFalse(occupied.intersection(range(at,at+len(old))))
             occupied.update(range(at,at+len(old)))
+        for at,old,new,name in image.axis_patches():
+            self.assertEqual(len(old),len(new))
+            self.assertFalse(occupied.intersection(range(at,at+len(old))))
+            occupied.update(range(at,at+len(old)))
         for name in ('rev_hud_mask_exit_cockpit11','rev_hud_mask_exit_minimap11'):
             self.assertNotEqual(0,symbols[name])
     def test_rejects_undefined_mask_exit(self):

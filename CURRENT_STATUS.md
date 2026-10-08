@@ -1,7 +1,7 @@
 # Estado actual del cooperativo local
 
 08/10/2026. Rama técnica: `research/script-member-serial-validation`.
-PR61 integrado: `cf9a866780a4511dfa71d241928bebc7eecf1228`, 20 workflows PASS.
+PR62 integrado: `52ea2467c13bb34c542172c5a21f3ae94c8d560f`, 21 workflows PASS.
 Prioridad actual: J2 sigue en IA según el propietario. PR60 corrige Cpu(3) -> Pad(1); la cadena de entrega necesitaba además aceptar las bases corregidas y rechazar las antiguas. Véase [corrección de construcción](docs/89-cpu3-cumulative-build.md). No se da por validado el movimiento jugando.
 
 **El cooperativo completo sigue en desarrollo. El juego no se ha ejecutado.**
@@ -11,7 +11,7 @@ El propietario prohíbe abrirlo y hará personalmente las pruebas jugando.
 
 | Área | Alcance real |
 |---|---|
-| Input | **Corrección nueva pendiente de retest gameplay:** Sub0 exacto usa Pad1; Cpu(3) -> Pad(1); Network(2) preservado. El candidato PR59 probado por el propietario dejó J2 en IA por la comparación histórica errónea con 2. |
+| Input | **Corrección nueva pendiente de retest gameplay:** Sub0 exacto usa Pad1; Cpu(3) -> Pad(1); Network(2) preservado. El ejecutable exacto probado por el propietario sigue sin identificarse; se confirmó el comparador histórico erróneo con 2 en las bases antiguas. |
 | Cámaras | View0 TOP y View1 BOTTOM, targets separados; cutscenes pendientes |
 | Inventario | Pack gameplay propio; menú global muestra Sub0 con owner J2 |
 | Pausa | Una pausa global; abrir/navegar/confirmar/cancelar por owner; lifetime y nested 6/7 implementados |
@@ -21,7 +21,7 @@ El propietario prohíbe abrirlo y hará personalmente las pruebas jugando.
 | Guiones | Dos callbacks PcsSub con owner+serial; cobertura QTE parcial |
 | Rescate | Routing parcial existente; muerte/checkpoints pendientes |
 
-La compilación acumulativa nueva conecta 182 hooks HUD/menú/ActionIcon sobre la base de
+La compilación acumulativa nueva conecta 185 hooks y ocho correcciones de los productores de ejes HUD/menú/ActionIcon sobre la base de
 input, cámara, pickup, puertas y serial de guion. Se ha generado y verificado
 estáticamente una copia local de trabajo. No se ha instalado en Steam ni abierto.
 No constituye una entrega final.
@@ -119,3 +119,5 @@ Genesis: [dibujo Hunter sin reutilizar la caché entre vistas locales](docs/86-g
 Corrección gameplay de input: [Cpu(3) -> Pad(1)](docs/88-sub0-cpu3-pad1-runtime-correction.md).
 
 Control J2: [conservar propiedad ante solicitudes posteriores de CPU](docs/90-local-input-mode-ownership.md).
+
+Control J2: los productores de ambos sticks y cruceta ignoraban su argumento de mando. Ocho lecturas corregidas en el instalador; [evidencia y regresiones](docs/91-pad-axis-producers.md). Movimiento jugando aún sin validar.

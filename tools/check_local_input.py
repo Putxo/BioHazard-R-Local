@@ -67,7 +67,8 @@ def main():
     try:
         data = args.image.read_bytes()
         report = inspect_binder(PE(data))
-        report.update(sha256=sha(data), game_executed=False)
+        from pad_axis_sites import inspect_axes
+        report.update(sha256=sha(data), game_executed=False, axes=inspect_axes(PE(data)))
         print(json.dumps(report))
         return 0 if report['status'] == 'CPU3_BINDER_PRESENT' else 1
     except (OSError, ValueError, struct.error) as exc:

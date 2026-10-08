@@ -18,6 +18,7 @@ from audit_lifetime_observer import SITES as LIFE_SITES
 from audit_hud_manager_phases import SITES as MANAGER_SITES
 from audit_pipeline_frame import SITES as PIPELINE_SITES
 from check_local_input import inspect_binder
+from pad_axis_sites import patches as axis_patches, inspect_axes
 
 BASES={
     # Cpu(3) -> Pad(1), Network(2) preserved: GNU and LLVM 22.1.8.
@@ -176,6 +177,8 @@ def build(base,module):
         target=symbols.get(name,0)
         if len(old)<5 or not textva<=target<textva+len(text):raise ValueError('invalid hook target: '+name)
         patch(pe.offset(va,len(old)),old,rel(va,target,opcode)+b'\x90'*(len(old)-5),name)
+    for va,old,new,label in axis_patches():
+        patch(pe.offset(va,len(old)),old,new,label)
     records=[]
     for i,(name,flags) in enumerate((('.revtext',0x60000020),('.revdata',0xC0000040)),10):
         va,blob=sections[name];raw=align(len(data),pe.fa);size=align(len(blob),pe.fa)
@@ -194,12 +197,14 @@ def build(base,module):
     header(pe.opt+64,pe_checksum(data,pe.opt+64),'checksum')
     out=bytes(data)
     if inspect_binder(PE(out))!=input_check:raise ValueError('runtime changed the Sub0 input binder')
+    axis_check=inspect_axes(PE(out))
+    if axis_check["status"]!="PAD_ARGUMENTS_PRESENT":raise ValueError("raw axis routing not installed")
     restored=bytearray(out[:len(base)])
     for p in writes:restored[p['offset']:p['offset']+len(bytes.fromhex(p['old']))]=bytes.fromhex(p['old'])
     if restored!=base:raise ValueError('reversal failed')
     return out,{'status':'EXPERIMENTAL_INTEGRATED_SUBSET','input_sha256':sha(base),'output_sha256':sha(out),
         'module_sha256':sha(module),'hook_count':len(hook_sites()),'writes':writes,'sections':records,
-        'local_input_binder':input_check,
+        'local_input_binder':input_check,'local_input_axes':axis_check,'inline_patch_count':len(list(axis_patches())),
         'exact_reversal':True,'gameplay_executed':False,'complete_local_coop':False}
 
 if __name__=='__main__':
