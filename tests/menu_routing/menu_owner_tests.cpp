@@ -26,6 +26,26 @@ struct F {
     void local(){active=1;sub=actor;}
 };
 int main(){
+    for(u32 owner:{0u,1u})for(u32 primary:{0u,1u})for(u32 nested:{5u,6u,7u}) {
+        F f;f.local();f.m[f.pad+0x970]=primary;
+        f.m[f.pad+owner*0x2F8+0x1A0]=8;
+        CHECK(f.router.pause_open_word(f.pad)&8);CHECK(f.router.owner()==owner);
+        f.router.state_transition(nested);
+        // Inputs from the other controller must not replace the opener's data.
+        f.m[f.pad+0x1A0]=0x1111A000;f.m[f.pad+0x2F8+0x1A0]=0x2222A000;
+        const auto before=f.m;
+        CHECK(f.router.pause_word_198(f.pad)==(owner?0x22220000u:0x11110000u));
+        CHECK(f.router.pause_word_1a0(f.pad)==(owner?0x2222A000u:0x1111A000u));
+        CHECK(f.router.pause_word_1ac(f.pad)==(owner?0x2222AC00u:0x1111AC00u));
+        CHECK(f.m==before);++scenarios;
+    }
+    {F f;f.local();f.m[f.pad+0x2F8+0x1A0]=8;CHECK(f.router.pause_open_word(f.pad)&8);
+     f.sub=f.actor2;CHECK(f.router.pause_word_198(f.pad)==0x11110000);
+     CHECK(f.router.owner()==0);CHECK(f.router.surface()==Surface::None);++scenarios;}
+    {F f;f.local();f.m[f.pad+0x2F8+0x1A0]=8;CHECK(f.router.pause_open_word(f.pad)&8);
+     f.m.erase(f.pad+0x2F8+0x198);CHECK(f.router.pause_word_198(f.pad)==0x11110000);
+     CHECK(f.router.owner()==0);CHECK(f.router.surface()==Surface::None);++scenarios;}
+
     {F f;f.m[f.pad+0x970]=1;f.m[f.pad+0x2F8+0x1A0]=0x1234;
      CHECK(f.router.submenu_open_word(f.pad)==0x1234);CHECK(f.router.owner()==0);CHECK(f.router.surface()==Surface::None);++scenarios;}
     {F f;f.local();f.m[f.pad+0x1A0]=1;f.m[f.pad+0x2F8+0x1A0]=1;

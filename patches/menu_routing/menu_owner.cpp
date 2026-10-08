@@ -74,12 +74,19 @@ u32 MenuOwnerRouter::owner_word(u32 pad,Surface surface,u32 offset) noexcept {
         clear();
         return stock_word(pad,offset);
     }
-    if(surface_!=surface || owner_!=1) return stock_word(pad,offset);
+    if(surface_!=surface) return stock_word(pad,offset);
+    if(owner_==0) {
+        // Local opening selected logical pad0, even if the stock primary is 1.
+        u32 sub=0;
+        if(valid_sub(sub) && pad_word(pad,0,offset,value)) return value;
+        return stock_word(pad,offset);
+    }
     if(pad_word(pad,1,offset,value)) return value;
     clear();
     return stock_word(pad,offset);
 }
 u32 MenuOwnerRouter::pause_open_word(u32 pad) noexcept { return open_word(pad,0x8,Surface::Pause); }
+u32 MenuOwnerRouter::pause_word_198(u32 pad) noexcept { return owner_word(pad,Surface::Pause,State198); }
 u32 MenuOwnerRouter::pause_word_1a0(u32 pad) noexcept { return owner_word(pad,Surface::Pause,State1A0); }
 u32 MenuOwnerRouter::pause_word_1ac(u32 pad) noexcept { return owner_word(pad,Surface::Pause,State1AC); }
 u32 MenuOwnerRouter::submenu_open_word(u32 pad) noexcept { return open_word(pad,0x1,Surface::SubMenu); }
@@ -110,6 +117,7 @@ bool bind_menu_owner_sink(MenuOwnerRouter& router) noexcept {
 }
 }
 extern "C" unsigned int rev_menu_pause_open_word(unsigned int pad) noexcept { return rev_menu::Sink ? rev_menu::Sink->pause_open_word(pad) : 0; }
+extern "C" unsigned int rev_menu_pause_word_198(unsigned int pad) noexcept { return rev_menu::Sink ? rev_menu::Sink->pause_word_198(pad) : 0; }
 extern "C" unsigned int rev_menu_pause_word_1a0(unsigned int pad) noexcept { return rev_menu::Sink ? rev_menu::Sink->pause_word_1a0(pad) : 0; }
 extern "C" unsigned int rev_menu_pause_word_1ac(unsigned int pad) noexcept { return rev_menu::Sink ? rev_menu::Sink->pause_word_1ac(pad) : 0; }
 extern "C" unsigned int rev_menu_submenu_open_word(unsigned int pad) noexcept { return rev_menu::Sink ? rev_menu::Sink->submenu_open_word(pad) : 0; }

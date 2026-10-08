@@ -4,6 +4,7 @@
 .code32
 .text
 .extern rev_menu_pause_open_word
+.extern rev_menu_pause_word_198
 .extern rev_menu_pause_word_1a0
 .extern rev_menu_pause_word_1ac
 .extern rev_menu_submenu_open_word
@@ -25,6 +26,7 @@ rev_menu_gate_\name:
 .size rev_menu_gate_\name,.-rev_menu_gate_\name
 .endm
 pad_bridge pause_open, rev_menu_pause_open_word
+pad_bridge pause_198, rev_menu_pause_word_198
 pad_bridge pause_1a0, rev_menu_pause_word_1a0
 pad_bridge pause_1ac, rev_menu_pause_word_1ac
 pad_bridge submenu_open, rev_menu_submenu_open_word
