@@ -93,6 +93,7 @@ class Machine:
                 reg,operand=self.modrm();regop=('reg',REGS[reg])
                 if opcode==0x8b:self.put(regop,self.get(operand))
                 else:self.put(operand,self.get(regop))
+            elif opcode==0x90:pass  # Explicit padding in fixed-size inline replacements.
             elif opcode==0xa3:self.write(self.imm(4),self.r['eax'])
             elif opcode in (0xc6,0xc7):
                 reg,operand=self.modrm();check(reg==0,'MOV extension');size=1 if opcode==0xc6 else 4
