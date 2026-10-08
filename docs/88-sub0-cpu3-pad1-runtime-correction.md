@@ -82,9 +82,11 @@ January script base corregida:
 31cbebd180bcc66da2afbdc57c928b22a47f956c53bb5ed12411a220206490ec
 ```
 
-`build_script_serial_guard.py` y `tools/runtime_image.py` admiten ahora estas
-bases corregidas para que una reconstrucción completa no vuelva a introducir
-el valor histórico equivocado.
+Rectificación 08/10/2026: PR60 añadió el perfil GNU corregido a
+`build_script_serial_guard.py`, pero no a `tools/runtime_image.py`. El instalador
+seguía aceptando exclusivamente las bases antiguas. Tampoco estaba registrado
+el perfil LLVM corregido. [La corrección de la cadena](89-cpu3-cumulative-build.md)
+resuelve ambos casos; la afirmación original de soporte completo era incorrecta.
 
 ## Estado
 

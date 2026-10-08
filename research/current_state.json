@@ -2,10 +2,9 @@
   "schema_version": 4,
   "canonical_branch": "research/script-member-serial-validation",
   "checkpoint": {
-    "merged_pr": 57,
-    "merge_sha": "770d79aa8adca7701af3dd32747c5a73c2e55934",
-    "tested_head": "f74f53f63e15199cc4e501fa9b3a3970e908a755",
-    "ci": "20 workflows PASS"
+    "merged_pr": 60,
+    "merge_sha": "d3034bb97066ee3d6e3c42150da0ee650a876ca4",
+    "ci": "PR60 merge records 20 workflows PASS; new build changes pending CI"
   },
   "user_constraints": {
     "launch_game": false,
@@ -25,7 +24,7 @@
   },
   "runtime": {
     "composition_root": true,
-    "hud_menu_hook_count": 182,
+    "hud_menu_hook_count": 184,
     "local_views_use_native_immediate_draw": true,
     "action_loop_priority_per_member": true,
     "action_loop_stop_per_member": true,
@@ -94,6 +93,7 @@
     "genesis_hunter_per_view_materials_complete": false
   },
   "pending": [
+    "verify J2 leaves AI and responds independently to physical controller 2 in owner gameplay",
     "full HUD and interaction prompts",
     "Genesis and remaining actions",
     "QTE/scripts",
@@ -139,6 +139,20 @@
     "docs/83-genesis-weapon-use-barriers.md",
     "docs/84-genesis-private-effect-toggle.md",
     "docs/85-genesis-color-per-view.md",
-    "docs/86-genesis-hunter-draw-cache.md"
-  ]
+    "docs/86-genesis-hunter-draw-cache.md",
+    "docs/88-sub0-cpu3-pad1-runtime-correction.md",
+    "docs/89-cpu3-cumulative-build.md"
+  ],
+  "input": {
+    "user_reports_j2_remains_ai": true,
+    "think_mode": {
+      "pad": 1,
+      "network": 2,
+      "cpu": 3
+    },
+    "cpu3_binder_in_generated_candidate": true,
+    "legacy_cpu2_bases_rejected_by_runtime_installer": true,
+    "gameplay_validated": false,
+    "tested_user_image_identified": false
+  }
 }

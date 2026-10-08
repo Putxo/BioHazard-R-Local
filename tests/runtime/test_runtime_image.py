@@ -4,8 +4,17 @@ from pathlib import Path
 import struct
 import sys
 import unittest
+from unittest.mock import patch
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]/'tools'))
 import runtime_image as image
+
+class InputBaseTests(unittest.TestCase):
+    def test_old_cpu2_bases_fail_before_module_loading(self):
+        for digest in image.LEGACY_CPU2_BASES:
+            with self.subTest(digest=digest), patch.object(image,'sha',return_value=digest):
+                with self.assertRaisesRegex(ValueError,'leaves J2 in AI'):
+                    image.build(b'input placeholder',b'not an ELF')
+        self.assertTrue(image.LEGACY_CPU2_BASES.isdisjoint(image.BASES))
 
 class ImageTests(unittest.TestCase):
     @classmethod

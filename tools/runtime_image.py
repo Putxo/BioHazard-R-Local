@@ -17,8 +17,14 @@ from build_local_routing import PE,align,pe_checksum,rel
 from audit_lifetime_observer import SITES as LIFE_SITES
 from audit_hud_manager_phases import SITES as MANAGER_SITES
 from audit_pipeline_frame import SITES as PIPELINE_SITES
+from check_local_input import inspect_binder
 
 BASES={
+    # Cpu(3) -> Pad(1), Network(2) preserved: GNU and LLVM 22.1.8.
+    '31cbebd180bcc66da2afbdc57c928b22a47f956c53bb5ed12411a220206490ec',
+    '152bce5dba9eb1a270d2fd392921883e772bfc42682b23497ae72452747814c7',
+}
+LEGACY_CPU2_BASES={
     '71f5e70dc19c334d303ee29a686d65a72cd18b0c87b98472170bff961cb048f4',
     '506ddc362abfa3f330b6d9d8dc75e4ca81c6b6f31bccb6568427899e26613b7b',
 }
@@ -147,8 +153,12 @@ def hook_sites():
     return out
 
 def build(base,module):
+    if sha(base) in LEGACY_CPU2_BASES:
+        raise ValueError('legacy Cpu(2) binder leaves J2 in AI; rebuild the January base with Cpu(3)')
     if sha(base) not in BASES:raise ValueError('unsupported input SHA256; requires the exact cumulative January base')
-    pe=PE(base);sections,symbols=read_module(module)
+    pe=PE(base);input_check=inspect_binder(pe)
+    if input_check['status']!='CPU3_BINDER_PRESENT':raise ValueError('requires corrected Cpu(3) binder')
+    sections,symbols=read_module(module)
     if (pe.base,pe.count,pe.sa,pe.fa)!=(0x400000,10,4096,512):raise ValueError('unsupported PE layout')
     if pe.u32(pe.opt+16)!=0x01C897E7-pe.base:raise ValueError('unexpected original entry')
     if pe.u16(pe.opt+70)&0x40 or not pe.u16(pe.pe+22)&1:raise ValueError('requires fixed image without relocations')
@@ -181,12 +191,14 @@ def build(base,module):
     header(pe.opt+8,pe.u32(pe.opt+8)+records[1]['raw_size'],'data size')
     header(pe.opt+56,align(records[1]['va']+records[1]['size']-pe.base,pe.sa),'image size')
     header(pe.opt+64,pe_checksum(data,pe.opt+64),'checksum')
-    out=bytes(data);PE(out)
+    out=bytes(data)
+    if inspect_binder(PE(out))!=input_check:raise ValueError('runtime changed the Sub0 input binder')
     restored=bytearray(out[:len(base)])
     for p in writes:restored[p['offset']:p['offset']+len(bytes.fromhex(p['old']))]=bytes.fromhex(p['old'])
     if restored!=base:raise ValueError('reversal failed')
     return out,{'status':'EXPERIMENTAL_INTEGRATED_SUBSET','input_sha256':sha(base),'output_sha256':sha(out),
         'module_sha256':sha(module),'hook_count':len(hook_sites()),'writes':writes,'sections':records,
+        'local_input_binder':input_check,
         'exact_reversal':True,'gameplay_executed':False,'complete_local_coop':False}
 
 if __name__=='__main__':

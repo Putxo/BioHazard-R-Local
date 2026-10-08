@@ -24,8 +24,11 @@ def main():
                     if address<=va and va+n<=address+len(blob):return blob[va-address:va-address+n]
                 raise ValueError('read outside compiled helper')
         cases=bridges.tests(ModuleReader(),symbols)
+        input_check=load('input_check_tests',ROOT/'tests/test_local_input_check.py')
+        binder_checks=input_check.tests(module,symbols)
         result={'status':'PASS','host':host,'host_architecture':'i386' if args.i386_host else 'native',
                 'sanitizers':args.sanitize,'bridge_scenarios':cases,'bridge_assertions':bridges.CHECKS,
+                'compiled_input_binder_checks':binder_checks,
                 'game_binary_used':False,'gameplay_executed':False,
                 'bridge_model':'only new assembly; engine and C++ calls stubbed',
                 'source_sha256':provenance['source_sha256']}

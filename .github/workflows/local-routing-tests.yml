@@ -2,9 +2,9 @@ name: Local routing source tests
 on:
   push:
     branches: [main, 'research/**']
-    paths: ['patches/local_routing/**', 'patches/build_local_routing.py', 'tests/**', 'tools/runtime_probe.py', '.github/workflows/local-routing-tests.yml']
+    paths: ['patches/local_routing/**', 'patches/build_local_routing.py', 'tests/**', 'tools/runtime_probe.py', 'tools/check_local_input.py', '.github/workflows/local-routing-tests.yml']
   pull_request:
-    paths: ['patches/local_routing/**', 'patches/build_local_routing.py', 'tests/**', 'tools/runtime_probe.py', '.github/workflows/local-routing-tests.yml']
+    paths: ['patches/local_routing/**', 'patches/build_local_routing.py', 'tests/**', 'tools/runtime_probe.py', 'tools/check_local_input.py', '.github/workflows/local-routing-tests.yml']
   workflow_dispatch:
 permissions:
   contents: read
