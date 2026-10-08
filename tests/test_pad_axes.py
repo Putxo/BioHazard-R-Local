@@ -5,6 +5,7 @@ import unittest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tools'))
 from pad_axis_sites import patches, inspect_axes
 from test_bridges import Machine
+from pad_state_sites import patches as state_patches
 
 class Reader:
     def __init__(self, code): self.code = code
@@ -55,6 +56,14 @@ class AxisTests(unittest.TestCase):
                     self.assertEqual(selected,[0])
                     self.assertEqual(result,values[0])
                     self.assertNotEqual(result,values[1])
+
+    def test_per_slot_state_queries(self):
+        for va,old,new,label in state_patches():
+            for index in (0,1):
+                for primary in (0,1):
+                    for values in ((0,1),(1,0)):
+                        selected,result=self.transport(new,'ecx',index,primary,values,True)
+                        self.assertEqual(selected,[index]);self.assertEqual(result,values[index])
 
     def test_inspector_detects_old_mixed_and_modified_sites(self):
         class Image:

@@ -19,6 +19,9 @@ from audit_hud_manager_phases import SITES as MANAGER_SITES
 from audit_pipeline_frame import SITES as PIPELINE_SITES
 from check_local_input import inspect_binder
 from pad_axis_sites import patches as axis_patches, inspect_axes
+from pad_state_sites import patches as state_patches
+
+def inline_input_sites():return [*axis_patches(),*state_patches()]
 
 BASES={
     # Cpu(3) -> Pad(1), Network(2) preserved: GNU and LLVM 22.1.8.
@@ -72,6 +75,8 @@ def read_module(data):
 
 def hook_sites():
     out=[(0x01EB73A0,bytes.fromhex('558bec81ecfc000000'),'rev_action_draw_gate',0xE9)]
+    for va in (0x02DB36A1,0x02DB36B6):
+        out.append((va,rel(va,0x01C15CB6),'rev_pad_clear_gate',0xE8))
     out.append((0x0278CC40,bytes.fromhex('558bec81eccc000000'),'rev_local_think_mode_gate',0xE9))
     out.append((0x0279CFBD,bytes.fromhex('e958010000'),'rev_aim_visibility_gate',0xE9))
     out.append((0x02B41E36,rel(0x02B41E36,0x01C2C7F4),'rev_scope_actor_gate',0xE8))
@@ -177,7 +182,7 @@ def build(base,module):
         target=symbols.get(name,0)
         if len(old)<5 or not textva<=target<textva+len(text):raise ValueError('invalid hook target: '+name)
         patch(pe.offset(va,len(old)),old,rel(va,target,opcode)+b'\x90'*(len(old)-5),name)
-    for va,old,new,label in axis_patches():
+    for va,old,new,label in inline_input_sites():
         patch(pe.offset(va,len(old)),old,new,label)
     records=[]
     for i,(name,flags) in enumerate((('.revtext',0x60000020),('.revdata',0xC0000040)),10):
@@ -204,7 +209,7 @@ def build(base,module):
     if restored!=base:raise ValueError('reversal failed')
     return out,{'status':'EXPERIMENTAL_INTEGRATED_SUBSET','input_sha256':sha(base),'output_sha256':sha(out),
         'module_sha256':sha(module),'hook_count':len(hook_sites()),'writes':writes,'sections':records,
-        'local_input_binder':input_check,'local_input_axes':axis_check,'inline_patch_count':len(list(axis_patches())),
+        'local_input_binder':input_check,'local_input_axes':axis_check,'inline_patch_count':len(inline_input_sites()),'indexed_state_sites':len(list(state_patches())),
         'exact_reversal':True,'gameplay_executed':False,'complete_local_coop':False}
 
 if __name__=='__main__':

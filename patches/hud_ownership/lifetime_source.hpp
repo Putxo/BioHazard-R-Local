@@ -39,6 +39,7 @@ public:
     bool capture(LifeSnapshot* out);
     // Actor ownership, independent of HUD readiness. Native setter applies result.
     u32 local_think_mode(u32 actor, u32 requested);
+    bool preserve_other_pad(u32 gamepad, u32 destination, u32 value, u32 size);
     SourceFault fault() const { return fault_; }
     u32 epoch() const { return epoch_; }
     u32 binder_depth() const { return depth_; }

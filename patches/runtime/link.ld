@@ -1,5 +1,6 @@
 OUTPUT_FORMAT(elf32-i386)
 ENTRY(rev_runtime_entry)
+rev_pad_stock_memset = 0x01C15CB6;
 rev_original_entry = 0x01C897E7;
 rev_local_think_mode_continue = 0x0278CC49;
 rev_action_draw_continue = 0x01EB73A9;
