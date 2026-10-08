@@ -16,6 +16,7 @@ public:
     MenuOwnerRouter(const MenuOwnerRouter&)=delete;
     MenuOwnerRouter& operator=(const MenuOwnerRouter&)=delete;
     u32 pause_open_word(u32 pad) noexcept;
+    u32 pause_word_198(u32 pad) noexcept;
     u32 pause_word_1a0(u32 pad) noexcept;
     u32 pause_word_1ac(u32 pad) noexcept;
     u32 submenu_open_word(u32 pad) noexcept;
@@ -46,6 +47,7 @@ private:
 bool bind_menu_owner_sink(MenuOwnerRouter&) noexcept;
 }
 extern "C" unsigned int rev_menu_pause_open_word(unsigned int pad) noexcept;
+extern "C" unsigned int rev_menu_pause_word_198(unsigned int pad) noexcept;
 extern "C" unsigned int rev_menu_pause_word_1a0(unsigned int pad) noexcept;
 extern "C" unsigned int rev_menu_pause_word_1ac(unsigned int pad) noexcept;
 extern "C" unsigned int rev_menu_submenu_open_word(unsigned int pad) noexcept;

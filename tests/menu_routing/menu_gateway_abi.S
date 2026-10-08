@@ -80,6 +80,7 @@ rev_menu_stock_state_transition:
     ret
 .endm
 cdecl1 rev_menu_pause_open_word,0x8008
+cdecl1 rev_menu_pause_word_198,0xA198
 cdecl1 rev_menu_pause_word_1a0,0xA1A0
 cdecl1 rev_menu_pause_word_1ac,0xA1AC
 cdecl1 rev_menu_submenu_open_word,0x9001

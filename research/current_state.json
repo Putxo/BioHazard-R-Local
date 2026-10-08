@@ -2,10 +2,10 @@
   "schema_version": 4,
   "canonical_branch": "research/script-member-serial-validation",
   "checkpoint": {
-    "merged_pr": 63,
-    "merge_sha": "9da52edd2dccc99538c0df55fb16d7705e4809bc",
-    "tested_head": "f95afc6c7c894164d75fc9b53e931f8910fa8f4e",
-    "ci": "20 workflows PASS"
+    "merged_pr": 64,
+    "merge_sha": "b54ba81d467d60747e349ab357f498605da6416b",
+    "tested_head": "d60f7415e6cfb85e89655d9e84daf42333dd517d",
+    "ci": "21 workflows PASS"
   },
   "user_constraints": {
     "launch_game": false,
@@ -25,7 +25,7 @@
   },
   "runtime": {
     "composition_root": true,
-    "hud_menu_hook_count": 187,
+    "hud_menu_hook_count": 212,
     "local_views_use_native_immediate_draw": true,
     "action_loop_priority_per_member": true,
     "action_loop_stop_per_member": true,
@@ -185,5 +185,13 @@
     "module_sha256": "8af171f78a6a8906b55f058331bab50ac9fc26f7a2b4afd3a27033a99ee07893",
     "inline_sites": 10,
     "gameplay_validated": false
+  },
+  "options": {
+    "owner_routed_pad_calls": 25,
+    "local_p1_reads_pad0_even_when_stock_primary_is_1": true,
+    "independent_settings": false,
+    "independent_save": false,
+    "gameplay_validated": false,
+    "candidate_sha256": "76e11e9377a5dfada25142fadf5462d5b4e837094ca13df22937916ce52d3984"
   }
 }
