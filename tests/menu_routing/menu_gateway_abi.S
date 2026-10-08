@@ -139,9 +139,35 @@ call_options_tests:
     mov dword ptr [synthetic_pad+0x970],0
     call test_options_ecx
     call test_options_edx
+    call test_options_input_ecx_eax
+    call test_options_input_edx_ecx
+    call test_options_input_esi_eax
+    call test_options_input_ecx_edx
+    call test_options_input_eax_edx
     mov dword ptr [synthetic_pad+0x970],1
     call test_options_ecx
     call test_options_edx
+    call test_options_input_ecx_eax
+    call test_options_input_edx_ecx
+    call test_options_input_esi_eax
+    call test_options_input_ecx_edx
+    call test_options_input_eax_edx
+    mov ecx,0x55667788
+    call rev_input_update_device
+    cmp dword ptr [input_pad],0x55667788
+    jne option_fail
+    cmp dword ptr [input_kind],0
+    jne option_fail
+    cmp esp,[stack_before]
+    jne option_fail
+    mov ecx,0x66778899
+    call rev_input_update_keyboard
+    cmp dword ptr [input_pad],0x66778899
+    jne option_fail
+    cmp dword ptr [input_kind],1
+    jne option_fail
+    cmp esp,[stack_before]
+    jne option_fail
     popad
     xor eax,eax
     ret
@@ -152,7 +178,7 @@ option_fail:
     mov eax,40
     ret
 
-.macro test_index name,base,destination,other
+.macro test_index name,base,destination,other,target,expected
 test_options_\name:
     mov eax,0x12345678
     mov ecx,0x23456789
@@ -170,18 +196,20 @@ test_options_\name:
     std
     pushfd
     pop dword ptr [option_flags]
-    call rev_menu_gate_options_\name
+    call \target
     pushfd
     pop dword ptr [option_flags_after]
     cld
-    cmp \destination,1
+    cmp \destination,\expected
     jne option_fail
     cmp \other,0xAAAAAAAA
     jne option_fail
     cmp ebx,0x456789AB
     jne option_fail
-    cmp esi,0x56789ABC
-    jne option_fail
+    .ifnc \destination,esi
+        cmp esi,0x56789ABC
+        jne option_fail
+    .endif
     cmp edi,0x6789ABCD
     jne option_fail
     cmp ebp,0x789ABCDE
@@ -192,11 +220,11 @@ test_options_\name:
     mov eax,[option_flags]
     cmp eax,[option_flags_after]
     jne option_fail
-    mov eax,[option_stock]
+    mov eax,[input_stock]
     cmp eax,[synthetic_pad+0x970]
     jne option_fail
     lea eax,[synthetic_pad]
-    cmp eax,[option_pad]
+    cmp eax,[input_pad]
     jne option_fail
     movd eax,xmm0
     cmp eax,-1
@@ -210,8 +238,40 @@ test_options_\name:
     jne option_fail
     ret
 .endm
-test_index ecx,eax,ecx,edx
-test_index edx,ecx,edx,eax
+test_index ecx,eax,ecx,edx,rev_menu_gate_options_ecx,1
+test_index edx,ecx,edx,eax,rev_menu_gate_options_edx,1
+test_index input_ecx_eax,eax,ecx,edx,rev_input_index_ecx_eax,0
+test_index input_edx_ecx,ecx,edx,eax,rev_input_index_edx_ecx,0
+test_index input_esi_eax,eax,esi,ecx,rev_input_index_esi_eax,0
+test_index input_ecx_edx,edx,ecx,eax,rev_input_index_ecx_edx,0
+test_index input_eax_edx,edx,eax,ecx,rev_input_index_eax_edx,0
+
+.global rev_local_input_update
+rev_local_input_update:
+    mov eax,[esp+4]
+    mov [input_pad],eax
+    mov eax,[esp+8]
+    mov [input_kind],eax
+    ret
+.global rev_local_input_index
+rev_local_input_index:
+    pushfd
+    pop eax
+    test eax,0x400
+    jnz option_fail
+    lea eax,[esp+4]
+    test eax,15
+    jnz option_fail
+    mov eax,[esp+4]
+    mov [input_pad],eax
+    mov eax,[esp+8]
+    mov [input_stock],eax
+    mov ecx,-1
+    mov edx,-1
+    pxor xmm0,xmm0
+    fninit
+    xor eax,eax
+    ret
 
 .global rev_menu_options_read
 rev_menu_options_read:
@@ -243,6 +303,8 @@ rev_menu_options_index:
     mov [option_pad],eax
     mov eax,[esp+8]
     mov [option_stock],eax
+    test eax,eax
+    jnz option_fail
     mov ecx,-1
     mov edx,-1
     pxor xmm0,xmm0
@@ -262,6 +324,9 @@ option_stock:.skip 4
 option_flags:.skip 4
 option_flags_after:.skip 4
 option_float:.skip 4
+input_pad:.skip 4
+input_kind:.skip 4
+input_stock:.skip 4
 .global seen_finder_this,seen_predicate
 seen_finder_this:.skip 4
 seen_predicate:.skip 4

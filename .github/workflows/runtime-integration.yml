@@ -68,6 +68,8 @@ jobs:
 
       - name: Raw pad axis argument transport without game code
         run: python tests/test_pad_axes.py
+      - name: Verify keyboard owner index map without a game image
+        run: python tests/runtime/test_input_owner.py
       - name: Physical pad preservation gateway ABI
         run: |
           as --32 patches/hud_ownership/pad_clear_gateway.S -o "$RUNNER_TEMP/pad-clear.o"

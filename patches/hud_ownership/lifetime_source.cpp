@@ -197,6 +197,10 @@ u32 LifetimeSource::local_think_mode(u32 address,u32 requested) {
     return revision==revision_ && !depth_ && fault_==SourceFault::None ? 1u : requested;
 }
 bool LifetimeSource::preserve_other_pad(u32 gamepad,u32 destination,u32 value,u32 size) {
+    // An admitted synthesis keeps its initial slot until the native call returns,
+    // including revocation in a callback. Never clear J2 halfway through it.
+    if(input_busy_ && input_local_ && on_thread() && gamepad==input_pad_ &&
+       !value && size==0x2C)return destination==gamepad+0x198+(1-input_member_)*0x2F8;
     if(!on_thread() || capturing_ || depth_ || fault_!=SourceFault::None ||
        value || size!=0x2C || !gamepad || gamepad>Invalid-0x994)return false;
     const u32 revision=revision_,sub=roles_[1].actor.address;
@@ -217,6 +221,40 @@ bool LifetimeSource::preserve_other_pad(u32 gamepad,u32 destination,u32 value,u3
     }
     // Recheck actor ownership after input reads, including deaths/rebindings.
     return revision==revision_ && local_think_mode(sub,3)==1 && revision==revision_;
+}
+u32 LifetimeSource::input_index(u32 gamepad,u32 stock) const {
+    return on_thread() && input_busy_ && input_local_ && input_pad_==gamepad ? input_member_ : stock;
+}
+void LifetimeSource::input_update(u32 gamepad,u32 kind) {
+    if(kind>1 || !access_.input_update)return;
+    if(!on_thread()){access_.input_update(access_.context,gamepad,kind);return;}
+    if(input_busy_)return;
+    input_busy_=true;
+    const u32 revision=revision_,sub=roles_[1].actor.address;
+    bool local=gamepad && gamepad<=Invalid-0x994 && local_think_mode(sub,3)==1;
+    if(local){
+        CaptureGuard guard(capturing_);u32 first_primary=Invalid;
+        for(u32 pass=0;pass<2 && local;++pass){
+            u32 singleton=0,vt=0,primary=0;
+            local=word(0x057A7480,singleton,revision) && singleton==gamepad &&
+                word(gamepad,vt,revision) && vt==0x04E11D30 &&
+                field(gamepad,0x970,primary,revision) && primary<2 &&
+                (!pass || primary==first_primary);
+            first_primary=primary;
+        }
+    }
+    input_local_=local && revision==revision_ && local_think_mode(sub,3)==1 && revision==revision_;
+    input_pad_=gamepad;input_member_=0;
+    if(input_local_ && kind==0){
+        // Slot1 may have inherited keyboard layout6 before the partner joined.
+        // Run the existing previous-layout restoration for J2, then reserve
+        // subsequent device selection and keyboard synthesis for logical J1.
+        input_member_=1;
+        access_.input_update(access_.context,gamepad,2);
+        input_member_=0;
+    }
+    access_.input_update(access_.context,gamepad,kind);
+    input_local_=false;input_pad_=0;input_busy_=false;
 }
 bool LifetimeSource::capture(LifeSnapshot* out) {
     if(!out || !on_thread() || fault_!=SourceFault::None || capturing_ || depth_)return false;
@@ -264,6 +302,12 @@ extern "C" unsigned int rev_hud_lifetime_event(unsigned int site,unsigned int ob
 }
 extern "C" unsigned int rev_local_think_mode(unsigned int actor,unsigned int requested) {
     return rev_hud::Sink ? rev_hud::Sink->local_think_mode(actor,requested) : requested;
+}
+extern "C" unsigned int rev_local_input_index(unsigned int gamepad,unsigned int stock) {
+    return rev_hud::Sink ? rev_hud::Sink->input_index(gamepad,stock) : stock;
+}
+extern "C" void rev_local_input_update(unsigned int gamepad,unsigned int kind) {
+    if(rev_hud::Sink)rev_hud::Sink->input_update(gamepad,kind);
 }
 
 extern "C" unsigned int rev_preserve_other_pad(unsigned int gamepad,unsigned int destination,

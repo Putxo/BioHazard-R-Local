@@ -9,6 +9,9 @@ struct LifetimeAccess {
     u32 (*thread_id)(void*) noexcept = nullptr;
     // January cdecl 0x01C16468 -> 0x026D7EF0, not the ret4 Self predicate.
     u32 (*stock_self)(void*) noexcept = nullptr;
+    // Native adapter: 0=device choice, 1=keyboard synthesis, 2=restore layout.
+    // Kind2 is called internally under the admitted slot1 restoration scope.
+    void (*input_update)(void*,u32 gamepad,u32 kind) noexcept = nullptr;
 };
 struct LifeSnapshot {
     Session session{};
@@ -40,6 +43,8 @@ public:
     // Actor ownership, independent of HUD readiness. Native setter applies result.
     u32 local_think_mode(u32 actor, u32 requested);
     bool preserve_other_pad(u32 gamepad, u32 destination, u32 value, u32 size);
+    void input_update(u32 gamepad,u32 kind);
+    u32 input_index(u32 gamepad,u32 stock) const;
     SourceFault fault() const { return fault_; }
     u32 epoch() const { return epoch_; }
     u32 binder_depth() const { return depth_; }
@@ -52,6 +57,8 @@ private:
     Token parents_[2]{}; Binding bindings_[BindCapacity]{};
     u32 thread_=0, next_generation_=0, revision_=1, epoch_=1, depth_=0;
     bool capturing_=false, was_ready_=false;
+    u32 input_pad_=0,input_member_=0;
+    bool input_busy_=false,input_local_=false;
     SourceFault fault_=SourceFault::None;
     bool on_thread() const;
     bool word(u32 address, u32& value, u32 revision);

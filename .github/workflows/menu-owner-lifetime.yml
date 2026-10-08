@@ -39,6 +39,7 @@ jobs:
           FLAGS="-m32 -std=c++17 -O2 -Wall -Wextra -Werror -ffreestanding -fno-exceptions -fno-rtti -fno-stack-protector -fno-pie"
           g++ $FLAGS -c tests/menu_routing/menu_gateway_abi.cpp -o "$RUNNER_TEMP/test.o"
           as --32 patches/menu_routing/menu_gateways.S -o "$RUNNER_TEMP/gates.o"
+          as --32 patches/hud_ownership/input_owner_gateways.S -o "$RUNNER_TEMP/input.o"
           as --32 tests/menu_routing/menu_gateway_abi.S -o "$RUNNER_TEMP/harness.o"
-          ld -m elf_i386 "$RUNNER_TEMP/gates.o" "$RUNNER_TEMP/test.o" "$RUNNER_TEMP/harness.o" -o "$RUNNER_TEMP/menu-gates"
+          ld -m elf_i386 "$RUNNER_TEMP/gates.o" "$RUNNER_TEMP/input.o" "$RUNNER_TEMP/test.o" "$RUNNER_TEMP/harness.o" -o "$RUNNER_TEMP/menu-gates"
           "$RUNNER_TEMP/menu-gates"
