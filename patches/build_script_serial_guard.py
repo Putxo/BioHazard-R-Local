@@ -20,6 +20,8 @@ BASE_PROFILES = {
     BASE_SHA: 'published GNU build with historical Cpu/Network enum mistake',
     'da2d48b79366874155fdf2a115217bbdfac0263a4c59f392fc5416d68adda04f':
         'corrected GNU build: Sub0 Cpu(3) -> Pad(1), Network(2) preserved',
+    '933aba845d32a4015d7c2aa084ef17514b833c9c467e4651c66abd209f32d659':
+        'corrected LLVM 22.1.8 build: Sub0 Cpu(3) -> Pad(1), Network(2) preserved',
     '118c06695e4a4cea8fffcc9ae5e9c8b7f4621a608f436d730d1ea4851b2b2d34':
         'LLVM 22.1.8 ELF32; historical Cpu/Network enum mistake',
 }

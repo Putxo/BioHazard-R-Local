@@ -1,8 +1,8 @@
 # Estado actual del cooperativo local
 
-29/09/2026. Rama técnica: `research/script-member-serial-validation`.
-PR59 integrado: `1e335fcf8ccfdb1917c02acafdf8d97be0e1044c`, 20 workflows PASS.
-Corrección de input Sub0 en rama `research/fix-sub0-cpu3-pad1`: gameplay real reveló que el hook trataba Network(2) como Cpu; ahora exige Cpu(3) -> Pad(1).
+08/10/2026. Rama técnica: `research/script-member-serial-validation`.
+PR60 integrado: `d3034bb97066ee3d6e3c42150da0ee650a876ca4`.
+Prioridad actual: J2 sigue en IA según el propietario. PR60 corrige Cpu(3) -> Pad(1); la cadena de entrega necesitaba además aceptar las bases corregidas y rechazar las antiguas. Véase [corrección de construcción](docs/89-cpu3-cumulative-build.md). No se da por validado el movimiento jugando.
 
 **El cooperativo completo sigue en desarrollo. El juego no se ha ejecutado.**
 El propietario prohíbe abrirlo y hará personalmente las pruebas jugando.
