@@ -35,6 +35,7 @@ struct Host {
     rev_genesis::FilterCopyHost filter_copy{};
     void (*effect_draw)(void*,u32 kind,u32 unit,u32 context) noexcept=nullptr;
     rev_menu::OptionsAccess options{};
+    void (*input_update)(void*,u32 gamepad,u32 kind) noexcept=nullptr;
 };
 // One process-lifetime graph. Construct and start before ANY installed gateway
 // is reachable. No callback is invoked during member construction.

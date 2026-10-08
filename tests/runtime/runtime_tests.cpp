@@ -13,6 +13,7 @@ struct Fixture {
     u32 mask_read_at=0,mask_read_fault=0,mask_nested=99;
     u32 effect_draws=0,effect_draw_fault=0;
     u32 options_reads=0,options_applies=0,options_publishes=0;
+    u32 input_calls=0,input_kind=99;
     static constexpr u32 FilterSource=0xF00000,FilterCopy=0xF10000;
     static void filter_graph(std::map<u32,u32>& m,u32 p,u32 count) {
         m[p]=0x04DB7A34;m[p+0x48]=1;m[p+0x54]=m[p+0x58]=m[p+0x5c]=0;
@@ -105,7 +106,12 @@ struct Fixture {
             C(config==0xE1004C && save==0 && flag==5);C(z.r.menu().options_index(0xE00000,0)==1);
             return 1;},
         [](void* p,u32 global,const u32* values) noexcept {auto& z=*static_cast<Fixture*>(p);++z.options_publishes;
-            C(global==0xE20000);C(values[1]==501);for(u32 i=0;i<65;++i)z.f.m[global+0x3C+i*4]=values[i];}}};
+            C(global==0xE20000);C(values[1]==501);for(u32 i=0;i<65;++i)z.f.m[global+0x3C+i*4]=values[i];}},
+        [](void* p,u32 pad,u32 kind) noexcept {auto& z=*static_cast<Fixture*>(p);
+            if(kind==2){C(z.r.source().input_index(pad,0)==1);return;}
+            ++z.input_calls;z.input_kind=kind;
+            C(pad==0xE00000);C(z.r.source().input_index(pad,1)==0);
+            C(z.r.source().preserve_other_pad(pad,pad+0x490,0,0x2C));}};
     }
     Fixture(u32 count=LegacyWidgetKinds):f(count),r(registry,host(),count) {
         f.life=&r.lifecycle();
@@ -990,5 +996,9 @@ int main(){
      C(x.options_reads==2);C(m[0xE10050]==10 && m[0xE10154]==10);
      C(menu.options_apply(0xE1004C,1,5)==1);C(x.options_applies==1 && x.options_publishes==1);
      C(menu.options_index(0xE00000,9)==9);C(m[0xE00970]==0);++scenarios;}
+    for(u32 primary:{0u,1u})for(u32 kind:{0u,1u}){Fixture x;x.start();x.births();
+     x.f.m[0xE00000]=0x04E11D30;x.f.m[0x057A7480]=0xE00000;x.f.m[0xE00970]=primary;
+     x.r.source().input_update(0xE00000,kind);C(x.input_calls==1 && x.input_kind==kind);
+     C(x.r.source().input_index(0xE00000,1)==1);C(x.f.m[0xE00970]==primary);++scenarios;}
     std::printf("{\"status\":\"PASS\",\"scenarios\":%u,\"assertions\":%u,\"engine_calls_mocked\":true,\"gameplay_executed\":false}\n",scenarios,checks);
 }

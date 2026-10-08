@@ -2,9 +2,9 @@
   "schema_version": 4,
   "canonical_branch": "research/script-member-serial-validation",
   "checkpoint": {
-    "merged_pr": 65,
-    "merge_sha": "d71eae57f0e89bdcad05e29d90a5285a4517d590",
-    "tested_head": "e6c2641548b5423ceb83d774722af1875cd8fd2e",
+    "merged_pr": 66,
+    "merge_sha": "289b4895583f2885b1b89fe11a24b1e613013afb",
+    "tested_head": "efda26d035313dd429c463a596f06572a0019495",
     "ci": "20 workflows PASS"
   },
   "user_constraints": {
@@ -25,7 +25,7 @@
   },
   "runtime": {
     "composition_root": true,
-    "hud_menu_hook_count": 227,
+    "hud_menu_hook_count": 425,
     "local_views_use_native_immediate_draw": true,
     "action_loop_priority_per_member": true,
     "action_loop_stop_per_member": true,
@@ -146,7 +146,8 @@
     "docs/88-sub0-cpu3-pad1-runtime-correction.md",
     "docs/89-cpu3-cumulative-build.md",
     "docs/90-local-input-mode-ownership.md",
-    "docs/94-options-controller-settings.md"
+    "docs/94-options-controller-settings.md",
+    "docs/95-keyboard-owner-and-device-switch.md"
   ],
   "input": {
     "user_reports_j2_remains_ai": true,
@@ -163,7 +164,10 @@
     "native_network_request_relinquishes_observed_sub0_ownership": true,
     "control_ownership_independent_of_hud_readiness": true,
     "other_physical_pad_preserved_during_keyboard_clear": true,
-    "complete_keyboard_mouse_plus_pad_validated": false
+    "complete_keyboard_mouse_plus_pad_validated": false,
+    "keyboard_synthesis_local_member": 0,
+    "j2_inherited_keyboard_layout_restored": true,
+    "single_physical_pad_reassignment": false
   },
   "input_axis_producers": {
     "status": "implemented_static_and_synthetic_checks",
@@ -179,11 +183,11 @@
     ],
     "gameplay_validated": false,
     "candidate_sha256": "96cb422a44c39cc86372ca56d0c3e50b9449ff7ec35657e37358124954807b7f",
-    "remaining": "Device mode switching, options ownership, mouse hit-test filter and full action coverage remain pending."
+    "remaining": "Single-controller physical reassignment, reconnection, global mouse/UI policies, options persistence and full action coverage remain pending."
   },
   "input_preservation": {
-    "candidate_sha256": "e467c459a7cf3a4041f4a3831c1a3a99d9afb750e54469b2c6f37b6d6e8d0107",
-    "module_sha256": "8af171f78a6a8906b55f058331bab50ac9fc26f7a2b4afd3a27033a99ee07893",
+    "candidate_sha256": "9f823502d3a40b461cebc16b690f0bcbffb809f2f4012fb027b0858777f19425",
+    "module_sha256": "698232ce908218b3842535d269f82cc6c52da19244c8d3fd43fbd17494ee1a0c",
     "inline_sites": 10,
     "gameplay_validated": false
   },

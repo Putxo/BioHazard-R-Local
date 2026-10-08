@@ -20,6 +20,7 @@ from audit_pipeline_frame import SITES as PIPELINE_SITES
 from check_local_input import inspect_binder
 from pad_axis_sites import patches as axis_patches, inspect_axes
 from pad_state_sites import patches as state_patches
+from input_owner_sites import hooks as input_owner_hooks
 
 def inline_input_sites():return [*axis_patches(),*state_patches()]
 
@@ -75,6 +76,9 @@ def read_module(data):
 
 def hook_sites():
     out=[(0x01EB73A0,bytes.fromhex('558bec81ecfc000000'),'rev_action_draw_gate',0xE9)]
+    out.extend(input_owner_hooks())
+    out.append((0x02DAC787,rel(0x02DAC787,0x01BF908E),'rev_input_update_device',0xE8))
+    out.append((0x02DAC8A1,rel(0x02DAC8A1,0x01C2742F),'rev_input_update_keyboard',0xE8))
     for va in (0x02DB36A1,0x02DB36B6):
         out.append((va,rel(va,0x01C15CB6),'rev_pad_clear_gate',0xE8))
     for va,name in ((0x02C2C641,'current'),(0x02C2C64F,'reference')):

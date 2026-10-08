@@ -13,8 +13,10 @@ struct Fixture {
     std::map<u32,u32> mem;
     u32 thread=7,self=PL,reads=0,self_calls=0,trigger=0,event_site=0,event_object=0;
     bool reenter=false;
+    u32 input_calls=0,input_kind=Invalid,input_slot=Invalid,input_fault=0,input_restores=0;
+    bool input_preserved=false;
     LifetimeSource source;
-    Fixture():source(registry,{this,read,tid,get_self}) {
+    Fixture():source(registry,{this,read,tid,get_self,update_input}) {
         mem[PL]=mem[NP]=NPC;mem[CO]=manager_vtable(ManagerKind::Cockpit);mem[MM]=manager_vtable(ManagerKind::MiniMap);
         mem[PL+0xE3C]=0;mem[NP+0xE3C]=1;mem[PL+0xE40]=mem[NP+0xE40]=1;
         mem[MAIN]=0x04E1642C;mem[SUB]=0x04E1649C;mem[MAIN+0x44]=PL;mem[SUB+0x44]=NP;
@@ -27,6 +29,27 @@ struct Fixture {
         const auto it=f.mem.find(a);if(it==f.mem.end())return false;*out=it->second;return true;
     }
     static u32 tid(void* c) noexcept {return static_cast<Fixture*>(c)->thread;}
+    static void update_input(void* c,u32 pad,u32 kind) noexcept {
+        if(kind==2){auto& f=*static_cast<Fixture*>(c);++f.input_restores;
+            CHECK(f.source.input_index(pad,9)==1);
+            if(f.mem[pad+0x738]==6)f.mem[pad+0x738]=f.mem[pad+0x73C];
+            return;
+        }
+        auto& f=*static_cast<Fixture*>(c);++f.input_calls;f.input_kind=kind;
+        f.input_slot=f.source.input_index(pad,f.mem[pad+0x970]);
+        if(f.input_fault==1)CHECK(f.source.event(0x0277DC70,NP));
+        if(f.input_fault==2)f.source.input_update(pad,kind);
+        if(f.input_fault==3){++f.thread;CHECK(f.source.input_index(pad,9)==9);--f.thread;}
+        CHECK(f.source.input_index(pad,f.mem[pad+0x970])==f.input_slot);
+        CHECK(f.source.input_index(pad+4,9)==9);
+        f.input_preserved=f.source.preserve_other_pad(pad,pad+0x490,0,0x2C);
+        // Synthetic poll -> clear -> keyboard-write transport; no game code.
+        if(kind==1){
+            for(u32 slot=0;slot<2;++slot){const u32 dest=pad+0x198+slot*0x2F8;
+                if(!f.source.preserve_other_pad(pad,dest,0,0x2C))f.mem[dest]=0;}
+            f.mem[pad+0x198+f.input_slot*0x2F8]=0x1234;
+        }
+    }
     static u32 get_self(void* c) noexcept {
         auto& f=*static_cast<Fixture*>(c);++f.self_calls;
         if(f.reenter){f.reenter=false;CHECK(f.source.event(0x027B5D00,PL));}
@@ -55,6 +78,35 @@ int main(){
         f.mem[GP_GLOBAL]=GP;f.mem[GP]=0x04E11D30;
         f.mem[GP+0x970]=primary;f.mem[GP+0x974]=1;
     };
+    for(u32 primary:{0u,1u})for(u32 kind:{0u,1u})for(u32 fault=0;fault<4;++fault){
+        Fixture f;f.births();f.bind(MAIN);f.bind(SUB);input(f,primary);f.input_fault=fault;
+        f.mem[GP+0x198]=0x1111;f.mem[GP+0x490]=0x2222;
+        CHECK(f.source.input_index(GP,9)==9);f.source.input_update(GP,kind);
+        CHECK(f.input_calls==1 && f.input_kind==kind && f.input_slot==0 && f.input_preserved);
+        CHECK(f.input_restores==(kind==0?1u:0u));
+        CHECK(f.mem[GP+0x970]==primary);CHECK(f.mem[GP+0x490]==0x2222);
+        CHECK(f.mem[GP+0x198]==(kind?0x1234u:0x1111u));CHECK(f.source.input_index(GP,9)==9);
+        if(fault==1){f.source.input_update(GP,0);CHECK(f.input_slot==primary);}
+        ++scenarios;
+    }
+    for(u32 bad=0;bad<10;++bad){
+        Fixture f;f.births();f.bind(MAIN);f.bind(SUB);input(f,1);
+        switch(bad){case 0:f.mem[GP_GLOBAL]=GP+4;break;case 1:f.mem[GP]=0;break;
+          case 2:f.mem[GP+0x970]=2;break;case 3:f.mem[ACTIVE]=0;break;
+          case 4:f.mem[NP+0xE40]=2;break;case 5:f.mem[NP+0xE40]=3;break;
+          case 6:f.thread=8;break;case 7:f.mem[NP+0xE3C]=2;break;
+          case 8:CHECK(f.source.event(BEGIN,SUB));break;case 9:f.mem.erase(GP_GLOBAL);break;}
+        f.source.input_update(GP,0);CHECK(f.input_calls==1);CHECK(f.input_slot==f.mem[GP+0x970]);
+        CHECK(f.source.input_index(GP,9)==9);++scenarios;
+    }
+    for(u32 at:{GP_GLOBAL,GP,GP+0x970}){Fixture f;f.ready();input(f,1);f.trigger=at;
+        f.event_site=0x0277DC70;f.event_object=NP;f.source.input_update(GP,0);
+        CHECK(f.input_calls==1 && f.input_slot==1);++scenarios;}
+    {Fixture f;input(f,1);f.source.input_update(GP,0);CHECK(f.input_calls==1 && f.input_slot==1);
+     f.source.input_update(GP,2);CHECK(f.input_calls==1);++scenarios;}
+    for(u32 layout:{0u,1u,5u,6u}){Fixture f;f.births();f.bind(MAIN);f.bind(SUB);input(f,1);
+      f.mem[GP+0x738]=layout;f.mem[GP+0x73C]=4;f.source.input_update(GP,0);
+      CHECK(f.mem[GP+0x738]==(layout==6?4u:layout));CHECK(f.mem[GP+0x970]==1);++scenarios;}
     for(u32 primary:{0u,1u})for(u32 mode:{0u,1u}){
         Fixture f;f.births();f.bind(MAIN);f.bind(SUB);input(f,primary);
         f.mem[PL+0xE40]=f.mem[NP+0xE40]=mode;const auto before=f.mem;

@@ -100,6 +100,8 @@ rev_menu_gate_options_\name:
     sub esp,8
     push dword ptr [esi+\dest_saved]
     push dword ptr [esi+\base_saved]
+    call rev_local_input_index
+    mov [esp+4],eax
     call rev_menu_options_index
     add esp,16
     mov [esi+\dest_saved],eax

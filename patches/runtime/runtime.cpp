@@ -18,7 +18,7 @@ Runtime::Runtime(Registry& registry,Host host,u32 count) noexcept
       targets_({host.memory,host.thread}), effects_({host.memory,host.thread}),
       weapons_({host.memory,host.thread}),
       target_views_(targets_,target_view_host()), count_(count),
-      source_(registry,{host.memory.context,host.memory.word,host.thread,host.self}),
+      source_(registry,{host.memory.context,host.memory.word,host.thread,host.self,host.input_update}),
       clock_({host.memory.context,host.thread}),
       view_({host.memory,host.thread}),
       window_(clock_,{host.memory.context,host.thread},
