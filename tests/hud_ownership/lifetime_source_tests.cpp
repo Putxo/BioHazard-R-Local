@@ -50,6 +50,40 @@ struct Fixture {
     void unchanged(LifeSnapshot& s) {s.revision=0xDEAD;CHECK(!source.capture(&s));CHECK(s.revision==0xDEAD);}
 };
 int main(){
+    constexpr u32 GP=0x160000,GP_GLOBAL=0x057A7480;
+    auto input=[=](Fixture& f,u32 primary){
+        f.mem[GP_GLOBAL]=GP;f.mem[GP]=0x04E11D30;
+        f.mem[GP+0x970]=primary;f.mem[GP+0x974]=1;
+    };
+    for(u32 primary:{0u,1u})for(u32 mode:{0u,1u}){
+        Fixture f;f.births();f.bind(MAIN);f.bind(SUB);input(f,primary);
+        f.mem[PL+0xE40]=f.mem[NP+0xE40]=mode;const auto before=f.mem;
+        CHECK(f.source.preserve_other_pad(GP,GP+0x198+(1-primary)*0x2F8,0,0x2C));
+        CHECK(!f.source.preserve_other_pad(GP,GP+0x198+primary*0x2F8,0,0x2C));
+        CHECK(f.mem==before);++scenarios;
+    }
+    for(u32 bad=0;bad<14;++bad){
+        Fixture f;f.ready();input(f,0);
+        u32 gp=GP,dest=GP+0x490,value=0,size=0x2C;
+        switch(bad){case 0:gp=0;break;case 1:gp=0xFFFFF800;break;
+          case 2:++dest;break;case 3:value=1;break;case 4:--size;break;
+          case 5:f.mem[GP_GLOBAL]=GP+4;break;case 6:f.mem[GP]=0;break;
+          case 7:f.mem[GP+0x970]=2;break;case 8:f.mem[GP+0x974]=0;break;
+          case 9:f.mem.erase(GP+0x970);break;case 10:f.mem[ACTIVE]=0;break;
+          case 11:f.mem[NP+0xE40]=2;break;case 12:f.mem[NP+0xE40]=3;break;
+          case 13:f.thread=8;break;}
+        const auto before=f.mem;CHECK(!f.source.preserve_other_pad(gp,dest,value,size));
+        CHECK(f.mem==before);++scenarios;
+    }
+    for(u32 at:{GP_GLOBAL,GP,GP+0x970,GP+0x974}){
+        Fixture f;f.ready();input(f,0);f.trigger=at;
+        f.event_site=0x0277DC70;f.event_object=NP;
+        CHECK(!f.source.preserve_other_pad(GP,GP+0x490,0,0x2C));++scenarios;
+    }
+    {Fixture f;input(f,0);CHECK(!f.source.preserve_other_pad(GP,GP+0x490,0,0x2C));
+     f.births();f.bind(MAIN);f.bind(SUB);CHECK(f.source.event(BEGIN,SUB));
+     CHECK(!f.source.preserve_other_pad(GP,GP+0x490,0,0x2C));++scenarios;}
+
     // Control ownership is established by two observed PCS binds, before HUD.
     for(u32 p1:{0u,1u})for(u32 p2:{0u,1u}){
         Fixture f;f.births();f.bind(MAIN);f.bind(SUB);

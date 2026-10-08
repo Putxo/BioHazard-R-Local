@@ -26,7 +26,7 @@ class ImageTests(unittest.TestCase):
         sections,symbols=image.read_module(self.data)
         va,code=sections['.revtext']
         sites=image.hook_sites()
-        self.assertEqual(185,len(sites))
+        self.assertEqual(187,len(sites))
         occupied=set()
         for at,old,name,opcode in sites:
             self.assertIn(opcode,(0xE8,0xE9))
@@ -35,7 +35,7 @@ class ImageTests(unittest.TestCase):
             self.assertLess(symbols[name],va+len(code))
             self.assertFalse(occupied.intersection(range(at,at+len(old))))
             occupied.update(range(at,at+len(old)))
-        for at,old,new,name in image.axis_patches():
+        for at,old,new,name in image.inline_input_sites():
             self.assertEqual(len(old),len(new))
             self.assertFalse(occupied.intersection(range(at,at+len(old))))
             occupied.update(range(at,at+len(old)))

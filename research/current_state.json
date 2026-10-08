@@ -2,10 +2,10 @@
   "schema_version": 4,
   "canonical_branch": "research/script-member-serial-validation",
   "checkpoint": {
-    "merged_pr": 62,
-    "merge_sha": "52ea2467c13bb34c542172c5a21f3ae94c8d560f",
-    "tested_head": "9d35a171962fe9a3756e8517b372b90ea6c07fe1",
-    "ci": "21 workflows PASS"
+    "merged_pr": 63,
+    "merge_sha": "9da52edd2dccc99538c0df55fb16d7705e4809bc",
+    "tested_head": "f95afc6c7c894164d75fc9b53e931f8910fa8f4e",
+    "ci": "20 workflows PASS"
   },
   "user_constraints": {
     "launch_game": false,
@@ -25,7 +25,7 @@
   },
   "runtime": {
     "composition_root": true,
-    "hud_menu_hook_count": 185,
+    "hud_menu_hook_count": 187,
     "local_views_use_native_immediate_draw": true,
     "action_loop_priority_per_member": true,
     "action_loop_stop_per_member": true,
@@ -92,7 +92,8 @@
     "genesis_retained_weapon_component": "app::game::sound::uBioSoundMotionSe",
     "genesis_hunter_local_uncached_draw_connected": true,
     "genesis_hunter_per_view_materials_complete": false,
-    "raw_pad_axis_argument_patches": 8
+    "raw_pad_axis_argument_patches": 8,
+    "indexed_pad_state_patches": 2
   },
   "pending": [
     "verify J2 leaves AI and responds independently to physical controller 2 in owner gameplay",
@@ -159,7 +160,9 @@
     "tested_user_image_identified": false,
     "observed_local_sub0_preserves_pad_on_later_cpu_request": true,
     "native_network_request_relinquishes_observed_sub0_ownership": true,
-    "control_ownership_independent_of_hud_readiness": true
+    "control_ownership_independent_of_hud_readiness": true,
+    "other_physical_pad_preserved_during_keyboard_clear": true,
+    "complete_keyboard_mouse_plus_pad_validated": false
   },
   "input_axis_producers": {
     "status": "implemented_static_and_synthetic_checks",
@@ -175,6 +178,12 @@
     ],
     "gameplay_validated": false,
     "candidate_sha256": "96cb422a44c39cc86372ca56d0c3e50b9449ff7ec35657e37358124954807b7f",
-    "remaining": "Physical device assignment, shared keyboard/mouse synthesis and complete action/mode coverage remain unvalidated."
+    "remaining": "Device mode switching, options ownership, mouse hit-test filter and full action coverage remain pending."
+  },
+  "input_preservation": {
+    "candidate_sha256": "e467c459a7cf3a4041f4a3831c1a3a99d9afb750e54469b2c6f37b6d6e8d0107",
+    "module_sha256": "8af171f78a6a8906b55f058331bab50ac9fc26f7a2b4afd3a27033a99ee07893",
+    "inline_sites": 10,
+    "gameplay_validated": false
   }
 }
