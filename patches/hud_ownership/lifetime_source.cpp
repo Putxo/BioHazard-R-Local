@@ -163,6 +163,39 @@ bool LifetimeSource::clear_managers() {
     if(!parents_[0].valid() && !parents_[1].valid())return true;
     parents_[0]={};parents_[1]={};return change(true);
 }
+u32 LifetimeSource::local_think_mode(u32 address,u32 requested) {
+    if(!on_thread() || fault_!=SourceFault::None || capturing_ || depth_ || !address ||
+       roles_[1].actor.address!=address || !get(roles_[1].token,LifeObject::Actor))return requested;
+    // Network relinquishes local ownership until another observed PCS bind.
+    if(requested==2){roles_[1]={};change(true);return requested;}
+    if(requested!=3)return requested; // Preserve Invalid(0), including suspension.
+    CaptureGuard guard(capturing_);
+    const u32 revision=revision_;
+    const Role roles[]={roles_[0],roles_[1]};
+    if(!roles[0].pcs || !roles[1].pcs || roles[0].pcs==roles[1].pcs ||
+       roles[0].actor.address==address || roles[0].actor.serial==roles[1].actor.serial)return requested;
+    u32 initial_modes[2]{};
+    // No manager/frame requirement: actor input must also survive HUD teardown.
+    for(u32 pass=0;pass<2;++pass){
+        u32 active=0,sub=0;
+        if(!word(Active,active,revision) || !active ||
+           !word(Sub,sub,revision) || sub!=address)return requested;
+        for(u32 i=0;i<2;++i){
+            const auto& role=roles[i];const auto* e=get(role.token,LifeObject::Actor);
+            u32 vt=0,pcs_vt=0,bound=0,serial=0,mode=0;
+            if(!e || e->address!=role.actor.address || e->generation!=role.actor.lifetime ||
+               !word(role.pcs,pcs_vt,revision) || pcs_vt!=(i?SubVT:MainVT) ||
+               !field(role.pcs,0x44,bound,revision) || bound!=e->address ||
+               !word(e->address,vt,revision) || vt!=role.vtable ||
+               !field(e->address,0xE3C,serial,revision) || serial>0x7FFFFFFFu ||
+               serial!=static_cast<u32>(role.actor.serial) ||
+               !field(e->address,0xE40,mode,revision) || mode>1)return requested;
+            if(pass && mode!=initial_modes[i])return requested;
+            initial_modes[i]=mode;
+        }
+    }
+    return revision==revision_ && !depth_ && fault_==SourceFault::None ? 1u : requested;
+}
 bool LifetimeSource::capture(LifeSnapshot* out) {
     if(!out || !on_thread() || fault_!=SourceFault::None || capturing_ || depth_)return false;
     CaptureGuard guard(capturing_);
@@ -206,4 +239,7 @@ bool bind_lifetime_sink(LifetimeSource& source){if(Sink)return false;Sink=&sourc
 }
 extern "C" unsigned int rev_hud_lifetime_event(unsigned int site,unsigned int object) {
     return rev_hud::Sink && rev_hud::Sink->event(site,object) ? 1u : 0u;
+}
+extern "C" unsigned int rev_local_think_mode(unsigned int actor,unsigned int requested) {
+    return rev_hud::Sink ? rev_hud::Sink->local_think_mode(actor,requested) : requested;
 }

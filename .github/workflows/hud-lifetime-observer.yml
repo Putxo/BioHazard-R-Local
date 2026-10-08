@@ -35,3 +35,7 @@ jobs:
           as --32 tests/hud_ownership/lifetime_gateway_abi.S -o "$RUNNER_TEMP/life-harness.o"
           ld -m elf_i386 "$RUNNER_TEMP/life-gates.o" "$RUNNER_TEMP/life-harness.o" -o "$RUNNER_TEMP/life-abi"
           "$RUNNER_TEMP/life-abi"
+          as --32 patches/hud_ownership/think_mode_gateway.S -o "$RUNNER_TEMP/think-gate.o"
+          as --32 tests/hud_ownership/think_mode_gateway_abi.S -o "$RUNNER_TEMP/think-test.o"
+          ld -m elf_i386 "$RUNNER_TEMP/think-gate.o" "$RUNNER_TEMP/think-test.o" -o "$RUNNER_TEMP/think-abi"
+          "$RUNNER_TEMP/think-abi"

@@ -2,7 +2,7 @@
 
 Actualización: 08/10/2026. Rama canónica: research/script-member-serial-validation.
 
-PR60 integrado: d3034bb97066ee3d6e3c42150da0ee650a876ca4.
+PR61 integrado: cf9a866780a4511dfa71d241928bebc7eecf1228, 20 workflows PASS.
 
 Prioridad: fallo real de J2 en IA; leer docs/88 y docs/89. Pad=1, Network=2, Cpu=3.
 No reutilizar una base con el antiguo comparador Cpu=2 para nuevas entregas.
@@ -15,7 +15,7 @@ Leer también docs/54-action-icon-view-routing.md, docs/55-action-priority-loop.
 
 y docs/56-local-draw-scheduling.md. Prioridad y parada del bucle por miembro;
 
-selector de dibujo inmediato local integrado: 184 hooks. No confundirlo
+selector de dibujo inmediato local integrado: 185 hooks. No confundirlo
 
 con cobertura completa de ActionCommand ni con validación jugando.
 
@@ -98,3 +98,5 @@ Genesis: [encendido privado de efectos sin escrituras globales de J2](docs/84-ge
 Genesis: [corrección de color por vista y admisión de dibujo](docs/85-genesis-color-per-view.md).
 
 Genesis: [dibujo Hunter sin reutilizar la caché entre vistas locales](docs/86-genesis-hunter-draw-cache.md).
+
+Control J2: [conservar propiedad ante solicitudes posteriores de CPU](docs/90-local-input-mode-ownership.md).

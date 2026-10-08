@@ -37,6 +37,8 @@ public:
     bool select_managers(u32 cockpit, u32 minimap);
     bool clear_managers();
     bool capture(LifeSnapshot* out);
+    // Actor ownership, independent of HUD readiness. Native setter applies result.
+    u32 local_think_mode(u32 actor, u32 requested);
     SourceFault fault() const { return fault_; }
     u32 epoch() const { return epoch_; }
     u32 binder_depth() const { return depth_; }
