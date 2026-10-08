@@ -2,10 +2,10 @@
   "schema_version": 4,
   "canonical_branch": "research/script-member-serial-validation",
   "checkpoint": {
-    "merged_pr": 66,
-    "merge_sha": "289b4895583f2885b1b89fe11a24b1e613013afb",
-    "tested_head": "efda26d035313dd429c463a596f06572a0019495",
-    "ci": "20 workflows PASS"
+    "merged_pr": 67,
+    "merge_sha": "2b243d8af3814caa6aa58eeb1d70fc30b053500f",
+    "tested_head": "defb573e6cade05c74b417abb522e7708bdae94d",
+    "ci": "21 workflows PASS"
   },
   "user_constraints": {
     "launch_game": false,
@@ -25,7 +25,7 @@
   },
   "runtime": {
     "composition_root": true,
-    "hud_menu_hook_count": 425,
+    "hud_menu_hook_count": 426,
     "local_views_use_native_immediate_draw": true,
     "action_loop_priority_per_member": true,
     "action_loop_stop_per_member": true,
@@ -147,7 +147,8 @@
     "docs/89-cpu3-cumulative-build.md",
     "docs/90-local-input-mode-ownership.md",
     "docs/94-options-controller-settings.md",
-    "docs/95-keyboard-owner-and-device-switch.md"
+    "docs/95-keyboard-owner-and-device-switch.md",
+    "docs/96-script-input-scheduler-owner.md"
   ],
   "input": {
     "user_reports_j2_remains_ai": true,
@@ -201,5 +202,15 @@
     "session_controller_fields_per_owner": 5,
     "j2_publication_preserves_j1_controller_fields": true,
     "module_sha256": "1d004982fe828e4090d7a4de822a82071196a66530ed5c835b5be839611f960d"
+  },
+  "script_input": {
+    "callback": "02DEE8D0",
+    "scheduler_unique_sub_actor_serial_routing": true,
+    "native_parent_relation_required": true,
+    "scheduler_lifetime_observer": false,
+    "complete_qte_coverage": false,
+    "gameplay_validated": false,
+    "candidate_sha256": "82a72094a10edeba17e9d579e0bd5e7c10daae53b971cfe6e9e677b98d8675c1",
+    "module_sha256": "d2afa835d86c66ddcc1194aa5adb9094dbf8ac0794bd9a18b03d165e27762737"
   }
 }

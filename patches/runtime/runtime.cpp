@@ -49,7 +49,23 @@ Runtime::Runtime(Registry& registry,Host host,u32 count) noexcept
           u32 v=0;return static_cast<Runtime*>(p)->word(0x057D9188,v)?v:0;
       },[](void* p) noexcept -> u32 {
           u32 v=0;return static_cast<Runtime*>(p)->word(0x057D9184,v)?v:0;
-      },host.options}), priority_(priority_host()), action_(action_host()) {}
+      },host.options}), script_input_(script_input_host()), priority_(priority_host()), action_(action_host()) {}
+
+rev_script::Host Runtime::script_input_host() noexcept {
+    return {this,[](void* p,u32 a,u32* out) noexcept {
+        return out && static_cast<Runtime*>(p)->word(a,*out);
+    },[](void* p) noexcept {
+        auto& r=*static_cast<Runtime*>(p);
+        return r.started_ && r.host_.thread && r.host_.thread(r.host_.memory.context)==r.thread_;
+    },[](void* p,rev_script::Owner* out) noexcept {
+        auto& r=*static_cast<Runtime*>(p);const u32 epoch=r.source_.epoch();
+        u32 actor=0,serial=0,mode=0;
+        if(!out || !r.word(0x057D9184,actor) || !actor || actor>Invalid-0xE43 ||
+           r.source_.local_think_mode(actor,3)!=1 || !r.word(actor+0xE40,mode) || mode!=1 ||
+           !r.word(actor+0xE3C,serial) || serial>0x7FFFFFFFu || epoch!=r.source_.epoch())return false;
+        *out={actor,serial,epoch};return true;
+    }};
+}
 
 rev_genesis::ProgressHost Runtime::genesis_host() noexcept {
     return {this,[](void* p,u32 widget,rev_genesis::Owner* out) noexcept {
@@ -767,7 +783,7 @@ bool Runtime::bind() noexcept {
     return bind_lifetime_sink(source_) && bind_pipeline_sink(clock_) &&
         bind_structural_sink(window_) && bind_manager_sink(driver_) &&
         bind_begin_activator_sink(activator_) && bind_p1_mask_sink(mask_) &&
-        rev_menu::bind_menu_owner_sink(menu_) && host_.action_rank &&
+        rev_menu::bind_menu_owner_sink(menu_) && rev_script::bind(script_input_) && host_.action_rank &&
         rev_action::bind_priority(priority_) && rev_action::bind(action_) &&
         bind_draw_schedule(action_host());
 }

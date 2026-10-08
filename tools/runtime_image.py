@@ -76,6 +76,7 @@ def read_module(data):
 
 def hook_sites():
     out=[(0x01EB73A0,bytes.fromhex('558bec81ecfc000000'),'rev_action_draw_gate',0xE9)]
+    out.append((0x02DEE8D0,bytes.fromhex('558bec81eccc000000'),'rev_script_input_gate',0xE9))
     out.extend(input_owner_hooks())
     out.append((0x02DAC787,rel(0x02DAC787,0x01BF908E),'rev_input_update_device',0xE8))
     out.append((0x02DAC8A1,rel(0x02DAC8A1,0x01C2742F),'rev_input_update_keyboard',0xE8))

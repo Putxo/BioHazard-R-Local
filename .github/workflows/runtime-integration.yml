@@ -18,8 +18,10 @@ jobs:
         run: |
           FLAGS="-std=c++17 -O1 -g -Wall -Wextra -Werror"
           if [ "${{ matrix.mode }}" = sanitized ]; then FLAGS="$FLAGS -fsanitize=address,undefined -fno-omit-frame-pointer"; fi
-          g++ $FLAGS -Ipatches/hud_ownership patches/hud_ownership/*.cpp patches/genesis/*.cpp patches/runtime/runtime.cpp patches/runtime/draw_schedule.cpp patches/menu_routing/menu_owner.cpp patches/action_icons/*.cpp tests/runtime/runtime_tests.cpp -o "$RUNNER_TEMP/runtime-tests"
+          g++ $FLAGS -Ipatches/hud_ownership patches/hud_ownership/*.cpp patches/genesis/*.cpp patches/runtime/runtime.cpp patches/runtime/draw_schedule.cpp patches/menu_routing/menu_owner.cpp patches/script_input/script_input.cpp patches/action_icons/*.cpp tests/runtime/runtime_tests.cpp -o "$RUNNER_TEMP/runtime-tests"
           "$RUNNER_TEMP/runtime-tests"
+          g++ $FLAGS patches/script_input/script_input.cpp tests/script_input/script_input_tests.cpp -o "$RUNNER_TEMP/script-input-tests"
+          "$RUNNER_TEMP/script-input-tests"
           g++ $FLAGS patches/runtime/draw_schedule.cpp tests/runtime/draw_schedule_tests.cpp -o "$RUNNER_TEMP/draw-schedule-tests"
           "$RUNNER_TEMP/draw-schedule-tests"
           g++ $FLAGS patches/runtime/draw_schedule.cpp tests/runtime/hunter_cache_tests.cpp -o "$RUNNER_TEMP/hunter-cache-tests"
@@ -76,3 +78,10 @@ jobs:
           as --32 tests/hud_ownership/pad_clear_gateway_abi.S -o "$RUNNER_TEMP/pad-clear-test.o"
           ld -m elf_i386 "$RUNNER_TEMP/pad-clear.o" "$RUNNER_TEMP/pad-clear-test.o" -o "$RUNNER_TEMP/pad-clear-abi"
           "$RUNNER_TEMP/pad-clear-abi"
+      - name: Script input callback thiscall ABI
+        run: |
+          python tests/script_input/test_installer.py
+          as --32 patches/script_input/script_input_gateway.S -o "$RUNNER_TEMP/script-input.o"
+          as --32 tests/script_input/script_input_abi.S -o "$RUNNER_TEMP/script-input-test.o"
+          ld -m elf_i386 "$RUNNER_TEMP/script-input.o" "$RUNNER_TEMP/script-input-test.o" -o "$RUNNER_TEMP/script-input-abi"
+          "$RUNNER_TEMP/script-input-abi"
