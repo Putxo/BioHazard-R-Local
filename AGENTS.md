@@ -2,7 +2,7 @@
 
 Actualización: 08/10/2026. Rama canónica: research/script-member-serial-validation.
 
-PR64 integrado: b54ba81d467d60747e349ab357f498605da6416b, 21 workflows PASS.
+PR65 integrado: d71eae57f0e89bdcad05e29d90a5285a4517d590, 20 workflows PASS.
 
 Prioridad: fallo real de J2 en IA; leer docs/88 y docs/89. Pad=1, Network=2, Cpu=3.
 No reutilizar una base con el antiguo comparador Cpu=2 para nuevas entregas.
@@ -15,7 +15,7 @@ Leer también docs/54-action-icon-view-routing.md, docs/55-action-priority-loop.
 
 y docs/56-local-draw-scheduling.md. Prioridad y parada del bucle por miembro;
 
-selector de dibujo inmediato local integrado: 212 hooks. No confundirlo
+selector de dibujo inmediato local integrado: 227 hooks. No confundirlo
 
 con cobertura completa de ActionCommand ni con validación jugando.
 
@@ -101,8 +101,10 @@ Genesis: [dibujo Hunter sin reutilizar la caché entre vistas locales](docs/86-g
 
 Control J2: [conservar propiedad ante solicitudes posteriores de CPU](docs/90-local-input-mode-ownership.md).
 
-Control J2: leer [productores de ejes](docs/91-pad-axis-producers.md); el instalador añade diez reemplazos inline además de los 212 hooks.
+Control J2: leer [productores de ejes](docs/91-pad-axis-producers.md); el instalador añade diez reemplazos inline además de los 227 hooks.
 
 Control J2: [conservar el mando físico durante teclado/ratón y consultas de estado por slot](docs/92-physical-pad-preservation.md). Cambio de dispositivo y opciones aún pendientes.
 
 Opciones: [25 lecturas del mando conectadas al dueño de Pause; configuración/guardado por jugador pendientes](docs/93-options-menu-input.md).
+
+Opciones: [cinco ajustes del mando del dueño, publicación global conservando los valores de J1](docs/94-options-controller-settings.md). Persistencia independiente de J2 y rutas completas de cancelar/defaults pendientes.

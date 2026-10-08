@@ -3,6 +3,7 @@ from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]/'scripts'))
 import audit_local_menu_owner as audit
 import audit_options_input as options
+import audit_options_settings as settings
 
 class T(unittest.TestCase):
  def test_bad(self):
@@ -33,5 +34,14 @@ class T(unittest.TestCase):
   for x in ('0x01F3EF43','0x01F3EF92','0x02B6A491','0x02B6A49E','0x02B6DE91','0x02B6EFDE',
             '0x02C3183B','0x02C31848','0x02C31FDC','0x02C31FE9'):self.assertIn(x,s)
   for x in ('pause_open','pause_1a0','pause_1ac','submenu_open','submenu_198','submenu_1a0','submenu_actor'):self.assertIn(x,g)
+ def test_options_settings_hook_bytes_match_pinned_witnesses(self):
+  root=Path(__file__).resolve().parents[2];sys.path.insert(0,str(root/'tools'))
+  import runtime_image
+  rows=[x for x in runtime_image.hook_sites() if x[2].startswith('rev_menu_gate_options_')]
+  self.assertEqual(15,len(rows))
+  for at,raw,symbol,op in rows:
+   self.assertEqual(op,0xE8)
+   self.assertIn((at,raw.hex(),symbol),settings.SITES)
+  with self.assertRaises(ValueError):settings.audit(b'not an original image')
 
 if __name__=='__main__':unittest.main(verbosity=2)

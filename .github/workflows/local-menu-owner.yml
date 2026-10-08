@@ -20,6 +20,8 @@ jobs:
           if [ "${{ matrix.mode }}" = sanitized ]; then FLAGS="$FLAGS -fsanitize=address,undefined -fno-omit-frame-pointer"; fi
           g++ $FLAGS -Ipatches/menu_routing patches/menu_routing/menu_owner.cpp tests/menu_routing/menu_owner_tests.cpp -o "$RUNNER_TEMP/menu-owner"
           "$RUNNER_TEMP/menu-owner"
+          g++ $FLAGS -Ipatches/menu_routing patches/menu_routing/menu_owner.cpp tests/menu_routing/options_tests.cpp -o "$RUNNER_TEMP/options"
+          "$RUNNER_TEMP/options"
       - name: Read-only audit/source map; private original optional
         run: python tests/menu_routing/test_menu_owner_audit.py
       - name: Freestanding i386 syntax
@@ -28,7 +30,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-      - name: Execute five source gateways against synthetic callbacks
+      - name: Execute menu gateways against synthetic callbacks
         shell: bash
         run: |
           FLAGS="-m32 -std=c++17 -O2 -Wall -Wextra -Werror -ffreestanding -fno-exceptions -fno-rtti -fno-stack-protector -fno-pie"

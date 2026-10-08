@@ -77,6 +77,13 @@ def hook_sites():
     out=[(0x01EB73A0,bytes.fromhex('558bec81ecfc000000'),'rev_action_draw_gate',0xE9)]
     for va in (0x02DB36A1,0x02DB36B6):
         out.append((va,rel(va,0x01C15CB6),'rev_pad_clear_gate',0xE8))
+    for va,name in ((0x02C2C641,'current'),(0x02C2C64F,'reference')):
+        out.append((va,rel(va,0x01B7D7CC),'rev_menu_gate_options_'+name,0xE8))
+    out.append((0x02C2CF0E,rel(0x02C2CF0E,0x01C1A0D6),'rev_menu_gate_options_apply',0xE8))
+    for va in (0x02DAE930,0x02DAE960,0x02DAE9CA,0x02DAE9FA,0x02DAEA5B,0x02DAEA89,0x02DAEBE6,0x02DAECF6,0x02DAEE06,0x02DAEF16):
+        out.append((va,bytes.fromhex('8b8870090000'),'rev_menu_gate_options_ecx',0xE8))
+    for va in (0x02DAE98C,0x02DAEA26):
+        out.append((va,bytes.fromhex('8b9170090000'),'rev_menu_gate_options_edx',0xE8))
     out.append((0x0278CC40,bytes.fromhex('558bec81eccc000000'),'rev_local_think_mode_gate',0xE9))
     out.append((0x0279CFBD,bytes.fromhex('e958010000'),'rev_aim_visibility_gate',0xE9))
     out.append((0x02B41E36,rel(0x02B41E36,0x01C2C7F4),'rev_scope_actor_gate',0xE8))

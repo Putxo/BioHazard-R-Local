@@ -6,6 +6,7 @@ u32 call_pad_gate(u32,u32,void(*)());u32 call_actor_gate(u32,u32);u32 call_state
 extern u32 seen_pad,seen_actor,seen_state_this,seen_state,seen_flag,seen_observed_state;
 extern u32 stack_before,stack_after,seen_incoming_eax,seen_incoming_edx;
 extern u32 seen_finder_this,seen_predicate;
+u32 call_options_tests();
 }
 extern "C" int run_tests(){
  static void(*const g[])()={rev_menu_gate_pause_open,rev_menu_gate_pause_1a0,rev_menu_gate_pause_1ac,rev_menu_gate_submenu_open,rev_menu_gate_submenu_198,rev_menu_gate_submenu_1a0,rev_menu_gate_pause_198};
@@ -17,7 +18,8 @@ extern "C" int run_tests(){
  if(call_state_gate(0x44440000,6,1)!=0xC0DEC0DE)return 30;
  if(seen_state_this!=0x44440000||seen_state!=6||seen_flag!=1||seen_observed_state!=6)return 31;
  if(stack_before!=stack_after||seen_incoming_eax!=0x11223344||seen_incoming_edx!=0x55667788)return 32;
- static const char msg[]="{\"status\":\"PASS\",\"gateways\":9,\"native_i386\":true,\"engine_mocked\":true,\"gameplay_executed\":false}\n";
+ const u32 options=call_options_tests();if(options)return options;
+ static const char msg[]="{\"status\":\"PASS\",\"gateways\":14,\"native_i386\":true,\"engine_mocked\":true,\"gameplay_executed\":false}\n";
  asm volatile("int $0x80"::"a"(4),"b"(1),"c"(msg),"d"(sizeof(msg)-1):"memory");
  return 0;
 }

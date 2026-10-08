@@ -34,6 +34,7 @@ struct Host {
     void (*scope_activate)(void*,u32 unit,u32 weapon,u32 flag) noexcept=nullptr;
     rev_genesis::FilterCopyHost filter_copy{};
     void (*effect_draw)(void*,u32 kind,u32 unit,u32 context) noexcept=nullptr;
+    rev_menu::OptionsAccess options{};
 };
 // One process-lifetime graph. Construct and start before ANY installed gateway
 // is reachable. No callback is invoked during member construction.

@@ -2,10 +2,10 @@
   "schema_version": 4,
   "canonical_branch": "research/script-member-serial-validation",
   "checkpoint": {
-    "merged_pr": 64,
-    "merge_sha": "b54ba81d467d60747e349ab357f498605da6416b",
-    "tested_head": "d60f7415e6cfb85e89655d9e84daf42333dd517d",
-    "ci": "21 workflows PASS"
+    "merged_pr": 65,
+    "merge_sha": "d71eae57f0e89bdcad05e29d90a5285a4517d590",
+    "tested_head": "e6c2641548b5423ceb83d774722af1875cd8fd2e",
+    "ci": "20 workflows PASS"
   },
   "user_constraints": {
     "launch_game": false,
@@ -25,7 +25,7 @@
   },
   "runtime": {
     "composition_root": true,
-    "hud_menu_hook_count": 212,
+    "hud_menu_hook_count": 227,
     "local_views_use_native_immediate_draw": true,
     "action_loop_priority_per_member": true,
     "action_loop_stop_per_member": true,
@@ -145,7 +145,8 @@
     "docs/86-genesis-hunter-draw-cache.md",
     "docs/88-sub0-cpu3-pad1-runtime-correction.md",
     "docs/89-cpu3-cumulative-build.md",
-    "docs/90-local-input-mode-ownership.md"
+    "docs/90-local-input-mode-ownership.md",
+    "docs/94-options-controller-settings.md"
   ],
   "input": {
     "user_reports_j2_remains_ai": true,
@@ -192,6 +193,9 @@
     "independent_settings": false,
     "independent_save": false,
     "gameplay_validated": false,
-    "candidate_sha256": "76e11e9377a5dfada25142fadf5462d5b4e837094ca13df22937916ce52d3984"
+    "candidate_sha256": "c40489b3e05208d9f203e70e62de2e6b5f71e581f3f761addd1cfb7b882bb6f5",
+    "session_controller_fields_per_owner": 5,
+    "j2_publication_preserves_j1_controller_fields": true,
+    "module_sha256": "1d004982fe828e4090d7a4de822a82071196a66530ed5c835b5be839611f960d"
   }
 }
