@@ -1,7 +1,7 @@
 # Estado actual del cooperativo local
 
 08/10/2026. Rama técnica: `research/script-member-serial-validation`.
-PR60 integrado: `d3034bb97066ee3d6e3c42150da0ee650a876ca4`.
+PR61 integrado: `cf9a866780a4511dfa71d241928bebc7eecf1228`, 20 workflows PASS.
 Prioridad actual: J2 sigue en IA según el propietario. PR60 corrige Cpu(3) -> Pad(1); la cadena de entrega necesitaba además aceptar las bases corregidas y rechazar las antiguas. Véase [corrección de construcción](docs/89-cpu3-cumulative-build.md). No se da por validado el movimiento jugando.
 
 **El cooperativo completo sigue en desarrollo. El juego no se ha ejecutado.**
@@ -117,3 +117,5 @@ Genesis: [dibujo Hunter sin reutilizar la caché entre vistas locales](docs/86-g
 
 
 Corrección gameplay de input: [Cpu(3) -> Pad(1)](docs/88-sub0-cpu3-pad1-runtime-correction.md).
+
+Control J2: [conservar propiedad ante solicitudes posteriores de CPU](docs/90-local-input-mode-ownership.md).

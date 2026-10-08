@@ -50,6 +50,52 @@ struct Fixture {
     void unchanged(LifeSnapshot& s) {s.revision=0xDEAD;CHECK(!source.capture(&s));CHECK(s.revision==0xDEAD);}
 };
 int main(){
+    // Control ownership is established by two observed PCS binds, before HUD.
+    for(u32 p1:{0u,1u})for(u32 p2:{0u,1u}){
+        Fixture f;f.births();f.bind(MAIN);f.bind(SUB);
+        f.mem[PL+0xE40]=p1;f.mem[NP+0xE40]=p2;const auto before=f.mem;
+        CHECK(f.source.local_think_mode(NP,3)==1);CHECK(f.mem==before);
+        CHECK(f.source.local_think_mode(PL,3)==3);
+        CHECK(f.source.local_think_mode(NP,0)==0);
+        CHECK(f.source.local_think_mode(NP,1)==1);
+        CHECK(f.source.local_think_mode(NP,0xFFFFFFFFu)==0xFFFFFFFFu);++scenarios;
+    }
+    for(u32 mode:{2u,3u,4u,0xFFFFFFFFu})for(u32 actor:{NP,PL}){
+        Fixture f;f.ready();f.mem[actor+0xE40]=mode;
+        CHECK(f.source.local_think_mode(NP,3)==3);++scenarios;
+    }
+    {Fixture f;f.births();f.bind(MAIN);f.bind(SUB);
+     CHECK(f.source.local_think_mode(NP,2)==2);
+     CHECK(f.source.local_think_mode(NP,3)==3); // request itself revoked lease
+     f.bind(SUB);CHECK(f.source.local_think_mode(NP,3)==1);++scenarios;}
+    {Fixture f;f.births();CHECK(f.source.local_think_mode(NP,3)==3);
+     f.bind(SUB);CHECK(f.source.local_think_mode(NP,3)==3);
+     f.bind(MAIN);CHECK(f.source.local_think_mode(NP,3)==1);++scenarios;}
+    for(u32 site:{0x0277DC70u,0x027B5D00u,0x02DF5970u,0x02DF5F90u}){
+        Fixture f;f.ready();const u32 object=site==0x0277DC70?NP:site==0x027B5D00?PL:site==0x02DF5970?MAIN:SUB;
+        CHECK(f.source.event(site,object));CHECK(f.source.local_think_mode(NP,3)==3);++scenarios;
+    }
+    {Fixture f;f.ready();CHECK(f.source.event(0x0277DC70,NP));
+     CHECK(f.source.event(0x0277D4FB,NP));CHECK(f.source.local_think_mode(NP,3)==3);
+     f.bind(SUB);CHECK(f.source.local_think_mode(NP,3)==1);++scenarios;}
+    for(int bad=0;bad<10;++bad){Fixture f;f.ready();
+     switch(bad){case 0:f.mem[ACTIVE]=0;break;case 1:f.mem[TRACK]=PL;break;
+       case 2:f.mem[SUB+0x44]=PL;break;case 3:f.mem[MAIN+0x44]=NP;break;
+       case 4:f.mem[NP+0xE3C]=8;break;case 5:f.mem[PL+0xE3C]=8;break;
+       case 6:f.mem[SUB]=0;break;case 7:f.mem[MAIN]=0;break;
+       case 8:f.mem[NP]=PLAYER;break;case 9:f.mem.erase(NP+0xE40);break;}
+     CHECK(f.source.local_think_mode(NP,3)==3);++scenarios;}
+    {Fixture f;f.ready();const auto reads=f.reads;f.thread=8;
+     CHECK(f.source.local_think_mode(NP,3)==3);CHECK(f.reads==reads);
+     f.thread=7;CHECK(f.source.event(BEGIN,SUB));
+     CHECK(f.source.local_think_mode(NP,3)==3);CHECK(f.source.event(END,SUB));
+     CHECK(f.source.local_think_mode(NP,3)==1);++scenarios;}
+    for(u32 trigger:{ACTIVE,TRACK,MAIN,MAIN+0x44,PL,PL+0xE3C,PL+0xE40,SUB,SUB+0x44,NP,NP+0xE3C,NP+0xE40}){
+        Fixture f;f.ready();f.trigger=trigger;f.event_site=0x0277DC70;f.event_object=NP;
+        CHECK(f.source.local_think_mode(NP,3)==3);++scenarios;
+    }
+    {Fixture f;f.ready();CHECK(f.source.event(0x02B47A30,CO));CHECK(f.source.event(0x02B68040,MM));
+     CHECK(f.source.local_think_mode(NP,3)==1);++scenarios;}
     {Fixture f;LifeSnapshot s{};f.unchanged(s);f.bind(MAIN);f.bind(SUB);f.unchanged(s);CHECK(!f.source.select_managers(CO,MM));++scenarios;}
     {Fixture f;const auto a=f.ready();f.clone();f.bind(MAIN);f.bind(SUB);LifeSnapshot b{};CHECK(f.source.capture(&b));
      CHECK(a.session.epoch==b.session.epoch);CHECK(a.session.sub0.lifetime==b.session.sub0.lifetime);

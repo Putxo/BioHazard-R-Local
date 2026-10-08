@@ -2,9 +2,10 @@
   "schema_version": 4,
   "canonical_branch": "research/script-member-serial-validation",
   "checkpoint": {
-    "merged_pr": 60,
-    "merge_sha": "d3034bb97066ee3d6e3c42150da0ee650a876ca4",
-    "ci": "PR60 merge records 20 workflows PASS; new build changes pending CI"
+    "merged_pr": 61,
+    "merge_sha": "cf9a866780a4511dfa71d241928bebc7eecf1228",
+    "tested_head": "7261c5172a034cbdd30f451e1f426dfac9cdd806",
+    "ci": "20 workflows PASS"
   },
   "user_constraints": {
     "launch_game": false,
@@ -24,7 +25,7 @@
   },
   "runtime": {
     "composition_root": true,
-    "hud_menu_hook_count": 184,
+    "hud_menu_hook_count": 185,
     "local_views_use_native_immediate_draw": true,
     "action_loop_priority_per_member": true,
     "action_loop_stop_per_member": true,
@@ -141,7 +142,8 @@
     "docs/85-genesis-color-per-view.md",
     "docs/86-genesis-hunter-draw-cache.md",
     "docs/88-sub0-cpu3-pad1-runtime-correction.md",
-    "docs/89-cpu3-cumulative-build.md"
+    "docs/89-cpu3-cumulative-build.md",
+    "docs/90-local-input-mode-ownership.md"
   ],
   "input": {
     "user_reports_j2_remains_ai": true,
@@ -153,6 +155,9 @@
     "cpu3_binder_in_generated_candidate": true,
     "legacy_cpu2_bases_rejected_by_runtime_installer": true,
     "gameplay_validated": false,
-    "tested_user_image_identified": false
+    "tested_user_image_identified": false,
+    "observed_local_sub0_preserves_pad_on_later_cpu_request": true,
+    "native_network_request_relinquishes_observed_sub0_ownership": true,
+    "control_ownership_independent_of_hud_readiness": true
   }
 }

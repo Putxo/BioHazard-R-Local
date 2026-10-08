@@ -71,6 +71,7 @@ def read_module(data):
 
 def hook_sites():
     out=[(0x01EB73A0,bytes.fromhex('558bec81ecfc000000'),'rev_action_draw_gate',0xE9)]
+    out.append((0x0278CC40,bytes.fromhex('558bec81eccc000000'),'rev_local_think_mode_gate',0xE9))
     out.append((0x0279CFBD,bytes.fromhex('e958010000'),'rev_aim_visibility_gate',0xE9))
     out.append((0x02B41E36,rel(0x02B41E36,0x01C2C7F4),'rev_scope_actor_gate',0xE8))
     for va in (0x02B295C6,0x02B295FE):
