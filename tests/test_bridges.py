@@ -21,7 +21,7 @@ def check(condition,message='assertion'):
 
 class Machine:
     def __init__(self,pe,symbols):
-        self.pe=pe;self.symbols=symbols;self.mem={};self.stubs={};self.calls=[];self.zf=False;self.ip=0
+        self.pe=pe;self.symbols=symbols;self.mem={};self.stubs={};self.calls=[];self.zf=False;self.cf=False;self.ip=0
         self.r={k:0x100+i*0x100 for i,k in enumerate(REGS)}
         self.r['esp']=0x100000;self.r['ebp']=0x110000
     def write(self,address,value,size=4):
@@ -101,17 +101,20 @@ class Machine:
             elif opcode in (0x81,0x83):
                 reg,operand=self.modrm();value=self.imm(4 if opcode==0x81 else 1,opcode==0x83)
                 left=self.get(operand)
-                if reg==7:self.zf=(left==(value&0xffffffff))
+                if reg==7:self.zf=(left==(value&0xffffffff));self.cf=left<(value&0xffffffff)
                 elif reg==0:self.put(operand,left+value)
                 else:raise AssertionError(f'unsupported immediate op {reg}')
             elif opcode==0x3b:
-                reg,operand=self.modrm();self.zf=(self.r[REGS[reg]]==self.get(operand))
+                reg,operand=self.modrm();left=self.r[REGS[reg]];right=self.get(operand)
+                self.zf=left==right;self.cf=left<right
             elif opcode in (0x85,0x84):
                 reg,operand=self.modrm();size=1 if opcode==0x84 else 4
                 self.zf=(self.get(('reg',REGS[reg]),size)&self.get(operand,size))==0
-            elif opcode in (0x74,0x75):
+                self.cf=False
+            elif opcode in (0x74,0x75,0x77):
                 displacement=self.imm(1,True)
-                if self.zf==(opcode==0x74):self.ip+=displacement
+                take=(not self.cf and not self.zf) if opcode==0x77 else self.zf==(opcode==0x74)
+                if take:self.ip+=displacement
             elif opcode in (0xe8,0xe9,0xeb):
                 displacement=self.imm(1 if opcode==0xeb else 4,True);target=self.ip+displacement
                 if opcode==0xe8:self.push(self.ip)
@@ -164,7 +167,10 @@ def tests(pe,symbols):
         (True,3,0,0,0,0x6000,1), (True,1,1,0x6000,0x6000,0x6000,1),
         (True,1,0,0x6000,0x6000,0x6000,0), (True,1,1,0x7000,0x6000,0x6000,0),
         (True,1,1,0x6000,0x7000,0x6000,0), (True,2,1,0x6000,0x6000,0x6000,0),
-        (True,0,1,0x6000,0x6000,0x6000,0), (True,0,1,0x6000,0x6000,0,0),
+        (True,0,1,0x6000,0x6000,0x6000,1), (True,0,1,0x6000,0x6000,0,0),
+        (True,0,0,0x6000,0x6000,0x6000,0), (True,0,1,0x7000,0x6000,0x6000,0),
+        (True,0,1,0x6000,0x7000,0x6000,0),
+        (True,4,1,0x6000,0x6000,0x6000,0), (True,0xFFFFFFFF,1,0x6000,0x6000,0x6000,0),
         (False,1,1,0x7000,0x7000,0x6000,1)]:
         c=fresh();owner=0x5000;c.write(owner,0x04E1649C if subtype else 0x04E1642C);c.write(owner+0x44,old_bound)
         c.write(c.r['ebp']-8,owner);c.write(c.r['ebp']-0x20,old_bound);c.write(ACTIVE,prior_active);c.write(SUB,old_tracker)
@@ -185,6 +191,7 @@ def tests(pe,symbols):
         check(c.read(SUB)==(new_actor if subtype else old_tracker))
         conversions=sum(a==0x01BB8B60 for a,_ in c.calls)
         check(conversions==int(subtype and mode==3 and bool(new_actor)))
+        if new_actor and mode!=3:check(c.read(new_actor+0xE40)==mode)
         cameras=sum(a==0x01C9504C for a,_ in c.calls)
         check(cameras==int(subtype and bool(expected)))
         cases+=1

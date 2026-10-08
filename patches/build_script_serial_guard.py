@@ -17,6 +17,8 @@ from build_local_routing import PE, sha, pe_checksum
 BASE_SHA = '0c019d43b92c0092fa458abcf7e2990f8783895eb2bd8181f6e9f130b697d378'
 BASE_SIZE = 60_755_456
 BASE_PROFILES = {
+    '170ce3fa623fa728728bef6d80974578e73134f5eb77decb37b01d1cd3291ee1':
+        'LLVM 22.1.8: Cpu3 conversion and same-actor suspended local rebind retention',
     BASE_SHA: 'published GNU build with historical Cpu/Network enum mistake',
     'da2d48b79366874155fdf2a115217bbdfac0263a4c59f392fc5416d68adda04f':
         'corrected GNU build: Sub0 Cpu(3) -> Pad(1), Network(2) preserved',

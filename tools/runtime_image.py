@@ -25,7 +25,11 @@ from input_owner_sites import hooks as input_owner_hooks
 def inline_input_sites():return [*axis_patches(),*state_patches()]
 
 BASES={
-    # Cpu(3) -> Pad(1), Network(2) preserved: GNU and LLVM 22.1.8.
+    # LLVM 22.1.8: Cpu3 conversion plus established suspended rebind retention.
+    'cd15455ad9e854ef5ef19ed1bdbfc3aa43a9c4c724ec97c7f8b61618840ece1f',
+}
+LEGACY_REBIND_BASES={
+    # Historical Cpu3-corrected GNU/LLVM bases still lose a suspended local pair.
     '31cbebd180bcc66da2afbdc57c928b22a47f956c53bb5ed12411a220206490ec',
     '152bce5dba9eb1a270d2fd392921883e772bfc42682b23497ae72452747814c7',
 }
@@ -174,9 +178,12 @@ def hook_sites():
 def build(base,module):
     if sha(base) in LEGACY_CPU2_BASES:
         raise ValueError('legacy Cpu(2) binder leaves J2 in AI; rebuild the January base with Cpu(3)')
+    if sha(base) in LEGACY_REBIND_BASES:
+        raise ValueError('legacy binder loses suspended J2 ownership; rebuild the January base')
     if sha(base) not in BASES:raise ValueError('unsupported input SHA256; requires the exact cumulative January base')
     pe=PE(base);input_check=inspect_binder(pe)
     if input_check['status']!='CPU3_BINDER_PRESENT':raise ValueError('requires corrected Cpu(3) binder')
+    if not input_check['suspended_rebind_preserved']:raise ValueError('requires suspended local rebind retention')
     sections,symbols=read_module(module)
     if (pe.base,pe.count,pe.sa,pe.fa)!=(0x400000,10,4096,512):raise ValueError('unsupported PE layout')
     if pe.u32(pe.opt+16)!=0x01C897E7-pe.base:raise ValueError('unexpected original entry')

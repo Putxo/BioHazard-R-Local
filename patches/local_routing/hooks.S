@@ -99,7 +99,9 @@ hook_bind_actor:
  cmp dword ptr [eax+0xE40],3
  je .convert_cpu
  cmp dword ptr [eax+0xE40],1
- jne .bind_done
+ # Retain a previously local actor while native control is suspended (mode0).
+ # The prior-active/tracked/old-PCS checks below forbid initial mode0 adoption.
+ ja .bind_done
  cmp dword ptr [ebp-0x118],0
  je .bind_done
  cmp eax,dword ptr [ebp-0x11C]

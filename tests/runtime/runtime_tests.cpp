@@ -184,6 +184,20 @@ struct Fixture {
     }
 };
 int main(){
+    for(u32 mode=0;mode<3;++mode){Fixture x;x.start();x.births();
+        const u32 sub=x.f.session.sub0.address,self=x.f.session.self.address;
+        script_fixture::populate(x.f.m,sub,1);
+        C(x.r.source().local_think_mode(sub,3)==1);
+        if(mode!=1)x.f.m[self+0xE40]=0;
+        if(mode!=0)x.f.m[sub+0xE40]=0;
+        const auto before=x.f.m;
+        for(u32 pcs:{MAIN,SUB}){C(x.r.source().event(0x02DF4F65,pcs));C(x.r.source().event(0x02DF504B,pcs));}
+        C(x.r.source().local_think_mode(sub,3)==1);C(x.f.m==before);
+        if(mode!=0)C(x.r.script_input().member(script_fixture::Input)==0);
+        x.f.m[sub+0xE40]=x.f.m[self+0xE40]=1;
+        C(x.r.script_input().member(script_fixture::Input)==1);C(x.f.allocations.empty());
+        x.begin();x.end();C(x.r.lifecycle().state()==LifeState::Live);++scenarios;
+    }
     for(u32 fault=0;fault<9;++fault){Fixture x;x.start();x.births();
         const u32 actor=x.f.session.sub0.address;
         script_fixture::populate(x.f.m,actor,1);

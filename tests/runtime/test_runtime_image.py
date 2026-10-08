@@ -15,6 +15,12 @@ class InputBaseTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError,'leaves J2 in AI'):
                     image.build(b'input placeholder',b'not an ELF')
         self.assertTrue(image.LEGACY_CPU2_BASES.isdisjoint(image.BASES))
+    def test_old_suspension_losing_bases_fail_before_module_loading(self):
+        for digest in image.LEGACY_REBIND_BASES:
+            with self.subTest(digest=digest), patch.object(image,'sha',return_value=digest):
+                with self.assertRaisesRegex(ValueError,'loses suspended J2 ownership'):
+                    image.build(b'input placeholder',b'not an ELF')
+        self.assertTrue(image.LEGACY_REBIND_BASES.isdisjoint(image.BASES))
 
 class ImageTests(unittest.TestCase):
     @classmethod

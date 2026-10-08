@@ -25,8 +25,16 @@ def tests(module, symbols):
         assert check.inspect_binder(reader)['status'] == status
         count += 1
     expect(Reader(), 'CPU3_BINDER_PRESENT')
-    legacy = Reader();legacy.code[entry-va+36] = 2
+    assert check.inspect_binder(Reader())['suspended_rebind_preserved'];count+=1
+    old = Reader();old.code[entry-va+46] = 0x75
+    expect(old, 'CPU3_BINDER_PRESENT')
+    assert not check.inspect_binder(old)['suspended_rebind_preserved'];count+=1
+    legacy = Reader();legacy.code[entry-va+36] = 2;legacy.code[entry-va+46] = 0x75
     expect(legacy, 'LEGACY_CPU2_BUG')
+    combined = Reader();combined.code[entry-va+36]=2
+    try:check.inspect_binder(combined)
+    except ValueError:count+=1
+    else:raise AssertionError('accepted unaudited Cpu2/suspension combination')
     # Every nonrelocation byte is part of the audited control flow/identity
     # contract. Tampering must not result in a corrected-input verdict.
     relocation_bytes = {i for start in (3,74,84,99,104) for i in range(start,start+4)}
