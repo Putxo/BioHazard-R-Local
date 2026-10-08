@@ -2,6 +2,7 @@
 #include "../hud_ownership/begin_activator.hpp"
 #include "../hud_ownership/p1_view_mask.hpp"
 #include "../menu_routing/menu_owner.hpp"
+#include "../script_input/script_input.hpp"
 #include "../action_icons/router.hpp"
 #include "../action_icons/priority_driver.hpp"
 #include "draw_schedule.hpp"
@@ -55,6 +56,7 @@ public:
     BeginActivator& activator() noexcept { return activator_; }
     ManagerDriver& driver() noexcept { return driver_; }
     rev_menu::MenuOwnerRouter& menu() noexcept { return menu_; }
+    rev_script::InputRouter& script_input() noexcept { return script_input_; }
     rev_action::Router& action() noexcept { return action_; }
     rev_action::PriorityDriver& priority() noexcept { return priority_; }
     rev_genesis::Progress& genesis_progress() noexcept {return genesis_;}
@@ -157,6 +159,8 @@ private:
     BeginActivator activator_;
     P1ViewMask mask_;
     rev_menu::MenuOwnerRouter menu_;
+    rev_script::InputRouter script_input_;
+    rev_script::Host script_input_host() noexcept;
     rev_action::PriorityDriver priority_;
     rev_action::Router action_;
     rev_action::Host action_host() noexcept;

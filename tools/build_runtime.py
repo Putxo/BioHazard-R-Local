@@ -18,6 +18,7 @@ def sources():
         (ROOT/'patches/genesis').glob('*.S')) + [
         ROOT/'patches/menu_routing/menu_owner.cpp',
         ROOT/'patches/menu_routing/menu_gateways.S',
+        ROOT/'patches/script_input/script_input.cpp',ROOT/'patches/script_input/script_input_gateway.S',
         ROOT/'patches/action_icons/router.cpp', ROOT/'patches/action_icons/gateway.S',
         ROOT/'patches/action_icons/arbitration.cpp',ROOT/'patches/action_icons/priority_driver.cpp',
         ROOT/'patches/action_icons/priority_gateways.S',

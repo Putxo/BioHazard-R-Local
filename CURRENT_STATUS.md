@@ -1,7 +1,7 @@
 # Estado actual del cooperativo local
 
 08/10/2026. Rama técnica: `research/script-member-serial-validation`.
-PR66 integrado: `289b4895583f2885b1b89fe11a24b1e613013afb`, 20 workflows PASS.
+PR67 integrado: `2b243d8af3814caa6aa58eeb1d70fc30b053500f`, 21 workflows PASS.
 Prioridad actual: J2 sigue en IA según el propietario. PR60 corrige Cpu(3) -> Pad(1); la cadena de entrega necesitaba además aceptar las bases corregidas y rechazar las antiguas. Véase [corrección de construcción](docs/89-cpu3-cumulative-build.md). No se da por validado el movimiento jugando.
 
 **El cooperativo completo sigue en desarrollo. El juego no se ha ejecutado.**
@@ -18,10 +18,10 @@ El propietario prohíbe abrirlo y hará personalmente las pruebas jugando.
 | HUD | Clones de Reticle, MainEquipment, MapHerb, SubEquipment, Damage, Heal, Scope y Scanner (detector conectado, activación pendiente); faltan asfixia, Genesis y otros widgets |
 | Recursos HUD | Grafo completo conectado, selección desde sIDCockpit, lifetimes y retirada |
 | Pickup/puertas | ActionIcon2D por miembro/vista; prioridad y parada del bucle por miembro; otros gates y prompts completos pendientes |
-| Guiones | Dos callbacks PcsSub con owner+serial; cobertura QTE parcial |
+| Guiones | Dos callbacks PcsSub y uPcsInput por scheduler/actor/serial; cobertura QTE parcial |
 | Rescate | Routing parcial existente; muerte/checkpoints pendientes |
 
-La compilación acumulativa nueva conecta 425 hooks y diez correcciones de ejes/estado HUD/menú/ActionIcon sobre la base de
+La compilación acumulativa nueva conecta 426 hooks y diez correcciones de ejes/estado HUD/menú/ActionIcon sobre la base de
 input, cámara, pickup, puertas y serial de guion. Se ha generado y verificado
 estáticamente una copia local de trabajo. No se ha instalado en Steam ni abierto.
 No constituye una entrega final.
@@ -129,3 +129,5 @@ Opciones: [25 lecturas del mando conectadas al dueño de Pause; configuración/g
 Opciones: [cinco ajustes del mando del dueño, publicación global conservando los valores de J1](docs/94-options-controller-settings.md). Persistencia independiente de J2 y rutas completas de cancelar/defaults pendientes.
 
 Entrada: [teclado para J1, cambio de dispositivo y restauración del mando de J2](docs/95-keyboard-owner-and-device-switch.md). Un único mando físico, reconexión y validación jugando pendientes.
+
+Guiones: [mando de uPcsInput mediante scheduler y actor/serial](docs/96-script-input-scheduler-owner.md). Sin validación jugando; reparenting, lifetime de schedulers y QTE completos pendientes.

@@ -1,5 +1,6 @@
 #include "../../patches/runtime/runtime.hpp"
 #include "../hud_ownership/january_fixture.hpp"
+#include "../script_input/fixture.hpp"
 using rev_runtime::Runtime;
 using rev_runtime::Host;
 constexpr u32 OWNER=0x900000,MAIN=0xA00000,SUB=0xA10000;
@@ -183,6 +184,22 @@ struct Fixture {
     }
 };
 int main(){
+    for(u32 fault=0;fault<9;++fault){Fixture x;x.start();x.births();
+        const u32 actor=x.f.session.sub0.address;
+        script_fixture::populate(x.f.m,actor,1);
+        C(x.f.allocations.empty());
+        C(x.r.script_input().member(script_fixture::Input)==1);
+        if(fault==1)x.thread=8;
+        if(fault==2)x.f.m[actor+0xE40]=3;
+        if(fault==3)x.f.m[actor+0xE40]=2;
+        if(fault==4)x.f.m[actor+0xE3C]=2;
+        if(fault==5)C(x.r.source().event(0x0277DC70,actor));
+        if(fault==6)x.f.m[0x057D9184]=0;
+        if(fault==7){x.mask_read_at=script_fixture::entry(15,16);x.mask_read_fault=1;}
+        if(fault==8)x.f.m[x.f.session.self.address+0xE40]=2;
+        C(x.r.script_input().member(script_fixture::Input)==(fault?0u:1u));
+        C(x.f.allocations.empty());++scenarios;
+    }
     for(u32 scan=0;scan<4;++scan){Fixture x(7);x.detector_setup();x.equipment_setup();const u32 scanner=x.r.lifecycle().unit(6);
      constexpr u32 system=0xF80000,unit=system+0x6A0;
      x.f.m[0x05563C04]=system;x.f.m[system]=0x04DB7C9C;x.f.m[unit]=0x04DB848C;
