@@ -49,7 +49,7 @@ Runtime::Runtime(Registry& registry,Host host,u32 count) noexcept
           u32 v=0;return static_cast<Runtime*>(p)->word(0x057D9188,v)?v:0;
       },[](void* p) noexcept -> u32 {
           u32 v=0;return static_cast<Runtime*>(p)->word(0x057D9184,v)?v:0;
-      }}), priority_(priority_host()), action_(action_host()) {}
+      },host.options}), priority_(priority_host()), action_(action_host()) {}
 
 rev_genesis::ProgressHost Runtime::genesis_host() noexcept {
     return {this,[](void* p,u32 widget,rev_genesis::Owner* out) noexcept {

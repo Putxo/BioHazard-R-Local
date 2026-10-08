@@ -63,4 +63,52 @@ rev_menu_gate_state_transition:
     pop eax
     jmp rev_menu_stock_state_transition
 .size rev_menu_gate_state_transition,.-rev_menu_gate_state_transition
+# Whole native config read/apply calls from uOptionManager only.
+.macro options_read name,reference
+.global rev_menu_gate_options_\name
+rev_menu_gate_options_\name:
+    push \reference
+    push ecx
+    call rev_menu_options_read
+    add esp,8
+    ret
+.endm
+options_read current,0
+options_read reference,1
+.global rev_menu_gate_options_apply
+rev_menu_gate_options_apply:
+    push dword ptr [esp+8]
+    push dword ptr [esp+8]
+    push ecx
+    call rev_menu_options_apply
+    add esp,12
+    ret 8
+
+# Replay an internal mStartPadNo load; only a synchronous options apply may
+# select another slot. All registers/flags/FP except the load destination stay.
+.macro options_index name,destination,base,dest_saved,base_saved
+.global rev_menu_gate_options_\name
+rev_menu_gate_options_\name:
+    mov \destination,[\base+0x970]
+    pushfd
+    pushad
+    mov esi,esp
+    and esp,-16
+    sub esp,512
+    fxsave [esp]
+    cld
+    sub esp,8
+    push dword ptr [esi+\dest_saved]
+    push dword ptr [esi+\base_saved]
+    call rev_menu_options_index
+    add esp,16
+    mov [esi+\dest_saved],eax
+    fxrstor [esp]
+    mov esp,esi
+    popad
+    popfd
+    ret
+.endm
+options_index ecx,ecx,eax,24,28
+options_index edx,edx,ecx,20,24
 .section .note.GNU-stack,"",@progbits

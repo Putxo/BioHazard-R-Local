@@ -1,7 +1,7 @@
 # Estado actual del cooperativo local
 
 08/10/2026. Rama técnica: `research/script-member-serial-validation`.
-PR64 integrado: `b54ba81d467d60747e349ab357f498605da6416b`, 21 workflows PASS.
+PR65 integrado: `d71eae57f0e89bdcad05e29d90a5285a4517d590`, 20 workflows PASS.
 Prioridad actual: J2 sigue en IA según el propietario. PR60 corrige Cpu(3) -> Pad(1); la cadena de entrega necesitaba además aceptar las bases corregidas y rechazar las antiguas. Véase [corrección de construcción](docs/89-cpu3-cumulative-build.md). No se da por validado el movimiento jugando.
 
 **El cooperativo completo sigue en desarrollo. El juego no se ha ejecutado.**
@@ -21,7 +21,7 @@ El propietario prohíbe abrirlo y hará personalmente las pruebas jugando.
 | Guiones | Dos callbacks PcsSub con owner+serial; cobertura QTE parcial |
 | Rescate | Routing parcial existente; muerte/checkpoints pendientes |
 
-La compilación acumulativa nueva conecta 212 hooks y diez correcciones de ejes/estado HUD/menú/ActionIcon sobre la base de
+La compilación acumulativa nueva conecta 227 hooks y diez correcciones de ejes/estado HUD/menú/ActionIcon sobre la base de
 input, cámara, pickup, puertas y serial de guion. Se ha generado y verificado
 estáticamente una copia local de trabajo. No se ha instalado en Steam ni abierto.
 No constituye una entrega final.
@@ -125,3 +125,5 @@ Control J2: los productores de ambos sticks y cruceta ignoraban su argumento de 
 Control J2: [conservar el mando físico durante teclado/ratón y consultas de estado por slot](docs/92-physical-pad-preservation.md). Cambio de dispositivo y opciones aún pendientes.
 
 Opciones: [25 lecturas del mando conectadas al dueño de Pause; configuración/guardado por jugador pendientes](docs/93-options-menu-input.md).
+
+Opciones: [cinco ajustes del mando del dueño, publicación global conservando los valores de J1](docs/94-options-controller-settings.md). Persistencia independiente de J2 y rutas completas de cancelar/defaults pendientes.

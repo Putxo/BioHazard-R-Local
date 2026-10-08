@@ -12,6 +12,7 @@ struct Fixture {
     u32 filter_created=0,filter_copied=0,filter_released=0,filter_returned=0,filter_fault=0;
     u32 mask_read_at=0,mask_read_fault=0,mask_nested=99;
     u32 effect_draws=0,effect_draw_fault=0;
+    u32 options_reads=0,options_applies=0,options_publishes=0;
     static constexpr u32 FilterSource=0xF00000,FilterCopy=0xF10000;
     static void filter_graph(std::map<u32,u32>& m,u32 p,u32 count) {
         m[p]=0x04DB7A34;m[p+0x48]=1;m[p+0x54]=m[p+0x58]=m[p+0x5c]=0;
@@ -95,7 +96,16 @@ struct Fixture {
             if(z.effect_draw_fault==3)(void)z.r.genesis_effects().event(effect_fixture::Death[kind],unit);
             if(z.effect_draw_fault==4)z.r.lifecycle().stop();
             if(z.effect_draw_fault==5)C(z.r.effect_draw(kind,unit,context));
-        }};
+        },{this,[](void* p,u32 a,u32 v) noexcept {return Fake::write(&static_cast<Fixture*>(p)->f,a,v);},
+        [](void* p) noexcept {return static_cast<Fixture*>(p)->thread;},
+        [](void* p,u32 config) noexcept {auto& z=*static_cast<Fixture*>(p);++z.options_reads;
+            for(u32 i=0;i<65;++i)z.f.m[config+i*4]=100+i;},
+        [](void* p,u32 config,u32 save,u32 flag) noexcept ->u32 {
+            auto& z=*static_cast<Fixture*>(p);++z.options_applies;
+            C(config==0xE1004C && save==0 && flag==5);C(z.r.menu().options_index(0xE00000,0)==1);
+            return 1;},
+        [](void* p,u32 global,const u32* values) noexcept {auto& z=*static_cast<Fixture*>(p);++z.options_publishes;
+            C(global==0xE20000);C(values[1]==501);for(u32 i=0;i<65;++i)z.f.m[global+0x3C+i*4]=values[i];}}};
     }
     Fixture(u32 count=LegacyWidgetKinds):f(count),r(registry,host(),count) {
         f.life=&r.lifecycle();
@@ -969,5 +979,16 @@ int main(){
      C(x.r.clock().event(PipelineEnd,0xC00000,0xD00000));
      C(!x.r.window().event(PipelineEnd,0xC00000,0xD00000));
      C(x.r.lifecycle().state()==LifeState::Quarantined);++scenarios;}
+    {Fixture x;x.start();auto& m=x.f.m;auto& menu=x.r.menu();
+     m[0xE00000]=0x04E11D30;m[0x057A7480]=0xE00000;m[0xE00970]=0;
+     m[0xE001A0]=0;m[0xE00498]=8;m[0xE10000]=0x04DF5AE4;m[0x055926F4]=0xE20000;
+     m[x.f.session.sub0.address+0xE3C]=1;m[x.f.session.sub0.address+0xE40]=1;
+     const u32 offsets[]={0x10,0xC,0x18,0x20,0x1C};
+     for(u32 i=0;i<5;++i)m[0xE00728+offsets[i]]=10+i;
+     for(u32 i=0;i<65;++i)m[0xE2003C+i*4]=500+i;
+     C(menu.pause_open_word(0xE00000)==8);menu.options_read(0xE1004C,0);menu.options_read(0xE10150,1);
+     C(x.options_reads==2);C(m[0xE10050]==10 && m[0xE10154]==10);
+     C(menu.options_apply(0xE1004C,1,5)==1);C(x.options_applies==1 && x.options_publishes==1);
+     C(menu.options_index(0xE00000,9)==9);C(m[0xE00970]==0);++scenarios;}
     std::printf("{\"status\":\"PASS\",\"scenarios\":%u,\"assertions\":%u,\"engine_calls_mocked\":true,\"gameplay_executed\":false}\n",scenarios,checks);
 }

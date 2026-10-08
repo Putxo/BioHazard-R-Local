@@ -77,6 +77,18 @@ void scope_activate(void*,u32 unit,u32 weapon,u32 flag) noexcept {
     using Activate=void(__attribute__((thiscall))*)(u32,u32,u32);
     reinterpret_cast<Activate>(0x01BE9C6Fu)(unit,weapon,flag);
 }
+void options_read(void*,u32 config) noexcept {
+    using Call=void(__attribute__((thiscall))*)(u32);
+    reinterpret_cast<Call>(0x01B7D7CCu)(config);
+}
+u32 options_apply(void*,u32 config,u32 save,u32 flag) noexcept {
+    using Call=unsigned char(__attribute__((thiscall))*)(u32,u32,u32);
+    return reinterpret_cast<Call>(0x01C1A0D6u)(config,save,flag);
+}
+void options_publish(void*,u32 global,const u32* copy) noexcept {
+    using Call=void(__attribute__((thiscall))*)(u32,const u32*);
+    reinterpret_cast<Call>(0x01C0AE6Au)(global,copy);
+}
 alignas(rev_runtime::Runtime) unsigned char storage[sizeof(rev_runtime::Runtime)];
 bool attempted=false;
 }
@@ -97,6 +109,7 @@ extern "C" u32 rev_runtime_initialize() noexcept {
     for(auto p=rev_init_begin;p!=rev_init_end;++p)if(*p)(*p)();
     accepted=true;
     rev_runtime::Host h{{nullptr,word},write,thread,image,self,rev_hud::january_native_calls()};
+    h.options={nullptr,write,thread,options_read,options_apply,options_publish};
     h.action={nullptr,action_member,action_draw};
     h.action_rank=action_rank;
     h.aim_weapon_hidden=aim_weapon_hidden;
