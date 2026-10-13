@@ -12,6 +12,9 @@ struct LifetimeAccess {
     // Native adapter: 0=device choice, 1=keyboard synthesis, 2=restore layout.
     // Kind2 is called internally under the admitted slot1 restoration scope.
     void (*input_update)(void*,u32 gamepad,u32 kind) noexcept = nullptr;
+    // Single physical controller for J2 while keyboard continues to own J1.
+    // Copy already-polled 44 raw bytes (slot0 -> slot1) on admitted frames.
+    bool (*remap_single_pad)(void*,u32 gamepad) noexcept = nullptr;
 };
 struct LifeSnapshot {
     Session session{};
@@ -75,6 +78,7 @@ private:
     bool pcs_dying(u32 pcs);
     bool actor(Token, Actor&, u32& vtable, u32 revision);
     bool local_pair(u32 sub,u32 revision);
+    bool single_physical_pad(u32 gamepad,u32 revision);
 };
 // Bind once while no hook is reachable; no hot swap or concurrent teardown.
 bool bind_lifetime_sink(LifetimeSource&);
