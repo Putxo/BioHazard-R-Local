@@ -15,8 +15,10 @@ struct Fixture {
     bool reenter=false;
     u32 input_calls=0,input_kind=Invalid,input_slot=Invalid,input_fault=0,input_restores=0;
     bool input_preserved=false;
+    u32 remap_calls=0;
+    bool remap_fails=false;
     LifetimeSource source;
-    Fixture():source(registry,{this,read,tid,get_self,update_input}) {
+    Fixture():source(registry,{this,read,tid,get_self,update_input,remap_pad}) {
         mem[PL]=mem[NP]=NPC;mem[CO]=manager_vtable(ManagerKind::Cockpit);mem[MM]=manager_vtable(ManagerKind::MiniMap);
         mem[PL+0xE3C]=0;mem[NP+0xE3C]=1;mem[PL+0xE40]=mem[NP+0xE40]=1;
         mem[MAIN]=0x04E1642C;mem[SUB]=0x04E1649C;mem[MAIN+0x44]=PL;mem[SUB+0x44]=NP;
@@ -49,6 +51,18 @@ struct Fixture {
                 if(!f.source.preserve_other_pad(pad,dest,0,0x2C))f.mem[dest]=0;}
             f.mem[pad+0x198+f.input_slot*0x2F8]=0x1234;
         }
+    }
+    static bool remap_pad(void* c,u32 gamepad) noexcept {
+        auto& f=*static_cast<Fixture*>(c);++f.remap_calls;
+        if(f.remap_fails)return false;
+        u32 input[11]{};
+        for(u32 i=0;i<11;++i){
+            const auto found=f.mem.find(gamepad+0x198u+i*4u);
+            if(found==f.mem.end())return false;
+            input[i]=found->second;
+        }
+        for(u32 i=0;i<11;++i)f.mem[gamepad+0x490u+i*4u]=input[i];
+        return true;
     }
     static u32 get_self(void* c) noexcept {
         auto& f=*static_cast<Fixture*>(c);++f.self_calls;
@@ -121,6 +135,54 @@ int main(){
         f.mem[GP_GLOBAL]=GP;f.mem[GP]=0x04E11D30;
         f.mem[GP+0x970]=primary;f.mem[GP+0x974]=1;
     };
+    // January physical slot0 -> logical slot1, with J1 keyboard retained.
+    // The exact native predicate at 02DB34B0 reads bytes +40/+43 per raw slot.
+    for(u32 primary:{0u,1u})for(bool two_controllers:{false,true}){
+        Fixture f;f.births();f.bind(MAIN);f.bind(SUB);input(f,primary);
+        f.mem[GP+0x98C]=1;f.mem[GP+0x968]=0x210000;
+        f.mem[GP+0x40]=0x01000001;
+        f.mem[GP+0x338]=two_controllers?0x01000001u:0u;
+        for(u32 i=0;i<11;++i){f.mem[GP+0x198+i*4]=0x5000+i;
+            f.mem[GP+0x490+i*4]=0x6000+i;}
+        f.source.input_update(GP,0);
+        CHECK(f.input_restores==1);
+        CHECK(f.input_calls==(two_controllers?1u:0u));
+        CHECK(f.remap_calls==(two_controllers?0u:1u));
+        for(u32 i=0;i<11;++i)
+            CHECK(f.mem[GP+0x490+i*4]==(two_controllers?0x6000u+i:0x5000u+i));
+        f.source.input_update(GP,1);
+        CHECK(f.input_calls==(two_controllers?2u:1u));
+        CHECK(f.mem[GP+0x198]==0x1234);
+        for(u32 i=0;i<11;++i)
+            CHECK(f.mem[GP+0x490+i*4]==(two_controllers?0x6000u+i:0x5000u+i));
+        CHECK(f.mem[GP+0x970]==primary);++scenarios;
+    }
+    for(u32 invalid=0;invalid<12;++invalid){
+        Fixture f;f.births();f.bind(MAIN);f.bind(SUB);input(f,0);
+        f.mem[GP+0x98C]=1;f.mem[GP+0x968]=0x210000;
+        f.mem[GP+0x40]=0x01000001;f.mem[GP+0x338]=0;
+        for(u32 i=0;i<11;++i){f.mem[GP+0x198+i*4]=0x7000+i;
+            f.mem[GP+0x490+i*4]=0x8000+i;}
+        switch(invalid){
+        case 0:f.mem[GP+0x974]=0;break;
+        case 1:f.mem[GP+0x98C]=0;break;
+        case 2:f.mem[GP+0x968]=0;break;
+        case 3:f.mem[GP+0x40]=0;break;
+        case 4:f.mem[GP+0x40]=1;break;
+        case 5:f.mem[GP+0x40]=0x01000000;break;
+        case 6:f.mem[GP+0x338]=1;break;
+        case 7:f.mem[GP+0x338]=0x01000000;break;
+        case 8:f.remap_fails=true;break;
+        case 9:f.mem.erase(GP+0x198+4*5);break;
+        case 10:f.mem[ACTIVE]=0;break;
+        case 11:f.thread=8;break;
+        }
+        f.source.input_update(GP,0);
+        CHECK(f.input_calls==1);
+        CHECK(f.remap_calls==((invalid==8 || invalid==9)?1u:0u));
+        for(u32 i=0;i<11;++i)CHECK(f.mem[GP+0x490+i*4]==0x8000u+i);
+        ++scenarios;
+    }
     for(u32 primary:{0u,1u})for(u32 kind:{0u,1u})for(u32 fault=0;fault<4;++fault){
         Fixture f;f.births();f.bind(MAIN);f.bind(SUB);input(f,primary);f.input_fault=fault;
         f.mem[GP+0x198]=0x1111;f.mem[GP+0x490]=0x2222;
