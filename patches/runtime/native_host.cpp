@@ -97,6 +97,21 @@ void input_update(void*,u32 gamepad,u32 kind) noexcept {
     using Call=void(__attribute__((thiscall))*)(u32);
     reinterpret_cast<Call>(kind==0?0x01BF908Eu:0x01C2742Fu)(gamepad);
 }
+// January poll copied eleven DWORDs from sPad[0] to +0x198 before 02DAC787.
+// Single-pad keyboard mode redirects that state to J2 (+0x490) before the
+// original synth overwrites the keyboard slot. Never copy without admission.
+bool remap_single_pad(void*,u32 gamepad) noexcept {
+    if(!gamepad || gamepad>0xFFFFFFFFu-0x4BBu)return false;
+    u32 words[11]{};
+    for(u32 i=0;i<11;++i){
+        if(!word(nullptr,gamepad+0x198u+i*4u,&words[i]) ||
+           !readable(gamepad+0x490u+i*4u,true))return false;
+    }
+    // No writes until the whole source and destination have been validated.
+    for(u32 i=0;i<11;++i)
+        *reinterpret_cast<volatile u32*>(gamepad+0x490u+i*4u)=words[i];
+    return true;
+}
 alignas(rev_runtime::Runtime) unsigned char storage[sizeof(rev_runtime::Runtime)];
 bool attempted=false;
 }
@@ -119,6 +134,7 @@ extern "C" u32 rev_runtime_initialize() noexcept {
     rev_runtime::Host h{{nullptr,word},write,thread,image,self,rev_hud::january_native_calls()};
     h.options={nullptr,write,thread,options_read,options_apply,options_publish};
     h.input_update=input_update;
+    h.remap_single_pad=remap_single_pad;
     h.action={nullptr,action_member,action_draw};
     h.action_rank=action_rank;
     h.aim_weapon_hidden=aim_weapon_hidden;
