@@ -151,12 +151,16 @@ int main(){
         // The earlier hook must not copy: January can clear/override both
         // native raw blocks before its subsequent keyboard-synth hook.
         for(u32 i=0;i<11;++i)CHECK(f.mem[GP+0x490+i*4]==0x6000u+i);
+        // Model the native 02DAC7B6..02DAC898 raw overwrite that happens
+        // between the device-choice hook and the keyboard-synthesis hook.
+        if(!two_controllers)for(u32 i=0;i<11;++i)
+            f.mem[GP+0x198+i*4]=0x5500u+i;
         f.source.input_update(GP,1);
         CHECK(f.remap_calls==(two_controllers?0u:1u));
         CHECK(f.input_calls==(two_controllers?2u:1u));
         CHECK(f.mem[GP+0x198]==0x1234);
         for(u32 i=0;i<11;++i)
-            CHECK(f.mem[GP+0x490+i*4]==(two_controllers?0x6000u+i:0x5000u+i));
+            CHECK(f.mem[GP+0x490+i*4]==(two_controllers?0x6000u+i:0x5500u+i));
         CHECK(f.mem[GP+0x970]==primary);++scenarios;
     }
     for(u32 invalid=0;invalid<12;++invalid){
