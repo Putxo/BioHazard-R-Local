@@ -147,10 +147,12 @@ int main(){
         f.source.input_update(GP,0);
         CHECK(f.input_restores==1);
         CHECK(f.input_calls==(two_controllers?1u:0u));
-        CHECK(f.remap_calls==(two_controllers?0u:1u));
-        for(u32 i=0;i<11;++i)
-            CHECK(f.mem[GP+0x490+i*4]==(two_controllers?0x6000u+i:0x5000u+i));
+        CHECK(f.remap_calls==0);
+        // The earlier hook must not copy: January can clear/override both
+        // native raw blocks before its subsequent keyboard-synth hook.
+        for(u32 i=0;i<11;++i)CHECK(f.mem[GP+0x490+i*4]==0x6000u+i);
         f.source.input_update(GP,1);
+        CHECK(f.remap_calls==(two_controllers?0u:1u));
         CHECK(f.input_calls==(two_controllers?2u:1u));
         CHECK(f.mem[GP+0x198]==0x1234);
         for(u32 i=0;i<11;++i)
@@ -178,9 +180,14 @@ int main(){
         case 11:f.thread=8;break;
         }
         f.source.input_update(GP,0);
-        CHECK(f.input_calls==1);
-        CHECK(f.remap_calls==((invalid==8 || invalid==9)?1u:0u));
+        CHECK(f.input_calls==((invalid==8 || invalid==9)?0u:1u));
+        CHECK(f.remap_calls==0);
         for(u32 i=0;i<11;++i)CHECK(f.mem[GP+0x490+i*4]==0x8000u+i);
+        if(invalid==8 || invalid==9){
+            f.source.input_update(GP,1);
+            CHECK(f.input_calls==1 && f.remap_calls==1);
+            for(u32 i=0;i<11;++i)CHECK(f.mem[GP+0x490+i*4]==0x8000u+i);
+        }
         ++scenarios;
     }
     for(u32 primary:{0u,1u})for(u32 kind:{0u,1u})for(u32 fault=0;fault<4;++fault){
