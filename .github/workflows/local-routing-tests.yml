@@ -2,9 +2,9 @@ name: Local routing source tests
 on:
   push:
     branches: [main, 'research/**']
-    paths: ['patches/local_routing/**', 'patches/build_local_routing.py', 'tests/**', 'tools/runtime_probe.py', 'tools/check_local_input.py', '.github/workflows/local-routing-tests.yml']
+    paths: ['patches/local_routing/**', 'patches/build_local_routing.py', 'tests/**', 'tools/runtime_probe.py', 'tools/check_local_input.py', 'tools/identify_revelations_build.py', '.github/workflows/local-routing-tests.yml']
   pull_request:
-    paths: ['patches/local_routing/**', 'patches/build_local_routing.py', 'tests/**', 'tools/runtime_probe.py', 'tools/check_local_input.py', '.github/workflows/local-routing-tests.yml']
+    paths: ['patches/local_routing/**', 'patches/build_local_routing.py', 'tests/**', 'tools/runtime_probe.py', 'tools/check_local_input.py', 'tools/identify_revelations_build.py', '.github/workflows/local-routing-tests.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -36,6 +36,7 @@ jobs:
             i386) python3 tests/run_without_game.py --i386-host ;;
             *) exit 2 ;;
           esac
+          python3 tests/test_identify_revelations_build.py
           python3 tests/test_runtime_probe.py
   windows-source-tests:
     name: windows-x86-mocks-and-readonly-probe
@@ -46,7 +47,9 @@ jobs:
         with:
           persist-credentials: false
       - name: Run sampler and real kernel32 read of the test process only
-        run: python tests/test_runtime_probe.py
+        run: |
+          python tests/test_identify_revelations_build.py
+          python tests/test_runtime_probe.py
       - name: Compile and run actor helper source as Windows x86 with engine mocks
         shell: cmd
         run: |
