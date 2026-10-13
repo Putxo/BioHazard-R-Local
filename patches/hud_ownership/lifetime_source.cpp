@@ -212,6 +212,37 @@ bool LifetimeSource::local_pair(u32 address,u32 revision) {
     }
     return revision==revision_ && fault_==SourceFault::None;
 }
+// January native connected predicate 02DB34B0: for slot N, both the
+// bytes at +0x40+N*0x2F8 and +0x43+N*0x2F8 must be nonzero.
+// Only redirect physical slot0 when J1 is using keyboard and slot1 is empty.
+// This function is invoked AFTER native sPad->raw copies at 02DAC75A and
+// BEFORE device selection (02DAC787) and keyboard synth (02DAC8A1).
+bool LifetimeSource::single_physical_pad(u32 gamepad,u32 revision) {
+    if(!access_.remap_single_pad || !on_thread() || capturing_ || depth_ ||
+       !gamepad || gamepad>Invalid-0x98Fu || fault_!=SourceFault::None)return false;
+    const u32 sub=roles_[1].actor.address;
+    if(!local_pair(sub,revision))return false;
+    u32 first_primary=Invalid,first_raw0=0,first_raw1=0;
+    for(u32 pass=0;pass<2;++pass){
+        u32 singleton=0,vt=0,primary=0,keyboard=0,poll=0,source=0;
+        u32 pad0=0,pad1=0;
+        if(!word(0x057A7480,singleton,revision) || singleton!=gamepad ||
+           !word(gamepad,vt,revision) || vt!=0x04E11D30 ||
+           !field(gamepad,0x970,primary,revision) || primary>1 ||
+           !field(gamepad,0x974,keyboard,revision) || keyboard!=1 ||
+           !field(gamepad,0x98C,poll,revision) || !(poll&255u) ||
+           !field(gamepad,0x968,source,revision) || !source ||
+           !field(gamepad,0x40,pad0,revision) ||
+           !field(gamepad,0x338,pad1,revision) ||
+           !(pad0&0x000000FFu) || !(pad0&0xFF000000u) ||
+           (pad1&0xFF0000FFu))return false;
+        if(pass && (primary!=first_primary || pad0!=first_raw0 ||
+                    pad1!=first_raw1))return false;
+        first_primary=primary;first_raw0=pad0;first_raw1=pad1;
+    }
+    return revision==revision_ && fault_==SourceFault::None &&
+           local_pair(sub,revision);
+}
 bool LifetimeSource::preserve_other_pad(u32 gamepad,u32 destination,u32 value,u32 size) {
     // An admitted synthesis keeps its initial slot until the native call returns,
     // including revocation in a callback. Never clear J2 halfway through it.
@@ -269,7 +300,15 @@ void LifetimeSource::input_update(u32 gamepad,u32 kind) {
         access_.input_update(access_.context,gamepad,2);
         input_member_=0;
     }
-    access_.input_update(access_.context,gamepad,kind);
+    // Physical pad0 normally belongs to J1. In a local session with keyboard
+    // J1 and exactly one native physical controller, move the polled raw state
+    // to slot1 and keep J1's keyboard mode. The subsequent keyboard synth uses
+    // slot0 and the existing memset guards preserve J2's slot1 raw state.
+    const bool redirected=kind==0 && input_local_ &&
+        single_physical_pad(gamepad,revision) &&
+        access_.remap_single_pad(access_.context,gamepad);
+    if(!redirected || revision!=revision_ || local_think_mode(sub,3)!=1)
+        access_.input_update(access_.context,gamepad,kind);
     input_local_=false;input_pad_=0;input_busy_=false;
 }
 bool LifetimeSource::capture(LifeSnapshot* out) {
