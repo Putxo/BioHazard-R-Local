@@ -300,14 +300,16 @@ void LifetimeSource::input_update(u32 gamepad,u32 kind) {
         access_.input_update(access_.context,gamepad,2);
         input_member_=0;
     }
-    // Physical pad0 normally belongs to J1. In a local session with keyboard
-    // J1 and exactly one native physical controller, move the polled raw state
-    // to slot1 and keep J1's keyboard mode. The subsequent keyboard synth uses
-    // slot0 and the existing memset guards preserve J2's slot1 raw state.
-    const bool redirected=kind==0 && input_local_ &&
-        single_physical_pad(gamepad,revision) &&
-        access_.remap_single_pad(access_.context,gamepad);
-    if(!redirected || revision!=revision_ || local_think_mode(sub,3)!=1)
+    // Physical pad0 normally belongs to J1. With local keyboard J1 and one
+    // connected physical controller, keep J1's keyboard mode at the first
+    // hook (02DAC787). January may still ZERO or OVERRIDE both 44-byte raw
+    // blocks at 02DAC7B6-02DAC898: copying here would lose J2 input.
+    // Transfer physical0 -> raw1 only at the second hook (02DAC8A1), AFTER
+    // these native writes and immediately BEFORE keyboard synthesis.
+    const bool one_pad=input_local_ && single_physical_pad(gamepad,revision);
+    if(kind==1 && one_pad)
+        (void)access_.remap_single_pad(access_.context,gamepad);
+    if(kind!=0 || !one_pad)
         access_.input_update(access_.context,gamepad,kind);
     input_local_=false;input_pad_=0;input_busy_=false;
 }
